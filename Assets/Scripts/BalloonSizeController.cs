@@ -26,6 +26,8 @@ public sealed class BalloonSizeController : MonoBehaviour
 
     private float currentSize = 1f;
 
+    public bool IsSmall => currentSize <= smallSize + 0.001f;
+
     private void Awake()
     {
         playerCollider = GetComponent<CapsuleCollider>();
