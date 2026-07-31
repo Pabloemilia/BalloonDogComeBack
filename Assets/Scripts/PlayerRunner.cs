@@ -5,49 +5,75 @@ using UnityEngine;
 public sealed class PlayerRunner : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField, Min(0f)]
-    private float forwardSpeed = 6f;
-
-    [SerializeField]
-    private BalloonSizeController balloonSizeController;
-
-    [SerializeField, Min(1f)]
-    private float smallBalloonSpeedMultiplier = 1.4f;
+    [SerializeField, Min(0f)] private float forwardSpeed = 6f;
+    [SerializeField] private BalloonSizeController balloonSizeController;
+    [SerializeField, Min(1f)] private float smallBalloonSpeedMultiplier = 1.12f;
 
     private Rigidbody playerRigidbody;
     private Coroutine slowCoroutine;
-    private float currentForwardSpeed;
+    private float slowMultiplier = 1f;
+    private bool movementEnabled = true;
 
-    public float CurrentForwardSpeed => currentForwardSpeed;
+    public float CurrentForwardSpeed => movementEnabled
+        ? forwardSpeed * slowMultiplier
+        : 0f;
+
+    public bool MovementEnabled => movementEnabled;
 
     private void Awake()
     {
         playerRigidbody = GetComponent<Rigidbody>();
-        currentForwardSpeed = forwardSpeed;
+
+        if (balloonSizeController == null)
+        {
+            balloonSizeController = GetComponent<BalloonSizeController>();
+        }
     }
 
     private void FixedUpdate()
     {
-        float speed = currentForwardSpeed;
+        Vector3 velocity = playerRigidbody.linearVelocity;
 
-        if (balloonSizeController != null &&
-            balloonSizeController.IsSmall)
+        if (!movementEnabled)
+        {
+            velocity.x = 0f;
+            velocity.z = 0f;
+            playerRigidbody.linearVelocity = velocity;
+            return;
+        }
+
+        float speed = CurrentForwardSpeed;
+
+        if (balloonSizeController != null && balloonSizeController.IsSmall)
         {
             speed *= smallBalloonSpeedMultiplier;
         }
 
-        Vector3 velocity = playerRigidbody.linearVelocity;
         velocity.z = speed;
-
         playerRigidbody.linearVelocity = velocity;
     }
 
-    public void ApplySlow(
-        float speedMultiplier,
-        float duration
-    )
+    public void SetMovementEnabled(bool enabled)
     {
-        speedMultiplier = Mathf.Clamp01(speedMultiplier);
+        movementEnabled = enabled;
+
+        if (!enabled && playerRigidbody != null)
+        {
+            Vector3 velocity = playerRigidbody.linearVelocity;
+            velocity.x = 0f;
+            velocity.z = 0f;
+            playerRigidbody.linearVelocity = velocity;
+        }
+    }
+
+    public void ApplySlow(float speedMultiplier, float duration)
+    {
+        if (!movementEnabled)
+        {
+            return;
+        }
+
+        speedMultiplier = Mathf.Clamp(speedMultiplier, 0.05f, 1f);
         duration = Mathf.Max(0f, duration);
 
         if (slowCoroutine != null)
@@ -55,27 +81,20 @@ public sealed class PlayerRunner : MonoBehaviour
             StopCoroutine(slowCoroutine);
         }
 
-        slowCoroutine = StartCoroutine(
-            SlowRoutine(speedMultiplier, duration)
-        );
+        slowCoroutine = StartCoroutine(SlowRoutine(speedMultiplier, duration));
     }
 
-    private IEnumerator SlowRoutine(
-        float speedMultiplier,
-        float duration
-    )
+    private IEnumerator SlowRoutine(float speedMultiplier, float duration)
     {
-        currentForwardSpeed =
-            forwardSpeed * speedMultiplier;
-
+        slowMultiplier = speedMultiplier;
         yield return new WaitForSeconds(duration);
-
-        currentForwardSpeed = forwardSpeed;
+        slowMultiplier = 1f;
         slowCoroutine = null;
     }
 
     private void OnDisable()
     {
-        currentForwardSpeed = forwardSpeed;
+        slowMultiplier = 1f;
+        movementEnabled = true;
     }
 }

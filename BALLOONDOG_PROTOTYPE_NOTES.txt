@@ -1,0 +1,25 @@
+BALLOONDOG OYNANABİLİR PROTOTİP
+==============================
+
+Unity sürümü: 6000.5.6f1
+Açılacak sahne: Assets/Scenes/Game.unity
+
+KONTROLLER
+- Ekranda/fareyle sağa-sola sürükle: karakteri hareket ettirir.
+- Oyun alanına basılı tut: balonu küçültür.
+- HELİKOPTER butonuna basılı tut: yükselir ve sürekli hava harcar.
+
+MEKANİKLER
+- Normal engel: hava azaltır, kısa süre yavaşlatır ve parçalanır.
+- Ağır tuğla duvar: 85+ hava varsa kırılır ve 25 hava harcar.
+- Ağır tuğla duvar: hava yetersizse 15 hava azaltır ve ciddi yavaşlatır.
+- Yer dikenleri: normal balonla temas edilirse oyun biter.
+- Helikopter: dikenlerin üstünden geçer, saniyede 18 hava harcar.
+- Mavi hava küreleri: 25 hava ve 100 bonus skor verir.
+- Bitiş kapısı: bölümü tamamlar.
+- Hava 0 olursa oyun biter.
+
+NOT
+Arayüz ve prototip engelleri oyun çalışırken BalloonDogPrototypeBootstrap.cs
+script'i tarafından otomatik hazırlanır. Game sahnesini açıp Play'e basmak yeterlidir.
+Bu paket ticari olarak tamamlanmış oyun değil; ana mekanikleri çalışan oynanabilir prototiptir.

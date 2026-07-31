@@ -5,46 +5,18 @@ using UnityEngine.UI;
 public sealed class AirDisplay : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField]
-    private AirController airController;
-
-    [SerializeField]
-    private Slider airSlider;
-
-    [SerializeField]
-    private TMP_Text airText;
+    [SerializeField] private AirController airController;
+    [SerializeField] private Slider airSlider;
+    [SerializeField] private TMP_Text airText;
 
     private void OnEnable()
     {
-        if (airController != null)
-        {
-            airController.AirChanged += UpdateDisplay;
-        }
+        Subscribe();
     }
 
     private void Start()
     {
-        if (airController == null)
-        {
-            Debug.LogError(
-                "AirDisplay: AirController atanmadı.",
-                this
-            );
-
-            return;
-        }
-
-        if (airSlider != null)
-        {
-            airSlider.minValue = 0f;
-            airSlider.maxValue =
-                airController.MaxAir;
-        }
-
-        UpdateDisplay(
-            airController.CurrentAir,
-            airController.MaxAir
-        );
+        RefreshDisplay();
     }
 
     private void OnDisable()
@@ -55,10 +27,53 @@ public sealed class AirDisplay : MonoBehaviour
         }
     }
 
-    private void UpdateDisplay(
-        float currentAir,
-        float maximumAir
-    )
+    public void Configure(
+        AirController controller,
+        Slider slider,
+        TMP_Text text)
+    {
+        if (isActiveAndEnabled && airController != null)
+        {
+            airController.AirChanged -= UpdateDisplay;
+        }
+
+        airController = controller;
+        airSlider = slider;
+        airText = text;
+
+        if (isActiveAndEnabled)
+        {
+            Subscribe();
+            RefreshDisplay();
+        }
+    }
+
+    private void Subscribe()
+    {
+        if (airController != null)
+        {
+            airController.AirChanged -= UpdateDisplay;
+            airController.AirChanged += UpdateDisplay;
+        }
+    }
+
+    private void RefreshDisplay()
+    {
+        if (airController == null)
+        {
+            return;
+        }
+
+        if (airSlider != null)
+        {
+            airSlider.minValue = 0f;
+            airSlider.maxValue = airController.MaxAir;
+        }
+
+        UpdateDisplay(airController.CurrentAir, airController.MaxAir);
+    }
+
+    private void UpdateDisplay(float currentAir, float maximumAir)
     {
         if (airSlider != null)
         {
@@ -68,8 +83,7 @@ public sealed class AirDisplay : MonoBehaviour
 
         if (airText != null)
         {
-            airText.text =
-                $"{currentAir:0} / {maximumAir:0}";
+            airText.text = $"HAVA {currentAir:0}/{maximumAir:0}";
         }
     }
 }

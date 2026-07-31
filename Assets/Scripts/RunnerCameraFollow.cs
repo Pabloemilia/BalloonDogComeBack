@@ -3,18 +3,17 @@ using UnityEngine;
 public sealed class RunnerCameraFollow : MonoBehaviour
 {
     [Header("Target")]
-    [SerializeField]
-    private Transform target;
+    [SerializeField] private Transform target;
 
     [Header("Camera Settings")]
-    [SerializeField]
-    private Vector3 offset = new Vector3(0f, 4f, -7f);
+    [SerializeField] private Vector3 offset = new Vector3(0f, 4f, -7f);
+    [SerializeField, Range(0f, 1f)] private float horizontalFollowAmount = 0.15f;
+    [SerializeField, Min(0f)] private float followSmoothness = 8f;
 
-    [SerializeField, Range(0f, 1f)]
-    private float horizontalFollowAmount = 0.15f;
-
-    [SerializeField, Min(0f)]
-    private float followSmoothness = 8f;
+    public void Configure(Transform followTarget)
+    {
+        target = followTarget;
+    }
 
     private void LateUpdate()
     {
@@ -24,19 +23,9 @@ public sealed class RunnerCameraFollow : MonoBehaviour
         }
 
         Vector3 targetPosition = target.position + offset;
+        targetPosition.x = offset.x + target.position.x * horizontalFollowAmount;
 
-        // Kamera, oyuncunun sağ-sol hareketini yalnızca
-        // küçük miktarda takip eder.
-        targetPosition.x =
-            offset.x + target.position.x * horizontalFollowAmount;
-
-        float smoothFactor =
-            1f - Mathf.Exp(-followSmoothness * Time.deltaTime);
-
-        transform.position = Vector3.Lerp(
-            transform.position,
-            targetPosition,
-            smoothFactor
-        );
+        float smoothFactor = 1f - Mathf.Exp(-followSmoothness * Time.deltaTime);
+        transform.position = Vector3.Lerp(transform.position, targetPosition, smoothFactor);
     }
 }

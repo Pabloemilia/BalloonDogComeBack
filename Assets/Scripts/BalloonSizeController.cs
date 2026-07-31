@@ -1,98 +1,156 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CapsuleCollider))]
+[RequireComponent(typeof(AirController))]
 public sealed class BalloonSizeController : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField]
-    private Transform balloonVisual;
+    [SerializeField] private Transform balloonVisual;
+    [SerializeField] private PlayerFormController formController;
+    [SerializeField] private AirController airController;
 
-    [Header("Size Settings")]
-    [SerializeField, Min(0.1f)]
-    private float smallSize = 0.6f;
+    [Header("Air Driven Size")]
+    [SerializeField, Min(0.1f)] private float minimumSizeMultiplier = 0.55f;
+    [SerializeField, Min(0.1f)] private float maximumSizeMultiplier = 1.2f;
+    [SerializeField, Min(0.1f)] private float resizeSpeed = 2.8f;
 
-    [SerializeField, Min(0.1f)]
-    private float largeSize = 1.3f;
-
-    [SerializeField, Min(0.1f)]
-    private float resizeSpeed = 4f;
+    [Header("Shrink Button")]
+    [SerializeField, Min(0f)] private float shrinkAirDrainPerSecond = 24f;
 
     private CapsuleCollider playerCollider;
-
-    private Vector3 originalVisualScale;
+    private Vector3 originalVisualScale = Vector3.one;
     private float originalColliderRadius;
     private float originalColliderHeight;
+    private float currentSizeMultiplier = 1f;
+    private bool shrinkRequested;
 
-    private float currentSize = 1f;
+    public bool IsSmall => currentSizeMultiplier <= Mathf.Lerp(
+        minimumSizeMultiplier,
+        maximumSizeMultiplier,
+        0.35f);
 
-    public bool IsSmall => currentSize <= smallSize + 0.001f;
+    public float CurrentSizeMultiplier => currentSizeMultiplier;
+    public bool IsShrinkRequested => shrinkRequested;
 
     private void Awake()
     {
         playerCollider = GetComponent<CapsuleCollider>();
+        airController = airController != null
+            ? airController
+            : GetComponent<AirController>();
+        formController = formController != null
+            ? formController
+            : GetComponent<PlayerFormController>();
+
+        originalColliderRadius = playerCollider.radius;
+        originalColliderHeight = playerCollider.height;
 
         if (balloonVisual == null)
         {
-            Debug.LogError(
-                "Balloon visual atanmadı.",
-                this
-            );
-
-            enabled = false;
-            return;
+            Transform fallback = transform.Find("Bubble");
+            if (fallback != null)
+            {
+                balloonVisual = fallback;
+            }
         }
 
-        originalVisualScale = balloonVisual.localScale;
-        originalColliderRadius = playerCollider.radius;
-        originalColliderHeight = playerCollider.height;
+        CaptureVisualScale();
+        currentSizeMultiplier = GetAirDrivenTargetSize();
+        UpdateBalloonSize();
+    }
+
+    public void Configure(
+        Transform visual,
+        PlayerFormController playerForm,
+        AirController controller)
+    {
+        balloonVisual = visual;
+        formController = playerForm;
+        airController = controller;
+        CaptureVisualScale();
+        currentSizeMultiplier = GetAirDrivenTargetSize();
+        UpdateBalloonSize();
+    }
+
+    // Eski bootstrap çağrılarıyla uyumluluk için bırakıldı.
+    public void Configure(Transform visual, PlayerFormController playerForm)
+    {
+        Configure(visual, playerForm, GetComponent<AirController>());
+    }
+
+    public void SetShrinkRequested(bool requested)
+    {
+        shrinkRequested = requested;
     }
 
     private void Update()
     {
-        bool isPressed = IsScreenPressed();
+        bool canShrink =
+            shrinkRequested &&
+            airController != null &&
+            !airController.IsEmpty &&
+            (formController == null || !formController.IsHelicopterActive) &&
+            (GameManager.Instance == null || !GameManager.Instance.IsGameOver);
 
-        float targetSize = isPressed
-            ? smallSize
-            : largeSize;
+        if (canShrink)
+        {
+            airController.RemoveAir(shrinkAirDrainPerSecond * Time.deltaTime);
+        }
 
-        currentSize = Mathf.MoveTowards(
-            currentSize,
+        float targetSize = GetAirDrivenTargetSize();
+        currentSizeMultiplier = Mathf.MoveTowards(
+            currentSizeMultiplier,
             targetSize,
-            resizeSpeed * Time.deltaTime
-        );
+            resizeSpeed * Time.deltaTime);
 
         UpdateBalloonSize();
     }
 
-    private bool IsScreenPressed()
+    private float GetAirDrivenTargetSize()
     {
-        if (Touchscreen.current != null &&
-            Touchscreen.current.primaryTouch.press.isPressed)
+        float normalizedAir = airController != null
+            ? airController.NormalizedAir
+            : 1f;
+
+        return Mathf.Lerp(
+            minimumSizeMultiplier,
+            maximumSizeMultiplier,
+            normalizedAir);
+    }
+
+    private void CaptureVisualScale()
+    {
+        if (balloonVisual == null)
         {
-            return true;
+            return;
         }
 
-        if (Mouse.current != null &&
-            Mouse.current.leftButton.isPressed)
-        {
-            return true;
-        }
-
-        return false;
+        originalVisualScale = balloonVisual.localScale;
     }
 
     private void UpdateBalloonSize()
     {
-        balloonVisual.localScale =
-            originalVisualScale * currentSize;
+        if (balloonVisual != null)
+        {
+            balloonVisual.localScale = originalVisualScale * currentSizeMultiplier;
+        }
 
-        playerCollider.radius =
-            originalColliderRadius * currentSize;
+        if (playerCollider == null)
+        {
+            return;
+        }
+
+        playerCollider.radius = Mathf.Max(
+            0.12f,
+            originalColliderRadius * currentSizeMultiplier);
 
         playerCollider.height = Mathf.Max(
             playerCollider.radius * 2f,
-            originalColliderHeight * currentSize
-        );
+            originalColliderHeight * currentSizeMultiplier);
+    }
+
+    private void OnDisable()
+    {
+        shrinkRequested = false;
     }
 }

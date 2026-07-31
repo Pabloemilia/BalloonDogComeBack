@@ -1,0 +1,30 @@
+BALLOONDOG V2 REVİZYONU
+
+KONTROLLER
+- Ekranı sağa/sola sürükle: oyuncuyu yatay hareket ettirir.
+- Oyun alanına çift dokun: helikopter formunu açar.
+- Tekrar çift dokun: normal balon köpek formuna döner.
+- Alt ortadaki KÜÇÜL butonuna basılı tut: köpek küçülür ve sürekli hava kaybeder.
+
+YENİ MEKANİKLER
+- Köpeğin büyüklüğü mevcut hava yüzdesine bağlıdır.
+- Mavi balonlar hava kazandırır ve köpeği yeniden büyütür.
+- Normal engeller hava azaltır ve geçici olarak yavaşlatır.
+- Ağır balon-tuğla duvarlar yalnızca 85 veya daha fazla havayla kırılır.
+- Yer dikenleri normal formda balonu patlatır; helikopter formunda geçilebilir.
+- Helikopter formu saniyelik hava tüketir.
+- Bölüm sonundaki kalan hava, fırlatma mini oyunundaki atış gücünü belirler.
+- Fırlatma mesafesi x1-x10 skor çarpanı verir.
+
+HARİTA
+- Oynanabilir parkur yaklaşık 150 metreye uzatıldı.
+- Fırlatma mini oyunu için bitiş çizgisinden sonra uzun pist bırakıldı.
+- Bombalar, silindirler, dişliler, spiral engeller, ağır duvarlar, dikenler ve hava balonları eklendi.
+
+MODELLER
+- balloon_dog.glb modeli OBJ/MTL formatına dönüştürülerek Resources içine bağlandı.
+- low_poly_mobile_game_obstacles.glb paketinden Bomb, Cylinder, Gear, Spiral, SpikeBase ve SpikeTrap modelleri dönüştürülüp kullanıldı.
+
+NOT
+- Unity ilk açılışta yeni OBJ/MTL modelleri ve yeni scriptler için .meta dosyaları oluşturur.
+- İlk import tamamlanana kadar bekleyip ardından Assets/Scenes/Game.unity sahnesini açın.
