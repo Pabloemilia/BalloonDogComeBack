@@ -7,7 +7,7 @@ public sealed class PlayerRunner : MonoBehaviour
     [Header("Movement")]
     [SerializeField, Min(0f)] private float forwardSpeed = 6f;
     [SerializeField] private BalloonSizeController balloonSizeController;
-    [SerializeField, Min(1f)] private float smallBalloonSpeedMultiplier = 1.12f;
+    [SerializeField, Range(1f, 1.25f)] private float smallBalloonSpeedMultiplier = 1.08f;
 
     private Rigidbody playerRigidbody;
     private Coroutine slowCoroutine;
@@ -24,6 +24,10 @@ public sealed class PlayerRunner : MonoBehaviour
     private void Awake()
     {
         playerRigidbody = GetComponent<Rigidbody>();
+
+        // Eski sahnelerde bu değer 1.12 olarak serialize edilmiş olabilir.
+        // Küçük form normalden yalnızca biraz daha hızlı ilerler.
+        smallBalloonSpeedMultiplier = 1.08f;
 
         if (balloonSizeController == null)
         {
@@ -110,4 +114,12 @@ public sealed class PlayerRunner : MonoBehaviour
         difficultyMultiplier = 1f;
         movementEnabled = true;
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        forwardSpeed = Mathf.Max(0f, forwardSpeed);
+        smallBalloonSpeedMultiplier = 1.08f;
+    }
+#endif
 }

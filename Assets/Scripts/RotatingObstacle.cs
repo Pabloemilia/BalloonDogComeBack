@@ -1,18 +1,17 @@
 using UnityEngine;
 
 /// <summary>
-/// Bir görsel pivotu yalnızca kendi yerel ekseni etrafında döndürür.
-/// Konuma dokunmadığı için engel yol dışına yörünge çizmez.
-/// Editör kurulumu, bu bileşeni modelin görünür merkezine yerleştirilmiş
-/// StableSpinPivot nesnesine bağlar.
+/// Yol engellerini zemine paralel olarak döndürür. Böylece engeller oyuncunun
+/// karşısında dikey takla atmak yerine yolu yatay biçimde süpürür.
 /// </summary>
 public sealed class RotatingObstacle : MonoBehaviour
 {
     [SerializeField] private Vector3 rotationAxis = Vector3.up;
     [SerializeField] private float degreesPerSecond = 70f;
-    [SerializeField] private bool rotateInWorldSpace;
+    [SerializeField] private bool rotateInWorldSpace = true;
     [SerializeField] private bool useUnscaledTime;
     [SerializeField] private bool randomizeStartingAngle = true;
+    [SerializeField] private bool forceHorizontalRoadRotation = true;
 
     private Quaternion initialLocalRotation;
     private Quaternion initialWorldRotation;
@@ -23,6 +22,14 @@ public sealed class RotatingObstacle : MonoBehaviour
         rotationAxis = axis.sqrMagnitude > 0.0001f ? axis.normalized : Vector3.up;
         degreesPerSecond = speed;
         rotateInWorldSpace = worldSpace;
+        CaptureInitialRotation();
+    }
+
+    public void ForceHorizontalRotation()
+    {
+        forceHorizontalRoadRotation = true;
+        rotationAxis = Vector3.up;
+        rotateInWorldSpace = true;
         CaptureInitialRotation();
     }
 
@@ -43,9 +50,17 @@ public sealed class RotatingObstacle : MonoBehaviour
 
     private void CaptureInitialRotation()
     {
-        rotationAxis = rotationAxis.sqrMagnitude > 0.0001f
-            ? rotationAxis.normalized
-            : Vector3.up;
+        if (forceHorizontalRoadRotation)
+        {
+            rotationAxis = Vector3.up;
+            rotateInWorldSpace = true;
+        }
+        else
+        {
+            rotationAxis = rotationAxis.sqrMagnitude > 0.0001f
+                ? rotationAxis.normalized
+                : Vector3.up;
+        }
 
         initialLocalRotation = transform.localRotation;
         initialWorldRotation = transform.rotation;
@@ -73,9 +88,17 @@ public sealed class RotatingObstacle : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        rotationAxis = rotationAxis.sqrMagnitude > 0.0001f
-            ? rotationAxis.normalized
-            : Vector3.up;
+        if (forceHorizontalRoadRotation)
+        {
+            rotationAxis = Vector3.up;
+            rotateInWorldSpace = true;
+        }
+        else
+        {
+            rotationAxis = rotationAxis.sqrMagnitude > 0.0001f
+                ? rotationAxis.normalized
+                : Vector3.up;
+        }
     }
 #endif
 }

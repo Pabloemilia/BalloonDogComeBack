@@ -9497,7 +9497,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &265379140
 Transform:
   m_ObjectHideFlags: 0
@@ -10984,8 +10984,9 @@ MonoBehaviour:
   airController: {fileID: 291108601}
   minimumSizeMultiplier: 0.55
   maximumSizeMultiplier: 1.2
-  resizeSpeed: 10
-  shrinkAirDrainPerSecond: 24
+  resizeSpeed: 16
+  shrinkAirDrainPerSecond: 72
+  instantShrinkAirBurst: 24
 --- !u!114 &291108600
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11079,11 +11080,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LaunchMinigameController
   minimumForwardSpeed: 10
-  maximumForwardSpeed: 34
+  maximumForwardSpeed: 36
   minimumUpwardSpeed: 5
-  maximumUpwardSpeed: 14
-  maximumFlightTime: 7
-  metersPerMultiplier: 8
+  maximumUpwardSpeed: 15
+  maximumFlightTime: 8
+  metersPerMultiplier: 10.5
   maximumMultiplier: 10
 --- !u!114 &291108606
 MonoBehaviour:
@@ -24017,7 +24018,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &607000171
 Transform:
   m_ObjectHideFlags: 0
@@ -29245,11 +29246,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7cb736c95e47194787296bbc22d388e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RotatingObstacle
-  rotationAxis: {x: 1, y: 0, z: 0}
+  rotationAxis: {x: 0, y: 1, z: 0}
   degreesPerSecond: 38
-  rotateInWorldSpace: 0
+  rotateInWorldSpace: 1
   useUnscaledTime: 0
   randomizeStartingAngle: 1
+  forceHorizontalRoadRotation: 1
 --- !u!1 &731077280
 GameObject:
   m_ObjectHideFlags: 0
@@ -31031,9 +31033,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RotatingObstacle
   rotationAxis: {x: 0, y: 1, z: 0}
   degreesPerSecond: 34
-  rotateInWorldSpace: 0
+  rotateInWorldSpace: 1
   useUnscaledTime: 0
   randomizeStartingAngle: 1
+  forceHorizontalRoadRotation: 1
 --- !u!1 &786465366
 GameObject:
   m_ObjectHideFlags: 0
@@ -31412,7 +31415,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &792911821
 Transform:
   m_ObjectHideFlags: 0
@@ -41059,11 +41062,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7cb736c95e47194787296bbc22d388e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RotatingObstacle
-  rotationAxis: {x: 0, y: 0, z: 1}
+  rotationAxis: {x: 0, y: 1, z: 0}
   degreesPerSecond: 44
-  rotateInWorldSpace: 0
+  rotateInWorldSpace: 1
   useUnscaledTime: 0
   randomizeStartingAngle: 1
+  forceHorizontalRoadRotation: 1
 --- !u!1 &1078252875
 GameObject:
   m_ObjectHideFlags: 0
@@ -45097,11 +45101,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7cb736c95e47194787296bbc22d388e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RotatingObstacle
-  rotationAxis: {x: 1, y: 0, z: 0}
+  rotationAxis: {x: 0, y: 1, z: 0}
   degreesPerSecond: 38
-  rotateInWorldSpace: 0
+  rotateInWorldSpace: 1
   useUnscaledTime: 0
   randomizeStartingAngle: 1
+  forceHorizontalRoadRotation: 1
 --- !u!1 &1211013150
 GameObject:
   m_ObjectHideFlags: 0
@@ -46340,7 +46345,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1251752042
 Transform:
   m_ObjectHideFlags: 0
@@ -50959,7 +50964,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1376640589
 Transform:
   m_ObjectHideFlags: 0
@@ -55011,7 +55016,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1487305341
 Transform:
   m_ObjectHideFlags: 0
@@ -56703,7 +56708,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1528924481
 Transform:
   m_ObjectHideFlags: 0
@@ -64715,11 +64720,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7cb736c95e47194787296bbc22d388e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RotatingObstacle
-  rotationAxis: {x: 0, y: 0, z: 1}
+  rotationAxis: {x: 0, y: 1, z: 0}
   degreesPerSecond: 44
-  rotateInWorldSpace: 0
+  rotateInWorldSpace: 1
   useUnscaledTime: 0
   randomizeStartingAngle: 1
+  forceHorizontalRoadRotation: 1
 --- !u!1 &1720471931
 GameObject:
   m_ObjectHideFlags: 0
@@ -64872,7 +64878,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1722675474
 Transform:
   m_ObjectHideFlags: 0
@@ -65241,9 +65247,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RotatingObstacle
   rotationAxis: {x: 0, y: 1, z: 0}
   degreesPerSecond: 34
-  rotateInWorldSpace: 0
+  rotateInWorldSpace: 1
   useUnscaledTime: 0
   randomizeStartingAngle: 1
+  forceHorizontalRoadRotation: 1
 --- !u!1 &1728453966
 GameObject:
   m_ObjectHideFlags: 0
@@ -72355,7 +72362,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1925816605
 Transform:
   m_ObjectHideFlags: 0
@@ -74709,11 +74716,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7cb736c95e47194787296bbc22d388e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RotatingObstacle
-  rotationAxis: {x: 1, y: 0, z: 0}
+  rotationAxis: {x: 0, y: 1, z: 0}
   degreesPerSecond: 38
-  rotateInWorldSpace: 0
+  rotateInWorldSpace: 1
   useUnscaledTime: 0
   randomizeStartingAngle: 1
+  forceHorizontalRoadRotation: 1
 --- !u!1 &2010608329
 GameObject:
   m_ObjectHideFlags: 0
