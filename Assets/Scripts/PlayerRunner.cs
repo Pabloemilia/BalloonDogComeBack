@@ -12,10 +12,11 @@ public sealed class PlayerRunner : MonoBehaviour
     private Rigidbody playerRigidbody;
     private Coroutine slowCoroutine;
     private float slowMultiplier = 1f;
+    private float difficultyMultiplier = 1f;
     private bool movementEnabled = true;
 
     public float CurrentForwardSpeed => movementEnabled
-        ? forwardSpeed * slowMultiplier
+        ? forwardSpeed * slowMultiplier * difficultyMultiplier
         : 0f;
 
     public bool MovementEnabled => movementEnabled;
@@ -51,6 +52,17 @@ public sealed class PlayerRunner : MonoBehaviour
 
         velocity.z = speed;
         playerRigidbody.linearVelocity = velocity;
+    }
+
+
+    public void SetDifficultyMultiplier(float multiplier)
+    {
+        difficultyMultiplier = Mathf.Clamp(multiplier, 0.5f, 2.5f);
+    }
+
+    public void ConfigureForwardSpeed(float speed)
+    {
+        forwardSpeed = Mathf.Max(0f, speed);
     }
 
     public void SetMovementEnabled(bool enabled)
@@ -95,6 +107,7 @@ public sealed class PlayerRunner : MonoBehaviour
     private void OnDisable()
     {
         slowMultiplier = 1f;
+        difficultyMultiplier = 1f;
         movementEnabled = true;
     }
 }

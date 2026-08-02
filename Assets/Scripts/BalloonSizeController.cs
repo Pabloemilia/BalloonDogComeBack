@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[DefaultExecutionOrder(-100)]
 [RequireComponent(typeof(CapsuleCollider))]
 [RequireComponent(typeof(AirController))]
 public sealed class BalloonSizeController : MonoBehaviour
@@ -12,7 +13,7 @@ public sealed class BalloonSizeController : MonoBehaviour
     [Header("Air Driven Size")]
     [SerializeField, Min(0.1f)] private float minimumSizeMultiplier = 0.55f;
     [SerializeField, Min(0.1f)] private float maximumSizeMultiplier = 1.2f;
-    [SerializeField, Min(0.1f)] private float resizeSpeed = 2.8f;
+    [SerializeField, Min(0.1f)] private float resizeSpeed = 3.8f;
 
     [Header("Shrink Button")]
     [SerializeField, Min(0f)] private float shrinkAirDrainPerSecond = 24f;
@@ -21,7 +22,7 @@ public sealed class BalloonSizeController : MonoBehaviour
     private Vector3 originalVisualScale = Vector3.one;
     private float originalColliderRadius;
     private float originalColliderHeight;
-    private float currentSizeMultiplier = 1f;
+    private float currentSizeMultiplier;
     private bool shrinkRequested;
 
     public bool IsSmall => currentSizeMultiplier <= Mathf.Lerp(
@@ -35,28 +36,27 @@ public sealed class BalloonSizeController : MonoBehaviour
     private void Awake()
     {
         playerCollider = GetComponent<CapsuleCollider>();
-        airController = airController != null
-            ? airController
-            : GetComponent<AirController>();
-        formController = formController != null
-            ? formController
-            : GetComponent<PlayerFormController>();
+        airController ??= GetComponent<AirController>();
+        formController ??= GetComponent<PlayerFormController>();
 
         originalColliderRadius = playerCollider.radius;
         originalColliderHeight = playerCollider.height;
 
         if (balloonVisual == null)
         {
-            Transform fallback = transform.Find("Bubble");
-            if (fallback != null)
-            {
-                balloonVisual = fallback;
-            }
+            balloonVisual = transform.Find("BalloonDogModel") ?? transform.Find("Bubble");
         }
 
         CaptureVisualScale();
-        currentSizeMultiplier = GetAirDrivenTargetSize();
+
+        // Menü Time.timeScale = 0 iken küçük görünmemesi için ilk karede tam boy başlar.
+        currentSizeMultiplier = maximumSizeMultiplier;
         UpdateBalloonSize();
+    }
+
+    private void Start()
+    {
+        SnapToCurrentAir();
     }
 
     public void Configure(
@@ -68,11 +68,9 @@ public sealed class BalloonSizeController : MonoBehaviour
         formController = playerForm;
         airController = controller;
         CaptureVisualScale();
-        currentSizeMultiplier = GetAirDrivenTargetSize();
-        UpdateBalloonSize();
+        SnapToCurrentAir();
     }
 
-    // Eski bootstrap çağrılarıyla uyumluluk için bırakıldı.
     public void Configure(Transform visual, PlayerFormController playerForm)
     {
         Configure(visual, playerForm, GetComponent<AirController>());
@@ -81,6 +79,12 @@ public sealed class BalloonSizeController : MonoBehaviour
     public void SetShrinkRequested(bool requested)
     {
         shrinkRequested = requested;
+    }
+
+    public void SnapToCurrentAir()
+    {
+        currentSizeMultiplier = GetAirDrivenTargetSize();
+        UpdateBalloonSize();
     }
 
     private void Update()
@@ -98,10 +102,14 @@ public sealed class BalloonSizeController : MonoBehaviour
         }
 
         float targetSize = GetAirDrivenTargetSize();
+        float deltaTime = Time.timeScale > 0f
+            ? Time.deltaTime
+            : Time.unscaledDeltaTime;
+
         currentSizeMultiplier = Mathf.MoveTowards(
             currentSizeMultiplier,
             targetSize,
-            resizeSpeed * Time.deltaTime);
+            resizeSpeed * deltaTime);
 
         UpdateBalloonSize();
     }
@@ -120,12 +128,10 @@ public sealed class BalloonSizeController : MonoBehaviour
 
     private void CaptureVisualScale()
     {
-        if (balloonVisual == null)
+        if (balloonVisual != null)
         {
-            return;
+            originalVisualScale = balloonVisual.localScale;
         }
-
-        originalVisualScale = balloonVisual.localScale;
     }
 
     private void UpdateBalloonSize()

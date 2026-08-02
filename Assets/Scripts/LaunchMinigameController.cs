@@ -26,6 +26,16 @@ public sealed class LaunchMinigameController : MonoBehaviour
     private TMP_Text launchText;
     private bool sequenceStarted;
 
+    private void Awake()
+    {
+        ResolveReferences();
+    }
+
+    private void Start()
+    {
+        ResolveReferences();
+    }
+
     public void Configure(
         GameObject playerObject,
         Rigidbody body,
@@ -59,6 +69,8 @@ public sealed class LaunchMinigameController : MonoBehaviour
 
     public void BeginLaunchSequence()
     {
+        ResolveReferences();
+
         if (sequenceStarted)
         {
             return;
@@ -142,6 +154,14 @@ public sealed class LaunchMinigameController : MonoBehaviour
             upwardSpeed,
             forwardSpeed);
         projectileBody.angularVelocity = new Vector3(8f, 5f, 3f);
+        RuntimeVfx.SpawnBurst(
+            startPosition,
+            new Color(0.18f, 0.9f, 1f, 1f),
+            32,
+            5.2f,
+            0.15f,
+            0.75f);
+        CameraShakeController.ShakeGlobal(0.24f, 0.1f);
 
         if (cameraFollow != null)
         {
@@ -184,6 +204,15 @@ public sealed class LaunchMinigameController : MonoBehaviour
             yield return null;
         }
 
+        RuntimeVfx.SpawnBurst(
+            projectile.transform.position,
+            new Color(1f, 0.7f, 0.12f, 1f),
+            28,
+            4.2f,
+            0.14f,
+            0.7f);
+        CameraShakeController.ShakeGlobal(0.28f, 0.12f);
+
         int multiplier = CalculateMultiplier(maximumDistance);
         int finalScore = baseScore * multiplier;
 
@@ -208,6 +237,48 @@ public sealed class LaunchMinigameController : MonoBehaviour
                 maximumDistance,
                 multiplier,
                 finalScore);
+        }
+    }
+
+    private void ResolveReferences()
+    {
+        if (player == null)
+        {
+            PlayerRunner foundRunner = FindAnyObjectByType<PlayerRunner>();
+            if (foundRunner != null)
+            {
+                player = foundRunner.gameObject;
+            }
+        }
+
+        if (player != null)
+        {
+            playerBody ??= player.GetComponent<Rigidbody>();
+            runner ??= player.GetComponent<PlayerRunner>();
+            horizontalController ??= player.GetComponent<PlayerHorizontalController>();
+            formController ??= player.GetComponent<PlayerFormController>();
+            sizeController ??= player.GetComponent<BalloonSizeController>();
+            airController ??= player.GetComponent<AirController>();
+            scoreController ??= player.GetComponent<ScoreController>();
+        }
+
+        cameraFollow ??= FindAnyObjectByType<RunnerCameraFollow>();
+        gameManager ??= GameManager.Instance ?? FindAnyObjectByType<GameManager>();
+
+        if (launchText == null)
+        {
+            TMP_Text[] texts = FindObjectsByType<TMP_Text>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+
+            foreach (TMP_Text text in texts)
+            {
+                if (text != null && text.name == "LaunchResultText")
+                {
+                    launchText = text;
+                    break;
+                }
+            }
         }
     }
 
@@ -240,6 +311,22 @@ public sealed class LaunchMinigameController : MonoBehaviour
                 material.color = new Color(0.15f, 0.85f, 1f);
                 renderer.material = material;
             }
+        }
+
+        GameObject ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        ring.name = "LaunchHalo";
+        ring.transform.SetParent(projectile.transform, false);
+        ring.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        ring.transform.localScale = new Vector3(1.15f, 0.035f, 1.15f);
+        Renderer ringRenderer = ring.GetComponent<Renderer>();
+        if (ringRenderer != null && renderer != null)
+        {
+            ringRenderer.material = renderer.material;
+        }
+        Collider ringCollider = ring.GetComponent<Collider>();
+        if (ringCollider != null)
+        {
+            Destroy(ringCollider);
         }
 
         Rigidbody body = projectile.AddComponent<Rigidbody>();

@@ -13,7 +13,12 @@ public sealed class GroundSpikes : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (triggered)
+        if (triggered || other == null)
+        {
+            return;
+        }
+
+        if (other.GetComponent<NearMissSensor>() != null)
         {
             return;
         }
@@ -33,6 +38,9 @@ public sealed class GroundSpikes : MonoBehaviour
         }
 
         triggered = true;
+        airController.GetComponent<ComboController>()?.BreakCombo();
+        airController.GetComponentInChildren<NearMissSensor>(true)?.RegisterHit(this);
+        GameAudioController.PlayHit();
         airController.EmptyAir("BALON DİKENLERE ÇARPTI");
     }
 }

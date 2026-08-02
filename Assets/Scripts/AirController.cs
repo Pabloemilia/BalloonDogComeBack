@@ -1,11 +1,13 @@
 using System;
 using UnityEngine;
 
+[DefaultExecutionOrder(-200)]
 public sealed class AirController : MonoBehaviour
 {
     [Header("Air Settings")]
     [SerializeField, Min(1f)] private float maxAir = 100f;
     [SerializeField, Min(0f)] private float startingAir = 100f;
+    [SerializeField] private bool startWithFullAir = true;
 
     [Header("Optional Reference")]
     [SerializeField] private GameManager gameManager;
@@ -22,7 +24,11 @@ public sealed class AirController : MonoBehaviour
 
     private void Awake()
     {
-        currentAir = Mathf.Clamp(startingAir, 0f, maxAir);
+        maxAir = Mathf.Max(1f, maxAir);
+        currentAir = startWithFullAir
+            ? maxAir
+            : Mathf.Clamp(startingAir, 0f, maxAir);
+        ranOutOfAir = false;
     }
 
     private void Start()
@@ -39,6 +45,20 @@ public sealed class AirController : MonoBehaviour
     public void Configure(GameManager manager)
     {
         gameManager = manager;
+    }
+
+    public void ConfigureStartAir(float maximum, float startAmount, bool alwaysStartFull)
+    {
+        maxAir = Mathf.Max(1f, maximum);
+        startingAir = Mathf.Clamp(startAmount, 0f, maxAir);
+        startWithFullAir = alwaysStartFull;
+    }
+
+    public void ResetToFull()
+    {
+        ranOutOfAir = false;
+        currentAir = maxAir;
+        NotifyAirChanged();
     }
 
     public bool HasAir(float requiredAmount)
@@ -132,14 +152,15 @@ public sealed class AirController : MonoBehaviour
 
     private void ResolveGameManager()
     {
-        if (gameManager == null)
-        {
-            gameManager = GameManager.Instance;
-        }
-
-        if (gameManager == null)
-        {
-            gameManager = FindFirstObjectByType<GameManager>();
-        }
+        gameManager ??= GameManager.Instance;
+        gameManager ??= FindAnyObjectByType<GameManager>();
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        maxAir = Mathf.Max(1f, maxAir);
+        startingAir = Mathf.Clamp(startingAir, 0f, maxAir);
+    }
+#endif
 }

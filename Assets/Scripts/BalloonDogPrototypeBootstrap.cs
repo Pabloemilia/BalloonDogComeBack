@@ -5,9 +5,16 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.Events;
+#endif
+
 public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
 {
-    private const string GeneratedLevelName = "__GeneratedBalloonDogLevelV2";
+    public const string BakedLevelRootName = "BalloonDog_Level";
+    private const string LegacyGeneratedLevelName = "__GeneratedBalloonDogLevelV2";
+    private const string GeneratedLevelName = BakedLevelRootName;
 
     private static Material cyanMaterial;
     private static Material redMaterial;
@@ -19,7 +26,7 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateBootstrap()
     {
-        PlayerRunner runner = FindFirstObjectByType<PlayerRunner>();
+        PlayerRunner runner = FindAnyObjectByType<PlayerRunner>();
         GameObject playerByName = GameObject.Find("player") ?? GameObject.Find("Player");
 
         if (runner == null && playerByName == null)
@@ -27,7 +34,13 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
             return;
         }
 
-        if (FindFirstObjectByType<BalloonDogPrototypeBootstrap>() != null)
+        // Sahne editörde bake edildiyse runtime'da yeniden üretme.
+        if (GameObject.Find(GeneratedLevelName) != null)
+        {
+            return;
+        }
+
+        if (FindAnyObjectByType<BalloonDogPrototypeBootstrap>() != null)
         {
             return;
         }
@@ -38,14 +51,44 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
 
     private IEnumerator Start()
     {
+        if (!Application.isPlaying)
+        {
+            yield break;
+        }
+
         // Unity'nin sahneyi ve Resources modellerini tamamen hazırlamasını bekler.
         yield return null;
         SetupPrototype();
     }
 
+    /// <summary>
+    /// Editör aracının sahnedeki bütün runtime nesnelerini kalıcı GameObject olarak
+    /// üretmesi için kullanılan giriş noktasıdır.
+    /// </summary>
+    public void BuildEditableScene()
+    {
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            // Daha önce Play modunda oluşturulmuş geçici materyalleri kullanma.
+            cyanMaterial = null;
+            redMaterial = null;
+            orangeMaterial = null;
+            darkMaterial = null;
+            whiteMaterial = null;
+            roadMaterial = null;
+        }
+#endif
+
+        SetupPrototype();
+    }
+
     private void SetupPrototype()
     {
-        Screen.orientation = ScreenOrientation.Portrait;
+        if (Application.isPlaying)
+        {
+            Screen.orientation = ScreenOrientation.Portrait;
+        }
         EnsureMaterials();
 
         GameObject player = ResolvePlayer();
@@ -68,7 +111,7 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
         PlayerHorizontalController horizontalController =
             GetOrAdd<PlayerHorizontalController>(player);
 
-        GameManager gameManager = FindFirstObjectByType<GameManager>();
+        GameManager gameManager = FindAnyObjectByType<GameManager>();
         if (gameManager == null)
         {
             GameObject managerObject = new GameObject("GameManager");
@@ -109,7 +152,7 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
 
     private static GameObject ResolvePlayer()
     {
-        PlayerRunner runner = FindFirstObjectByType<PlayerRunner>();
+        PlayerRunner runner = FindAnyObjectByType<PlayerRunner>();
         if (runner != null)
         {
             return runner.gameObject;
@@ -214,6 +257,7 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
             "AirPickup_A",
             "AirPickup_B",
             "AirPickup_C",
+            LegacyGeneratedLevelName,
             GeneratedLevelName
         };
 
@@ -226,61 +270,74 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
             }
 
             gameObject.SetActive(false);
-            Destroy(gameObject);
+            DestroySmart(gameObject);
         }
     }
 
     private static void SetupLongLevel()
     {
-        PrepareRoad();
-
         GameObject levelRoot = new GameObject(GeneratedLevelName);
 
+        Transform environmentRoot = CreateGroup(levelRoot.transform, "Environment");
+        Transform obstaclesRoot = CreateGroup(levelRoot.transform, "Obstacles");
+        Transform collectiblesRoot = CreateGroup(levelRoot.transform, "Collectibles");
+        Transform finishRoot = CreateGroup(levelRoot.transform, "FinishSystem");
+        Transform decorationsRoot = CreateGroup(levelRoot.transform, "Decorations");
+
+        PrepareRoad(environmentRoot);
+
         // Oyunun ilk yarısı: temel kaçış ve hava toplama.
-        CreateNormalObstacle(levelRoot.transform, "Bomb_15", new Vector3(-1.55f, 0f, 15f),
+        CreateNormalObstacle(obstaclesRoot, "Bomb_15", new Vector3(-1.55f, 0f, 15f),
             "Models/ObstaclePack/Bomb/Bomb", new Vector3(1.4f, 1.65f, 1.4f),
             new Vector3(0f, 0.82f, 0f), 11f, 1f);
-        CreateAirPickup(levelRoot.transform, "BlueBalloon_21", new Vector3(1.55f, 1.2f, 21f), 22f);
-        CreateNormalObstacle(levelRoot.transform, "Cylinder_27", new Vector3(1.5f, 0f, 27f),
+        CreateAirPickup(collectiblesRoot, "BlueBalloon_21", new Vector3(1.55f, 1.2f, 21f), 22f);
+        CreateNormalObstacle(obstaclesRoot, "Cylinder_27", new Vector3(1.5f, 0f, 27f),
             "Models/ObstaclePack/Cylinder/Cylinder", new Vector3(1.45f, 2.5f, 1.45f),
             new Vector3(0f, 1.25f, 0f), 12f, 0.75f);
-        CreateSpikeStrip(levelRoot.transform, "Spikes_35", new Vector3(0f, 0f, 35f));
-        CreateAirPickupRow(levelRoot.transform, 44f, new[] { -1.55f, 0f, 1.55f }, 15f);
-        CreateLowGate(levelRoot.transform, "LowGate_47", 47f);
+        CreateSpikeStrip(obstaclesRoot, "Spikes_35", new Vector3(0f, 0f, 35f));
+        CreateAirPickupRow(collectiblesRoot, 44f, new[] { -1.55f, 0f, 1.55f }, 15f);
+        CreateLowGate(obstaclesRoot, "LowGate_47", 47f);
 
         // Orta bölüm: ağır duvar ve karışık engeller.
-        CreateHeavyBalloonWall(levelRoot.transform, "HeavyWall_52", new Vector3(-1.45f, 0f, 52f));
-        CreateNormalObstacle(levelRoot.transform, "Gear_60", new Vector3(1.4f, 0f, 60f),
+        CreateHeavyBalloonWall(obstaclesRoot, "HeavyWall_52", new Vector3(-1.45f, 0f, 52f));
+        CreateNormalObstacle(obstaclesRoot, "Gear_60", new Vector3(1.4f, 0f, 60f),
             "Models/ObstaclePack/Gear/Gear", new Vector3(2f, 0.8f, 2f),
             new Vector3(0f, 0.4f, 0f), 10f, 0.68f);
-        CreateNormalObstacle(levelRoot.transform, "BombLeft_68", new Vector3(-1.65f, 0f, 68f),
+        CreateNormalObstacle(obstaclesRoot, "BombLeft_68", new Vector3(-1.65f, 0f, 68f),
             "Models/ObstaclePack/Bomb/Bomb", new Vector3(1.35f, 1.6f, 1.35f),
             new Vector3(0f, 0.8f, 0f), 11f, 0.95f);
-        CreateNormalObstacle(levelRoot.transform, "BombRight_68", new Vector3(1.65f, 0f, 68f),
+        CreateNormalObstacle(obstaclesRoot, "BombRight_68", new Vector3(1.65f, 0f, 68f),
             "Models/ObstaclePack/Bomb/Bomb", new Vector3(1.35f, 1.6f, 1.35f),
             new Vector3(0f, 0.8f, 0f), 11f, 0.95f);
-        CreateAirPickup(levelRoot.transform, "BlueBalloon_74", new Vector3(0f, 1.2f, 74f), 25f);
-        CreateSpikeStrip(levelRoot.transform, "Spikes_82", new Vector3(0f, 0f, 82f));
-        CreateLowGate(levelRoot.transform, "LowGate_88", 88f);
-        CreateAirPickupRow(levelRoot.transform, 91f, new[] { -1.5f, 1.5f }, 18f);
+        CreateAirPickup(collectiblesRoot, "BlueBalloon_74", new Vector3(0f, 1.2f, 74f), 25f);
+        CreateSpikeStrip(obstaclesRoot, "Spikes_82", new Vector3(0f, 0f, 82f));
+        CreateLowGate(obstaclesRoot, "LowGate_88", 88f);
+        CreateAirPickupRow(collectiblesRoot, 91f, new[] { -1.5f, 1.5f }, 18f);
 
         // Son bölüm: daha yoğun engel dizilimi.
-        CreateHeavyBalloonWall(levelRoot.transform, "HeavyWall_99", new Vector3(1.45f, 0f, 99f));
-        CreateNormalObstacle(levelRoot.transform, "Spiral_107", new Vector3(-1.45f, 0f, 107f),
+        CreateHeavyBalloonWall(obstaclesRoot, "HeavyWall_99", new Vector3(1.45f, 0f, 99f));
+        CreateNormalObstacle(obstaclesRoot, "Spiral_107", new Vector3(-1.45f, 0f, 107f),
             "Models/ObstaclePack/Spiral/Spiral", new Vector3(1.7f, 0.9f, 2.2f),
             new Vector3(0f, 0.45f, 0f), 12f, 0.65f);
-        CreateNormalObstacle(levelRoot.transform, "Cylinder_115", new Vector3(1.45f, 0f, 115f),
+        CreateNormalObstacle(obstaclesRoot, "Cylinder_115", new Vector3(1.45f, 0f, 115f),
             "Models/ObstaclePack/Cylinder/Cylinder", new Vector3(1.45f, 2.5f, 1.45f),
             new Vector3(0f, 1.25f, 0f), 13f, 0.72f);
-        CreateAirPickupRow(levelRoot.transform, 122f, new[] { -1.55f, 0f, 1.55f }, 14f);
-        CreateSpikeStrip(levelRoot.transform, "Spikes_130", new Vector3(0f, 0f, 130f));
-        CreateHeavyBalloonWall(levelRoot.transform, "HeavyWall_140", new Vector3(-1.4f, 0f, 140f));
+        CreateAirPickupRow(collectiblesRoot, 122f, new[] { -1.55f, 0f, 1.55f }, 14f);
+        CreateSpikeStrip(obstaclesRoot, "Spikes_130", new Vector3(0f, 0f, 130f));
+        CreateHeavyBalloonWall(obstaclesRoot, "HeavyWall_140", new Vector3(-1.4f, 0f, 140f));
 
-        CreateFinishGate(levelRoot.transform, new Vector3(0f, 0f, 150f));
-        CreateSideDecorations(levelRoot.transform);
+        CreateFinishGate(finishRoot, new Vector3(0f, 0f, 150f));
+        CreateSideDecorations(decorationsRoot);
     }
 
-    private static void PrepareRoad()
+    private static Transform CreateGroup(Transform parent, string name)
+    {
+        GameObject group = new GameObject(name);
+        group.transform.SetParent(parent, false);
+        return group.transform;
+    }
+
+    private static void PrepareRoad(Transform parent)
     {
         GameObject road = GameObject.Find("Road");
         if (road == null)
@@ -289,6 +346,8 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
             road.name = "Road";
         }
 
+        road.transform.SetParent(parent, true);
+
         // Oynanış 150 metrede biter; kalan kısım fırlatma mini oyununun pisti.
         road.transform.position = new Vector3(0f, -0.5f, 140f);
         road.transform.localScale = new Vector3(6f, 1f, 300f);
@@ -296,7 +355,7 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
         Renderer renderer = road.GetComponent<Renderer>();
         if (renderer != null)
         {
-            renderer.material = roadMaterial;
+            renderer.sharedMaterial = roadMaterial;
         }
     }
 
@@ -335,8 +394,8 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
         fallback.transform.SetParent(root.transform, false);
         fallback.transform.localPosition = colliderCenter;
         fallback.transform.localScale = colliderSize;
-        fallback.GetComponent<Renderer>().material = orangeMaterial;
-        Destroy(fallback.GetComponent<Collider>());
+        fallback.GetComponent<Renderer>().sharedMaterial = orangeMaterial;
+        DestroySmart(fallback.GetComponent<Collider>());
     }
 
     private static void CreateLowGate(
@@ -377,8 +436,8 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
         part.transform.SetParent(parent, false);
         part.transform.localPosition = localPosition;
         part.transform.localScale = localScale;
-        part.GetComponent<Renderer>().material = orangeMaterial;
-        Destroy(part.GetComponent<Collider>());
+        part.GetComponent<Renderer>().sharedMaterial = orangeMaterial;
+        DestroySmart(part.GetComponent<Collider>());
     }
 
     private static void CreateHeavyBalloonWall(
@@ -409,10 +468,10 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
                     0.35f + row * 0.62f,
                     0f);
                 brick.transform.localScale = new Vector3(0.72f, 0.55f, 0.52f);
-                brick.GetComponent<Renderer>().material = row % 2 == 0
+                brick.GetComponent<Renderer>().sharedMaterial = row % 2 == 0
                     ? redMaterial
                     : orangeMaterial;
-                Destroy(brick.GetComponent<Collider>());
+                DestroySmart(brick.GetComponent<Collider>());
             }
         }
     }
@@ -453,8 +512,8 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
             spike.transform.localPosition = new Vector3(i * 1.7f, 0.3f, 0f);
             spike.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
             spike.transform.localScale = new Vector3(0.45f, 1f, 2.8f);
-            spike.GetComponent<Renderer>().material = redMaterial;
-            Destroy(spike.GetComponent<Collider>());
+            spike.GetComponent<Renderer>().sharedMaterial = redMaterial;
+            DestroySmart(spike.GetComponent<Collider>());
         }
     }
 
@@ -495,16 +554,16 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
         balloon.name = "BlueBalloonVisual";
         balloon.transform.SetParent(root.transform, false);
         balloon.transform.localScale = new Vector3(0.72f, 0.9f, 0.72f);
-        balloon.GetComponent<Renderer>().material = cyanMaterial;
-        Destroy(balloon.GetComponent<Collider>());
+        balloon.GetComponent<Renderer>().sharedMaterial = cyanMaterial;
+        DestroySmart(balloon.GetComponent<Collider>());
 
         GameObject knot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         knot.name = "BalloonKnot";
         knot.transform.SetParent(root.transform, false);
         knot.transform.localPosition = new Vector3(0f, -0.58f, 0f);
         knot.transform.localScale = new Vector3(0.18f, 0.22f, 0.18f);
-        knot.GetComponent<Renderer>().material = cyanMaterial;
-        Destroy(knot.GetComponent<Collider>());
+        knot.GetComponent<Renderer>().sharedMaterial = cyanMaterial;
+        DestroySmart(knot.GetComponent<Collider>());
     }
 
     private static void CreateFinishGate(Transform parent, Vector3 position)
@@ -531,8 +590,8 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
         part.transform.SetParent(parent, false);
         part.transform.localPosition = localPosition;
         part.transform.localScale = scale;
-        part.GetComponent<Renderer>().material = whiteMaterial;
-        Destroy(part.GetComponent<Collider>());
+        part.GetComponent<Renderer>().sharedMaterial = whiteMaterial;
+        DestroySmart(part.GetComponent<Collider>());
     }
 
     private static void CreateSideDecorations(Transform parent)
@@ -573,7 +632,7 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
         PlayerHorizontalController horizontalController,
         RunnerCameraFollow cameraFollow)
     {
-        Canvas canvas = FindFirstObjectByType<Canvas>();
+        Canvas canvas = FindAnyObjectByType<Canvas>();
         if (canvas == null)
         {
             GameObject canvasObject = new GameObject(
@@ -698,7 +757,7 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
             }
 
             child.gameObject.SetActive(false);
-            Destroy(child.gameObject);
+            DestroySmart(child.gameObject);
         }
     }
 
@@ -757,8 +816,7 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
             new Vector2(0f, -190f), new Vector2(460f, 130f));
 
         Button button = restartButton.GetComponent<Button>();
-        button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(gameManager.RestartGame);
+        ConfigureRestartButton(button, gameManager);
 
         panel.SetActive(false);
         return panel;
@@ -805,7 +863,7 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
 
     private static void EnsureEventSystem()
     {
-        EventSystem eventSystem = FindFirstObjectByType<EventSystem>();
+        EventSystem eventSystem = FindAnyObjectByType<EventSystem>();
         if (eventSystem == null)
         {
             GameObject eventObject = new GameObject("EventSystem");
@@ -863,8 +921,8 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
         blade.name = "RotorBlade";
         blade.transform.SetParent(parent, false);
         blade.transform.localScale = scale;
-        blade.GetComponent<Renderer>().material = darkMaterial;
-        Destroy(blade.GetComponent<Collider>());
+        blade.GetComponent<Renderer>().sharedMaterial = darkMaterial;
+        DestroySmart(blade.GetComponent<Collider>());
     }
 
     private static GameObject InstantiateResourceModel(
@@ -901,7 +959,7 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
 
         foreach (Renderer renderer in model.GetComponentsInChildren<Renderer>(true))
         {
-            Material[] sourceMaterials = renderer.materials;
+            Material[] sourceMaterials = renderer.sharedMaterials;
             Material[] convertedMaterials = new Material[sourceMaterials.Length];
 
             for (int i = 0; i < sourceMaterials.Length; i++)
@@ -921,12 +979,14 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
                     }
                 }
 
-                Material converted = new Material(shader);
-                converted.color = color;
+                string colorCode = ColorUtility.ToHtmlStringRGBA(color);
+                Material converted = CreateMaterial(
+                    $"BD_Imported_{colorCode}",
+                    color);
                 convertedMaterials[i] = converted;
             }
 
-            renderer.materials = convertedMaterials;
+            renderer.sharedMaterials = convertedMaterials;
         }
     }
 
@@ -937,15 +997,15 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
             return;
         }
 
-        cyanMaterial = CreateMaterial(new Color(0.1f, 0.85f, 1f));
-        redMaterial = CreateMaterial(new Color(0.95f, 0.12f, 0.16f));
-        orangeMaterial = CreateMaterial(new Color(1f, 0.45f, 0.08f));
-        darkMaterial = CreateMaterial(new Color(0.08f, 0.1f, 0.14f));
-        whiteMaterial = CreateMaterial(new Color(0.95f, 0.95f, 0.95f));
-        roadMaterial = CreateMaterial(new Color(0.16f, 0.2f, 0.25f));
+        cyanMaterial = CreateMaterial("BD_Cyan", new Color(0.1f, 0.85f, 1f));
+        redMaterial = CreateMaterial("BD_Red", new Color(0.95f, 0.12f, 0.16f));
+        orangeMaterial = CreateMaterial("BD_Orange", new Color(1f, 0.45f, 0.08f));
+        darkMaterial = CreateMaterial("BD_Dark", new Color(0.08f, 0.1f, 0.14f));
+        whiteMaterial = CreateMaterial("BD_White", new Color(0.95f, 0.95f, 0.95f));
+        roadMaterial = CreateMaterial("BD_Road", new Color(0.16f, 0.2f, 0.25f));
     }
 
-    private static Material CreateMaterial(Color color)
+    private static Material CreateMaterial(string materialName, Color color)
     {
         Shader shader = Shader.Find("Universal Render Pipeline/Lit");
         if (shader == null)
@@ -953,9 +1013,95 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
             shader = Shader.Find("Standard");
         }
 
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            const string rootFolder = "Assets/Materials";
+            const string generatedFolder = "Assets/Materials/BalloonDogGenerated";
+
+            if (!AssetDatabase.IsValidFolder(rootFolder))
+            {
+                AssetDatabase.CreateFolder("Assets", "Materials");
+            }
+
+            if (!AssetDatabase.IsValidFolder(generatedFolder))
+            {
+                AssetDatabase.CreateFolder(rootFolder, "BalloonDogGenerated");
+            }
+
+            string assetPath = $"{generatedFolder}/{materialName}.mat";
+            Material savedMaterial = AssetDatabase.LoadAssetAtPath<Material>(assetPath);
+
+            if (savedMaterial == null)
+            {
+                savedMaterial = new Material(shader);
+                savedMaterial.name = materialName;
+                savedMaterial.color = color;
+                AssetDatabase.CreateAsset(savedMaterial, assetPath);
+            }
+            else
+            {
+                savedMaterial.shader = shader;
+                savedMaterial.color = color;
+                EditorUtility.SetDirty(savedMaterial);
+            }
+
+            return savedMaterial;
+        }
+#endif
+
         Material material = new Material(shader);
+        material.name = materialName;
         material.color = color;
         return material;
+    }
+
+    private static void ConfigureRestartButton(
+        Button button,
+        GameManager gameManager)
+    {
+        if (button == null || gameManager == null)
+        {
+            return;
+        }
+
+        button.onClick.RemoveAllListeners();
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            for (int i = button.onClick.GetPersistentEventCount() - 1; i >= 0; i--)
+            {
+                UnityEventTools.RemovePersistentListener(button.onClick, i);
+            }
+
+            UnityEventTools.AddPersistentListener(
+                button.onClick,
+                gameManager.RestartGame);
+            EditorUtility.SetDirty(button);
+            return;
+        }
+#endif
+
+        button.onClick.AddListener(gameManager.RestartGame);
+    }
+
+    private static void DestroySmart(Object target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            Object.DestroyImmediate(target);
+            return;
+        }
+#endif
+
+        Object.Destroy(target);
     }
 
     private static Transform FindChildByName(Transform parent, string name)

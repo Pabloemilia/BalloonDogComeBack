@@ -198,6 +198,17 @@ public sealed class PlayerFormController : MonoBehaviour
 
     private void SetHelicopterActive(bool active)
     {
+        if (IsHelicopterActive != active)
+        {
+            GameAudioController.PlayTransform();
+            RuntimeVfx.SpawnBurst(
+                transform.position + Vector3.up * 1.1f,
+                active ? new Color(1f, 0.75f, 0.15f, 1f) : new Color(0.2f, 0.85f, 1f, 1f),
+                14,
+                2.6f,
+                0.12f,
+                0.5f);
+        }
         IsHelicopterActive = active;
         playerRigidbody.useGravity = !active;
 

@@ -68,7 +68,14 @@ public sealed class Obstacle : MonoBehaviour
 
     private void ResolveContact(Collider other)
     {
-        if (hasBeenHit)
+        if (hasBeenHit || other == null)
+        {
+            return;
+        }
+
+        // NearMissSensor büyük bir trigger alanıdır. Eski sürümde bu sensör
+        // gerçek çarpışma sanıldığı için oyuncu bütün engellere vurmuş gibi oluyordu.
+        if (other.GetComponent<NearMissSensor>() != null)
         {
             return;
         }
@@ -80,6 +87,9 @@ public sealed class Obstacle : MonoBehaviour
         }
 
         PlayerRunner playerRunner = other.GetComponentInParent<PlayerRunner>();
+        other.GetComponentInParent<ComboController>()?.BreakCombo();
+        other.GetComponentInParent<NearMissSensor>()?.RegisterHit(this);
+        GameAudioController.PlayHit();
 
         switch (obstacleType)
         {
@@ -105,6 +115,14 @@ public sealed class Obstacle : MonoBehaviour
             playerRunner.ApplySlow(normalSlowMultiplier, normalSlowDuration);
         }
 
+        RuntimeVfx.SpawnBurst(
+            transform.position + Vector3.up * 0.5f,
+            new Color(1f, 0.48f, 0.18f, 1f),
+            14,
+            2.4f,
+            0.13f,
+            0.5f);
+        CameraShakeController.ShakeGlobal(0.16f, 0.085f);
         StartCoroutine(NormalImpactRoutine());
     }
 
@@ -117,6 +135,7 @@ public sealed class Obstacle : MonoBehaviour
         if (airController.HasAir(requiredAir))
         {
             airController.RemoveAir(breakAirCost);
+            CameraShakeController.ShakeGlobal(0.24f, 0.12f);
             BreakWall();
             return;
         }
@@ -128,6 +147,14 @@ public sealed class Obstacle : MonoBehaviour
             playerRunner.ApplySlow(failedSlowMultiplier, failedSlowDuration);
         }
 
+        RuntimeVfx.SpawnBurst(
+            transform.position + Vector3.up * 0.75f,
+            new Color(1f, 0.25f, 0.12f, 1f),
+            18,
+            2.8f,
+            0.16f,
+            0.6f);
+        CameraShakeController.ShakeGlobal(0.24f, 0.14f);
         StartCoroutine(HeavyFailureRoutine());
     }
 
@@ -175,6 +202,14 @@ public sealed class Obstacle : MonoBehaviour
             Destroy(createdEffect.gameObject, 3f);
         }
 
+        RuntimeVfx.SpawnBurst(
+            transform.position + Vector3.up,
+            new Color(1f, 0.68f, 0.2f, 1f),
+            28,
+            4.2f,
+            0.18f,
+            0.8f);
+        CameraShakeController.ShakeGlobal(0.2f, 0.12f);
         SpawnSimpleDebris();
         Destroy(gameObject);
     }

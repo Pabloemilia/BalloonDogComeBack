@@ -4,6 +4,8 @@ using UnityEngine.SceneManagement;
 
 public sealed class GameManager : MonoBehaviour
 {
+    public const string BestScorePreferenceKey = "BalloonDog.BestScore";
+
     [Header("Optional UI References")]
     [SerializeField] private GameObject endPanel;
     [SerializeField] private TMP_Text endTitleText;
@@ -12,6 +14,7 @@ public sealed class GameManager : MonoBehaviour
     private bool isGameOver;
 
     public static GameManager Instance { get; private set; }
+    public static int BestScore => PlayerPrefs.GetInt(BestScorePreferenceKey, 0);
     public bool IsGameOver => isGameOver;
 
     private void Awake()
@@ -54,7 +57,12 @@ public sealed class GameManager : MonoBehaviour
         }
 
         isGameOver = true;
-        ShowEndPanel("ÖLDÜN", reason);
+        int score = ResolveCurrentScore();
+        SaveBestScore(score);
+        ShowEndPanel(
+            "ÖLDÜN",
+            $"{reason}\nSkor: {score}\nEn iyi: {BestScore}");
+        CameraShakeController.ShakeGlobal(0.32f, 0.18f);
         Time.timeScale = 0f;
     }
 
@@ -70,14 +78,15 @@ public sealed class GameManager : MonoBehaviour
         }
 
         isGameOver = true;
+        SaveBestScore(finalScore);
         ShowEndPanel(
             $"x{multiplier} ÇARPAN!",
             $"Fırlatma: {launchDistance:0.0} m\n" +
-            $"Skor: {baseScore} → {finalScore}");
+            $"Skor: {baseScore} → {finalScore}\n" +
+            $"En iyi: {BestScore}");
         Time.timeScale = 0f;
     }
 
-    // Eski FinishLine sürümüyle uyumluluk.
     public void TriggerLevelComplete(int score)
     {
         TriggerLevelComplete(score, 0f, 1, score);
@@ -85,18 +94,50 @@ public sealed class GameManager : MonoBehaviour
 
     public void RestartGame()
     {
+        MainMenuController.StartImmediatelyOnNextSceneLoad = true;
+        ReloadCurrentScene();
+    }
+
+    public void ReturnToMainMenu()
+    {
+        MainMenuController.StartImmediatelyOnNextSceneLoad = false;
+        ReloadCurrentScene();
+    }
+
+    private int ResolveCurrentScore()
+    {
+        ScoreController scoreController = FindAnyObjectByType<ScoreController>();
+        return scoreController != null ? scoreController.CurrentScore : 0;
+    }
+
+    private static void SaveBestScore(int score)
+    {
+        if (score <= BestScore)
+        {
+            return;
+        }
+
+        PlayerPrefs.SetInt(BestScorePreferenceKey, score);
+        PlayerPrefs.Save();
+    }
+
+    private void ReloadCurrentScene()
+    {
         Time.timeScale = 1f;
         isGameOver = false;
 
         Scene currentScene = SceneManager.GetActiveScene();
 
-        if (currentScene.buildIndex >= 0)
+        if (!string.IsNullOrWhiteSpace(currentScene.name))
         {
-            SceneManager.LoadScene(currentScene.buildIndex, LoadSceneMode.Single);
+            SceneManager.LoadScene(currentScene.name, LoadSceneMode.Single);
             return;
         }
 
-        SceneManager.LoadScene(currentScene.name, LoadSceneMode.Single);
+        if (currentScene.buildIndex >= 0)
+        {
+            SceneManager.LoadScene(currentScene.buildIndex, LoadSceneMode.Single);
+        }
     }
 
     private void ShowEndPanel(string title, string summary)
