@@ -15,6 +15,18 @@ public sealed class RunnerCameraFollow : MonoBehaviour
         target = followTarget;
     }
 
+    public void SnapToTarget()
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        Vector3 targetPosition = target.position + offset;
+        targetPosition.x = offset.x + target.position.x * horizontalFollowAmount;
+        transform.position = targetPosition;
+    }
+
     private void LateUpdate()
     {
         if (target == null)

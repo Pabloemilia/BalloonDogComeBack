@@ -3,8 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(AirPickup))]
 public sealed class CollectibleMagnet : MonoBehaviour
 {
-    [SerializeField, Min(0f)] private float activationDistance = 3.2f;
-    [SerializeField, Min(0f)] private float pullSpeed = 8f;
+    [SerializeField, Min(0f)] private float activationDistance = 1.6f;
+    [SerializeField, Min(0f)] private float pullSpeed = 4f;
 
     private Transform player;
     private AirController airController;

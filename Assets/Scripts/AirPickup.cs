@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public sealed class AirPickup : MonoBehaviour
 {
-    [SerializeField, Min(1f)] private float airAmount = 22f;
+    [SerializeField, Min(1f)] private float airAmount = 14f;
     [SerializeField, Min(0f)] private float rotationSpeed = 80f;
     [SerializeField, Min(0f)] private float bobHeight = 0.22f;
     [SerializeField, Min(0f)] private float bobSpeed = 3f;
@@ -28,7 +28,7 @@ public sealed class AirPickup : MonoBehaviour
 
     public void Configure(float amount)
     {
-        airAmount = Mathf.Max(1f, amount);
+        airAmount = Mathf.Max(1f, amount * 0.6f);
     }
 
     private void Update()

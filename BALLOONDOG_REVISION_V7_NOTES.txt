@@ -1,0 +1,42 @@
+BALLOON DOG - REVISION V7
+=========================
+
+Yapılan değişiklikler:
+
+1) Balon temalı UI
+- Ana menüye hava kabarcığı arka planı ve balon logo dekoru eklendi.
+- Menü, ayarlar ve oyun sonu butonları yuvarlatılmış balon stiline geçirildi.
+- Hava göstergesi kabarcık kartına dönüştürüldü.
+- Küçülme butonu büyük, yuvarlak "HAVAYI SAL" balon butonu oldu.
+- Oyun içi yazılar, ilerleme çubuğu ve sonuç ekranı aynı temaya uyarlandı.
+
+2) Oyun sonu fırlatma başlangıcı
+- Fırlatılan top artık oyuncu referansına bağlı kalmadan doğrudan bitiş çizgisinin
+  hemen önünden oluşturuluyor. Böylece pistin başından fırlama hatası engellendi.
+
+3) Dönen engeller
+- Dönen yol engellerinin ekseni dünya Y eksenine alındı.
+- Engeller artık dikey takla atmak yerine zemine paralel/yatay dönüyor.
+
+4) Bombalar
+- Sahnedeki tüm bomba engelleri ve bomba uyarıları devre dışı bırakıldı.
+- Çalışma anında ek güvenlik olarak bomba isimli sahne nesneleri de temizleniyor.
+- Diğer engeller korunuyor.
+
+5) Küçülme ve hava topları
+- Küçülme hızı 16'ya yükseltildi.
+- Basılı tutma hava boşaltma hızı 72/sn yapıldı.
+- İlk basışta 24 hava anında boşaltılarak doğrudan görsel tepki eklendi.
+- Yoldaki hava topları şeffaf kabarcık, iç parıltı ve ışık yansımalarıyla yenilendi.
+
+6) Oyun sonu çarpan pisti
+- Maksimum çarpan 10X olarak korundu.
+- Çarpan aralığı 10.5 metreye çıkarıldı.
+- X2-X10 olmak üzere 9 ayrı yeni çarpan alanı oluşturuldu.
+- Pist uzatıldı; yan ışıklar, kabarcıklar, ayırıcı çizgiler ve 10X MAX kemeri eklendi.
+- Fırlatma değerleri 10X'in hâlâ ulaşılabilir olması için dengelendi.
+
+Önemli:
+- Proje Unity 6000.5.5f1 sürümündedir.
+- İlk açılışta Unity yeni scriptleri import ederken kısa süre beklemek normaldir.
+- Game sahnesini açıp Play ile test edin.
