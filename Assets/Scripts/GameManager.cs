@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -16,6 +17,13 @@ public sealed class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
     public static int BestScore => PlayerPrefs.GetInt(BestScorePreferenceKey, 0);
     public bool IsGameOver => isGameOver;
+    public bool LastRunCompleted { get; private set; }
+    public int LastScore { get; private set; }
+    public string LastEndReason { get; private set; } = string.Empty;
+    public string LastEndTitle { get; private set; } = string.Empty;
+    public string LastEndSummary { get; private set; } = string.Empty;
+
+    public event Action GameEnded;
 
     private void Awake()
     {
@@ -59,11 +67,15 @@ public sealed class GameManager : MonoBehaviour
         isGameOver = true;
         int score = ResolveCurrentScore();
         SaveBestScore(score);
-        ShowEndPanel(
-            "ÖLDÜN",
-            $"{reason}\nSkor: {score}\nEn iyi: {BestScore}");
+        LastRunCompleted = false;
+        LastScore = score;
+        LastEndReason = reason;
+        LastEndTitle = "RUN OVER";
+        LastEndSummary = $"{reason}\nSkor: {score}\nEn iyi: {BestScore}";
+        ShowEndPanel(LastEndTitle, LastEndSummary);
         CameraShakeController.ShakeGlobal(0.32f, 0.18f);
         Time.timeScale = 0f;
+        GameEnded?.Invoke();
     }
 
     public void TriggerLevelComplete(
@@ -79,12 +91,18 @@ public sealed class GameManager : MonoBehaviour
 
         isGameOver = true;
         SaveBestScore(finalScore);
-        ShowEndPanel(
-            $"x{multiplier} ÇARPAN!",
-            $"Fırlatma: {launchDistance:0.0} m\n" +
-            $"Skor: {baseScore} → {finalScore}\n" +
-            $"En iyi: {BestScore}");
+        LastRunCompleted = true;
+        LastScore = finalScore;
+        LastEndReason = "FINISH REACHED";
+        LastEndTitle = "LEVEL COMPLETE";
+        LastEndSummary =
+            $"x{multiplier} MULTIPLIER\n" +
+            $"Launch: {launchDistance:0.0} m\n" +
+            $"Score: {baseScore} → {finalScore}\n" +
+            $"Best: {BestScore}";
+        ShowEndPanel(LastEndTitle, LastEndSummary);
         Time.timeScale = 0f;
+        GameEnded?.Invoke();
     }
 
     public void TriggerLevelComplete(int score)
