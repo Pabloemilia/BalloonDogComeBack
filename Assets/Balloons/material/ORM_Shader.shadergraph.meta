@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: df9b639c918b2a743ad11d8066774243
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 625f186215c104763be7675aa2d941aa, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307245
+  packageName: Balloons
+  packageVersion: 1.0
+  assetPath: Assets/LoafbrrAssets/Balloons/material/ORM_Shader.shadergraph
+  uploadId: 722111

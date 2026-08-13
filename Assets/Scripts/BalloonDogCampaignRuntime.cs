@@ -139,6 +139,12 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
         selector.SetActive(mainVisible);
         gameplayProgress.SetActive(gameplayVisible);
         nextLevelButton.SetActive(resultVisible);
+
+        GameObject restartButton = GameObject.Find("ModernRestartButton");
+        if (restartButton != null)
+        {
+            restartButton.SetActive(!resultVisible);
+        }
         if (IsActive("ModernPrivacyScreen"))
         {
             RefreshPrivacyNotice();
@@ -213,8 +219,8 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
         {
             nextLevelLabel.text =
                 BalloonDogCampaign.CurrentLevel >= BalloonDogCampaign.LevelCount
-                    ? "PLAY FINAL AGAIN"
-                    : "NEXT LEVEL  " + BalloonDogCampaign.CurrentLevel;
+                    ? "PLAY AGAIN"
+                    : "NEXT LEVEL";
         }
     }
 
@@ -244,8 +250,8 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
         SetRect(selector.GetComponent<RectTransform>(), new Vector2(0f, 495f), new Vector2(850f, 116f));
         CreatePanel(selector.transform, new Vector2(0f, 0f), new Vector2(600f, 116f), DeepPurple);
         selectorLabel = CreateText(selector.transform, "LevelLabel", "LEVEL 1", Vector2.zero, new Vector2(550f, 104f), 27f, Color.white);
-        CreateButton(selector.transform, "PreviousLevel", "‹", new Vector2(-370f, 0f), new Vector2(104f, 104f), DeepPurple, Color.white, SelectPrevious);
-        CreateButton(selector.transform, "NextLevel", "›", new Vector2(370f, 0f), new Vector2(104f, 104f), Orange, new Color(0.15f, 0.05f, 0.01f), SelectNext);
+        CreateButton(selector.transform, "PreviousLevel", "", new Vector2(-370f, 0f), new Vector2(104f, 104f), DeepPurple, Color.white, SelectPrevious);
+        CreateButton(selector.transform, "NextLevel", "", new Vector2(370f, 0f), new Vector2(104f, 104f), Orange, new Color(0.15f, 0.05f, 0.01f), SelectNext);
 
         gameplayProgress = CreateRect("CampaignGameplayProgress", safeRoot).gameObject;
         SetRect(gameplayProgress.GetComponent<RectTransform>(), new Vector2(0f, 955f), new Vector2(430f, 104f));
