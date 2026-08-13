@@ -12,7 +12,7 @@ public static class BalloonLetterSpriteBaker
     private const string Characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private const int RenderSize = 512;
     private const int RenderLayer = 31;
-    private const string SessionKey = "BalloonDog.IsolatedBalloonBakeV4_MirrorFix";
+    private const string SessionKey = "BalloonDog.IsolatedBalloonBakeV5_AFacingFix";
 
     static BalloonLetterSpriteBaker()
     {
@@ -98,7 +98,12 @@ public static class BalloonLetterSpriteBaker
             instance.name = "__BalloonLetterBake_" + character;
             instance.hideFlags = HideFlags.HideAndDontSave;
             instance.transform.position = bakeOrigin;
-            instance.transform.rotation = Quaternion.identity;
+            // The A mesh faces the opposite direction in the source FBX. Rendering
+            // it from the shared camera side produced the nearly black A seen in
+            // the menu, so turn only that glyph before baking its sprite.
+            instance.transform.rotation = character == 'A'
+                ? Quaternion.Euler(0f, 180f, 0f)
+                : Quaternion.identity;
             instance.transform.localScale = Vector3.one;
             SetLayerRecursively(instance, RenderLayer);
 

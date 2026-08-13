@@ -29,6 +29,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private static readonly Color Lime = new Color(0.35f, 0.95f, 0.025f, 1f);
     private static readonly Color Cyan = new Color(0.04f, 0.75f, 0.98f, 1f);
     private static readonly Color Muted = new Color(0.62f, 0.62f, 0.72f, 1f);
+    private static readonly Color MenuSkyTop = new Color(0.20f, 0.49f, 0.64f, 0.98f);
+    private static readonly Color MenuSkyBottom = new Color(0.075f, 0.20f, 0.29f, 0.98f);
+    private static readonly Color MenuBlue = new Color(0.18f, 0.54f, 0.96f, 1f);
+    private static readonly Color MenuBlueDark = new Color(0.055f, 0.27f, 0.43f, 0.98f);
+    private static readonly Color MenuBlueCard = new Color(0.075f, 0.35f, 0.52f, 0.96f);
+    private static readonly Color MenuGreen = new Color(0.35f, 0.84f, 0.23f, 1f);
+    private static readonly Color MenuCream = new Color(0.91f, 0.86f, 0.63f, 0.98f);
 
     private enum SettingsReturnTarget
     {
@@ -501,145 +508,77 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         marketScreen = CreateScreen(
             "ModernMarketScreen",
-            new Color(0.39f, 0.07f, 0.98f, 1f),
-            new Color(0.32f, 0.05f, 0.91f, 1f));
+            MenuSkyTop,
+            MenuSkyBottom);
+
+        CreateImage(
+            marketScreen.transform,
+            "MarketTreeBubbleLeft",
+            new Vector2(-490f, 520f),
+            new Vector2(220f, 220f),
+            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.34f),
+            true);
+        CreateImage(
+            marketScreen.transform,
+            "MarketTreeBubbleRight",
+            new Vector2(500f, 180f),
+            new Vector2(260f, 260f),
+            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.24f),
+            true);
+
         CreateTopBar(marketScreen.transform, "Market", () => ShowSettingsScreen(SettingsReturnTarget.Main));
-        CreateResourceImage(
+        CreateRibbon(marketScreen.transform, "MARKET", new Vector2(0f, 800f));
+
+        RectTransform shelves = CreateCard(
             marketScreen.transform,
-            "FigmaShopRibbon",
-            "ModernUI/Title",
-            new Vector2(0f, 790f),
-            new Vector2(800f, 280f));
-
-        RectTransform card = CreateCard(
-            marketScreen.transform,
-            "MarketWheelCard",
-            new Vector2(0f, -35f),
-            new Vector2(910f, 1370f),
-            new Color(0.13f, 0.015f, 0.43f, 0.96f),
-            new Color(0.34f, 0.05f, 0.75f, 0.92f));
+            "MarketShelvesCard",
+            new Vector2(0f, -45f),
+            new Vector2(910f, 1390f),
+            MenuBlueDark,
+            new Color(0.43f, 0.76f, 1f, 0.58f));
 
         CreateText(
-            card,
-            "WheelCaption",
-            "SKIN REWARD",
-            new Vector2(0f, 565f),
-            new Vector2(700f, 70f),
-            38f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-        CreateText(
-            card,
-            "WheelRule",
-            "NO DUPLICATES • NEXT REWARD IS SHOWN",
-            new Vector2(0f, 505f),
-            new Vector2(760f, 50f),
-            21f,
-            new Color(0.80f, 0.72f, 0.98f, 1f),
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-
-        wheelTransform = CreateRect("RewardWheel", card);
-        SetRect(wheelTransform, new Vector2(0f, 160f), new Vector2(610f, 610f));
-        CreateImage(
-            wheelTransform,
-            "WheelBack",
-            Vector2.zero,
-            new Vector2(630f, 630f),
-            new Color(0.04f, 0.015f, 0.15f, 1f),
-            true);
-
-        BalloonDogSkinDefinition[] wheelSkins = BalloonDogEconomy.Skins;
-        for (int index = 0; index < wheelSkins.Length; index++)
-        {
-            RectTransform segmentRect = CreateRect("WheelSegment_" + index, wheelTransform);
-            SetRect(segmentRect, Vector2.zero, new Vector2(580f, 580f));
-            Image segment = segmentRect.gameObject.AddComponent<Image>();
-            segment.sprite = GetCircleSprite();
-            segment.type = Image.Type.Filled;
-            segment.fillMethod = Image.FillMethod.Radial360;
-            segment.fillOrigin = 2;
-            segment.fillClockwise = true;
-            segment.fillAmount = 1f / wheelSkins.Length;
-            segment.color = wheelSkins[index].PrimaryColor;
-            segment.raycastTarget = false;
-            segmentRect.localEulerAngles = new Vector3(0f, 0f, -index * 60f);
-
-            float angle = (90f - index * 60f) * Mathf.Deg2Rad;
-            CreateText(
-                wheelTransform,
-                "WheelLabel_" + index,
-                (index + 1).ToString(),
-                new Vector2(Mathf.Cos(angle) * 215f, Mathf.Sin(angle) * 215f),
-                new Vector2(75f, 75f),
-                28f,
-                Color.white,
-                FontStyles.Bold,
-                TextAlignmentOptions.Center);
-        }
-
-        CreateImage(
-            wheelTransform,
-            "WheelHub",
-            Vector2.zero,
-            new Vector2(175f, 175f),
-            new Color(0.15f, 0.02f, 0.48f, 1f),
-            true);
-        CreateText(
-            wheelTransform,
-            "WheelHubText",
-            "DOG",
-            Vector2.zero,
-            new Vector2(145f, 65f),
-            28f,
-            Gold,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-        CreateText(
-            card,
-            "WheelPointer",
-            "▼",
-            new Vector2(0f, 484f),
-            new Vector2(100f, 95f),
-            70f,
-            Orange,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-
-        wheelNextText = CreateText(
-            card,
-            "WheelNextReward",
-            "NEXT REWARD",
-            new Vector2(0f, -235f),
-            new Vector2(760f, 80f),
+            shelves,
+            "MarketSubtitle",
+            "ITEMS",
+            new Vector2(0f, 605f),
+            new Vector2(760f, 64f),
             31f,
-            Lime,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-
-        wheelButton = CreateButton(
-            card,
-            "UnlockNextSkinButton",
-            "UNLOCK NEXT  •  " + WheelTokenCost + " TOKENS",
-            new Vector2(0f, -385f),
-            new Vector2(720f, 125f),
-            Orange,
             Color.white,
-            StartWheelUnlock,
-            29f);
-        wheelButtonLabel = wheelButton.GetComponentInChildren<TMP_Text>(true);
-
-        CreateText(
-            card,
-            "WheelSafetyNote",
-            "FIXED ORDER • EVERY PURCHASE UNLOCKS A NEW SKIN",
-            new Vector2(0f, -510f),
-            new Vector2(760f, 52f),
-            19f,
-            new Color(0.73f, 0.66f, 0.88f, 1f),
             FontStyles.Bold,
             TextAlignmentOptions.Center);
+
+        for (int index = 0; index < 6; index++)
+        {
+            int column = index % 2;
+            int row = index / 2;
+            Vector2 position = new Vector2(
+                column == 0 ? -215f : 215f,
+                355f - row * 365f);
+
+            RectTransform slot = CreateCard(
+                shelves,
+                "MarketEmptySlot_" + index,
+                position,
+                new Vector2(390f, 310f),
+                new Color(0.16f, 0.52f, 0.72f, 0.36f),
+                new Color(0.72f, 0.90f, 1f, 0.62f));
+
+            Image slotImage = slot.GetComponent<Image>();
+            if (slotImage != null)
+            {
+                slotImage.raycastTarget = false;
+            }
+
+            Image innerHighlight = CreateImage(
+                slot,
+                "EmptySlotHighlight",
+                new Vector2(0f, 22f),
+                new Vector2(330f, 220f),
+                new Color(1f, 1f, 1f, 0.055f),
+                false);
+            innerHighlight.raycastTarget = false;
+        }
 
         CreateRoundNavButton(marketScreen.transform, "MarketClose", "×", new Vector2(-90f, -1035f), ShowMainScreen);
         CreateRoundNavButton(marketScreen.transform, "MarketSkins", "♛", new Vector2(90f, -1035f), ShowSkinsScreen);
@@ -649,8 +588,24 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         skinsScreen = CreateScreen(
             "ModernSkinsScreen",
-            new Color(0.39f, 0.07f, 0.98f, 1f),
-            new Color(0.32f, 0.05f, 0.91f, 1f));
+            MenuSkyTop,
+            MenuSkyBottom);
+
+        CreateImage(
+            skinsScreen.transform,
+            "SkinsTreeBubbleLeft",
+            new Vector2(-500f, 260f),
+            new Vector2(250f, 250f),
+            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.28f),
+            true);
+        CreateImage(
+            skinsScreen.transform,
+            "SkinsTreeBubbleRight",
+            new Vector2(500f, 570f),
+            new Vector2(210f, 210f),
+            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.30f),
+            true);
+
         CreateTopBar(skinsScreen.transform, "Skins", () => ShowSettingsScreen(SettingsReturnTarget.Main));
         CreateRibbon(skinsScreen.transform, "SKINS", new Vector2(0f, 800f));
 
@@ -659,8 +614,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "SkinCollectionCard",
             new Vector2(0f, -45f),
             new Vector2(910f, 1390f),
-            new Color(0.13f, 0.015f, 0.43f, 0.96f),
-            new Color(0.34f, 0.05f, 0.75f, 0.92f));
+            MenuBlueDark,
+            new Color(0.43f, 0.76f, 1f, 0.58f));
         CreateText(
             collection,
             "SkinsSubtitle",
@@ -694,7 +649,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 (marketMode ? "Market_" : "Skins_") + skin.Id,
                 position,
                 new Vector2(390f, 320f),
-                new Color(0.18f, 0.02f, 0.52f, 0.98f),
+                MenuBlueCard,
                 new Color(skin.AccentColor.r, skin.AccentColor.g, skin.AccentColor.b, 0.72f));
 
             Image swatch = CreateImage(
@@ -704,7 +659,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 new Vector2(130f, 130f),
                 skin.PrimaryColor,
                 true);
-            AddGraphicShadow(swatch, new Color(0f, 0f, 0f, 0.45f), new Vector2(5f, -7f));
+            AddGraphicShadow(swatch, new Color(0f, 0f, 0f, 0.34f), new Vector2(5f, -7f));
 
             CreateText(
                 card,
@@ -724,7 +679,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 new Vector2(0f, -58f),
                 new Vector2(350f, 42f),
                 21f,
-                Muted,
+                new Color(0.78f, 0.90f, 0.98f, 1f),
                 FontStyles.Bold,
                 TextAlignmentOptions.Center);
 
@@ -734,8 +689,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 "BUY",
                 new Vector2(0f, -118f),
                 new Vector2(310f, 76f),
-                Orange,
-                Ink,
+                MenuGreen,
+                Color.white,
                 null,
                 25f);
 
@@ -760,8 +715,24 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         settingsScreen = CreateScreen(
             "ModernSettingsScreen",
-            new Color(0.39f, 0.07f, 0.98f, 1f),
-            new Color(0.32f, 0.05f, 0.91f, 1f));
+            MenuSkyTop,
+            MenuSkyBottom);
+
+        CreateImage(
+            settingsScreen.transform,
+            "SettingsTreeBubbleLeft",
+            new Vector2(-500f, 450f),
+            new Vector2(230f, 230f),
+            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.27f),
+            true);
+        CreateImage(
+            settingsScreen.transform,
+            "SettingsTreeBubbleRight",
+            new Vector2(505f, -50f),
+            new Vector2(280f, 280f),
+            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.22f),
+            true);
+
         CreateTopBar(settingsScreen.transform, "Settings", CloseSettings);
         CreateRibbon(settingsScreen.transform, "SETTINGS", new Vector2(0f, 800f));
 
@@ -770,8 +741,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "SettingsCard",
             new Vector2(0f, -55f),
             new Vector2(910f, 1390f),
-            new Color(0.13f, 0.015f, 0.43f, 0.96f),
-            new Color(0.34f, 0.05f, 0.75f, 0.92f));
+            MenuBlueDark,
+            new Color(0.43f, 0.76f, 1f, 0.58f));
 
         CreateText(
             card,
@@ -780,7 +751,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(0f, 585f),
             new Vector2(700f, 58f),
             24f,
-            new Color(0.66f, 0.54f, 0.88f, 1f),
+            new Color(0.76f, 0.90f, 1f, 1f),
             FontStyles.Bold,
             TextAlignmentOptions.Center);
 
@@ -808,7 +779,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(0f, 140f),
             new Vector2(700f, 58f),
             24f,
-            new Color(0.66f, 0.54f, 0.88f, 1f),
+            new Color(0.76f, 0.90f, 1f, 1f),
             FontStyles.Bold,
             TextAlignmentOptions.Center);
 
@@ -821,7 +792,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "PRIVACY NOTICE",
             new Vector2(0f, -320f),
             new Vector2(700f, 100f),
-            Orange,
+            MenuGreen,
             Color.white,
             ShowPrivacyScreen,
             28f);
@@ -1162,8 +1133,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "◉  " + BalloonDogEconomy.Coins,
             new Vector2(-365f, 1030f),
             new Vector2(290f, 92f),
-            new Color(0.25f, 0.03f, 0.67f, 0.95f),
-            Gold).gameObject.AddComponent<BalloonDogCoinLabel>();
+            MenuCream,
+            new Color(0.31f, 0.18f, 0.02f, 1f)).gameObject.AddComponent<BalloonDogCoinLabel>();
 
         CreateButton(
             parent,
@@ -1171,7 +1142,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             screenName == "Settings" || screenName == "Privacy" ? "X" : "⚙",
             new Vector2(430f, 1030f),
             new Vector2(105f, 105f),
-            new Color(0.25f, 0.03f, 0.67f, 0.95f),
+            MenuBlue,
             Color.white,
             rightAction,
             46f);
@@ -1179,37 +1150,28 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private static void CreateRibbon(Transform parent, string title, Vector2 position)
     {
-        Image leftTail = CreateImage(
-            parent,
-            title + "LeftTail",
-            position + new Vector2(-385f, -35f),
-            new Vector2(230f, 120f),
-            new Color(0.91f, 0.42f, 0.03f, 1f),
-            false);
-        leftTail.rectTransform.localEulerAngles = new Vector3(0f, 0f, -8f);
-
-        Image rightTail = CreateImage(
-            parent,
-            title + "RightTail",
-            position + new Vector2(385f, -35f),
-            new Vector2(230f, 120f),
-            new Color(0.91f, 0.42f, 0.03f, 1f),
-            false);
-        rightTail.rectTransform.localEulerAngles = new Vector3(0f, 0f, 8f);
-
         RectTransform ribbon = CreateCard(
             parent,
             title + "Ribbon",
             position,
-            new Vector2(720f, 190f),
-            new Color(1f, 0.62f, 0.16f, 1f),
-            new Color(1f, 0.45f, 0.04f, 0.92f));
+            new Vector2(720f, 180f),
+            MenuBlue,
+            new Color(1f, 1f, 1f, 0.20f));
+
+        CreateImage(
+            ribbon,
+            "GreenAccent",
+            new Vector2(0f, -70f),
+            new Vector2(520f, 18f),
+            MenuGreen,
+            false);
+
         CreateText(
             ribbon,
             "Label",
             title,
-            Vector2.zero,
-            new Vector2(640f, 115f),
+            new Vector2(0f, 8f),
+            new Vector2(640f, 112f),
             54f,
             Color.white,
             FontStyles.Bold,
@@ -1229,7 +1191,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             label,
             position,
             new Vector2(118f, 118f),
-            new Color(0.25f, 0.03f, 0.67f, 0.96f),
+            MenuBlue,
             Color.white,
             action,
             44f);
@@ -1280,7 +1242,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         RectTransform root = CreateRect("VolumeSlider", parent);
         SetRect(root, position, size);
 
-        Image background = CreateImage(root, "Background", Vector2.zero, size, new Color(0.88f, 0.88f, 0.92f, 1f), false);
+        Image background = CreateImage(root, "Background", Vector2.zero, size, new Color(0.83f, 0.91f, 0.95f, 1f), false);
         background.raycastTarget = true;
 
         RectTransform fillArea = CreateRect("Fill Area", root);
@@ -1289,14 +1251,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         fillArea.offsetMin = new Vector2(10f, 10f);
         fillArea.offsetMax = new Vector2(-10f, -10f);
 
-        Image fill = CreateImage(fillArea, "Fill", Vector2.zero, Vector2.zero, Orange, false);
+        Image fill = CreateImage(fillArea, "Fill", Vector2.zero, Vector2.zero, MenuGreen, false);
         fill.rectTransform.anchorMin = Vector2.zero;
         fill.rectTransform.anchorMax = Vector2.one;
         fill.rectTransform.offsetMin = Vector2.zero;
         fill.rectTransform.offsetMax = Vector2.zero;
 
-        Image handle = CreateImage(root, "Handle", Vector2.zero, new Vector2(72f, 72f), Gold, true);
-        AddGraphicShadow(handle, new Color(0f, 0f, 0f, 0.45f), new Vector2(3f, -4f));
+        Image handle = CreateImage(root, "Handle", Vector2.zero, new Vector2(72f, 72f), MenuBlue, true);
+        AddGraphicShadow(handle, new Color(0f, 0f, 0f, 0.30f), new Vector2(3f, -4f));
 
         Slider slider = root.gameObject.AddComponent<Slider>();
         slider.fillRect = fill.rectTransform;
@@ -1320,8 +1282,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             label + "Row",
             position,
             new Vector2(760f, 120f),
-            Purple,
-            new Color(0.46f, 0.18f, 1f, 0.48f));
+            MenuBlueCard,
+            new Color(0.62f, 0.84f, 1f, 0.42f));
 
         CreateText(
             row,
@@ -1340,7 +1302,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             string.Empty,
             new Vector2(260f, 0f),
             new Vector2(190f, 76f),
-            InkSoft,
+            MenuBlueDark,
             Color.white,
             action,
             23f);
@@ -1361,11 +1323,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             label + "InfoRow",
             position,
             new Vector2(760f, 105f),
-            new Color(0.11f, 0.07f, 0.22f, 1f),
-            new Color(0.45f, 0.22f, 0.76f, 0.35f));
+            new Color(0.055f, 0.29f, 0.44f, 1f),
+            new Color(0.62f, 0.84f, 1f, 0.34f));
 
         CreateText(row, "Label", label, new Vector2(-230f, 0f), new Vector2(290f, 60f), 25f, Color.white, FontStyles.Bold, TextAlignmentOptions.Left);
-        CreateText(row, "Value", value, new Vector2(190f, 0f), new Vector2(380f, 60f), 23f, Gold, FontStyles.Bold, TextAlignmentOptions.Right);
+        CreateText(row, "Value", value, new Vector2(190f, 0f), new Vector2(380f, 60f), 23f, MenuCream, FontStyles.Bold, TextAlignmentOptions.Right);
     }
 
     private void StartGame()
@@ -1805,33 +1767,33 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         if (equipped)
         {
             view.Status.text = "CURRENT LOOK";
-            view.Status.color = Lime;
+            view.Status.color = MenuGreen;
             view.ActionLabel.text = "EQUIPPED";
-            buttonImage.color = Lime;
+            buttonImage.color = MenuGreen;
             view.ActionButton.interactable = false;
         }
         else if (owned)
         {
             view.Status.text = "OWNED";
-            view.Status.color = Lime;
+            view.Status.color = MenuGreen;
             view.ActionLabel.text = "EQUIP";
-            buttonImage.color = PurpleBright;
+            buttonImage.color = MenuBlue;
             view.ActionButton.interactable = true;
         }
         else if (view.MarketMode)
         {
             view.Status.text = coins >= view.Skin.Price ? "AVAILABLE" : "KEEP RUNNING";
-            view.Status.color = coins >= view.Skin.Price ? Gold : Muted;
+            view.Status.color = coins >= view.Skin.Price ? MenuCream : Muted;
             view.ActionLabel.text = view.Skin.Price + " TOKENS";
-            buttonImage.color = coins >= view.Skin.Price ? Orange : InkSoft;
+            buttonImage.color = coins >= view.Skin.Price ? MenuGreen : MenuBlueDark;
             view.ActionButton.interactable = true;
         }
         else
         {
             view.Status.text = "LOCKED";
-            view.Status.color = Muted;
+            view.Status.color = new Color(0.72f, 0.84f, 0.92f, 1f);
             view.ActionLabel.text = "MARKET";
-            buttonImage.color = InkSoft;
+            buttonImage.color = MenuBlueDark;
             view.ActionButton.interactable = true;
         }
     }
@@ -1855,11 +1817,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         if (view.StateLabel != null)
         {
             view.StateLabel.text = enabled ? "ON" : "OFF";
-            view.StateLabel.color = enabled ? Ink : Color.white;
+            view.StateLabel.color = Color.white;
         }
         if (view.StateBackground != null)
         {
-            view.StateBackground.color = enabled ? Orange : InkSoft;
+            view.StateBackground.color = enabled ? MenuGreen : MenuBlueDark;
         }
     }
 
@@ -1932,7 +1894,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         patternImage.sprite = GetPatternSprite();
         patternImage.type = Image.Type.Tiled;
         patternImage.pixelsPerUnitMultiplier = 0.72f;
-        patternImage.color = new Color(1f, 1f, 1f, 0.34f);
+        patternImage.color = new Color(1f, 1f, 1f, 0.065f);
         patternImage.raycastTarget = false;
         return root.gameObject;
     }
