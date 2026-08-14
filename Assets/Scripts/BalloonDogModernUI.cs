@@ -36,6 +36,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private static readonly Color MenuBlueCard = new Color(0.075f, 0.35f, 0.52f, 0.96f);
     private static readonly Color MenuGreen = new Color(0.35f, 0.84f, 0.23f, 1f);
     private static readonly Color MenuCream = new Color(0.91f, 0.86f, 0.63f, 0.98f);
+    private static readonly Color MarketCommon = new Color(0.36f, 0.45f, 0.54f, 0.98f);
+    private static readonly Color MarketUncommon = new Color(0.18f, 0.58f, 0.38f, 0.98f);
+    private static readonly Color MarketRare = new Color(0.10f, 0.42f, 0.82f, 0.98f);
+    private static readonly Color MarketEpic = new Color(0.48f, 0.18f, 0.78f, 0.98f);
+    private static readonly Color MarketLegendary = new Color(0.93f, 0.55f, 0.08f, 0.98f);
 
     private enum SettingsReturnTarget
     {
@@ -73,6 +78,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private GameObject resultScreen;
     private GameObject pauseScreen;
     private GameObject gameplayOverlay;
+    private GameObject marketSkinOffersPanel;
+    private GameObject marketExtrasPanel;
 
     private TMP_Text coinText;
     private TMP_Text mainBestText;
@@ -94,6 +101,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private ToggleRowView vibrationToggle;
     private SettingsReturnTarget settingsReturnTarget;
     private bool privacyReturnToSettings;
+    private Button marketSkinsTabButton;
+    private Button marketExtrasTabButton;
 
     private readonly List<SkinCardView> skinCards = new List<SkinCardView>();
     private readonly List<Image> menuPreviewParts = new List<Image>();
@@ -214,6 +223,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultScreen = null;
         pauseScreen = null;
         gameplayOverlay = null;
+        marketSkinOffersPanel = null;
+        marketExtrasPanel = null;
+        marketSkinsTabButton = null;
+        marketExtrasTabButton = null;
         coinText = null;
         mainBestText = null;
         equippedNameText = null;
@@ -527,61 +540,397 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             true);
 
         CreateTopBar(marketScreen.transform, "Market", () => ShowSettingsScreen(SettingsReturnTarget.Main));
-        CreateRibbon(marketScreen.transform, "MARKET", new Vector2(0f, 800f));
+        CreateRibbon(marketScreen.transform, "MARKET", new Vector2(0f, 815f));
+
+        marketSkinsTabButton = CreateButton(
+            marketScreen.transform,
+            "MarketSkinsTabButton",
+            "SKINS",
+            new Vector2(-205f, 625f),
+            new Vector2(380f, 92f),
+            MenuGreen,
+            Color.white,
+            () => ShowMarketTab(true),
+            29f);
+
+        marketExtrasTabButton = CreateButton(
+            marketScreen.transform,
+            "MarketExtrasTabButton",
+            "EXTRAS",
+            new Vector2(205f, 625f),
+            new Vector2(380f, 92f),
+            MenuBlue,
+            Color.white,
+            () => ShowMarketTab(false),
+            29f);
 
         RectTransform shelves = CreateCard(
             marketScreen.transform,
             "MarketShelvesCard",
-            new Vector2(0f, -45f),
-            new Vector2(910f, 1390f),
+            new Vector2(0f, -115f),
+            new Vector2(910f, 1260f),
             MenuBlueDark,
             new Color(0.43f, 0.76f, 1f, 0.58f));
 
+        RectTransform skinPanel = CreateRect("MarketSkinOffersPanel", shelves);
+        SetRect(skinPanel, new Vector2(0f, -10f), new Vector2(850f, 1160f));
+        marketSkinOffersPanel = skinPanel.gameObject;
+        marketSkinOffersPanel.AddComponent<UiPanelAnimator>();
+        BuildLockedSkinMarketGrid(skinPanel);
+
+        RectTransform extrasPanel = CreateRect("MarketExtrasPanel", shelves);
+        SetRect(extrasPanel, new Vector2(0f, -10f), new Vector2(850f, 1160f));
+        marketExtrasPanel = extrasPanel.gameObject;
+        marketExtrasPanel.AddComponent<UiPanelAnimator>();
+        BuildMarketExtras(extrasPanel);
+
+        CreateRoundNavButton(
+            marketScreen.transform,
+            "MarketClose",
+            "HOME",
+            new Vector2(-90f, -1035f),
+            ShowMainScreen);
+        CreateRoundNavButton(
+            marketScreen.transform,
+            "MarketSkins",
+            "COLLECTION",
+            new Vector2(90f, -1035f),
+            ShowSkinsScreen);
+
+        ShowMarketTab(true);
+    }
+
+    private void BuildLockedSkinMarketGrid(Transform parent)
+    {
         CreateText(
-            shelves,
-            "MarketSubtitle",
-            "ITEMS",
-            new Vector2(0f, 605f),
-            new Vector2(760f, 64f),
-            31f,
+            parent,
+            "MarketSkinGridTitle",
+            "15 MYSTERY SKINS",
+            new Vector2(0f, 535f),
+            new Vector2(720f, 48f),
+            27f,
             Color.white,
             FontStyles.Bold,
             TextAlignmentOptions.Center);
 
-        for (int index = 0; index < 6; index++)
+        for (int index = 0; index < 15; index++)
         {
-            int column = index % 2;
-            int row = index / 2;
+            int column = index % 3;
+            int row = index / 3;
             Vector2 position = new Vector2(
-                column == 0 ? -215f : 215f,
-                355f - row * 365f);
+                (column - 1) * 275f,
+                420f - row * 215f);
 
-            RectTransform slot = CreateCard(
-                shelves,
-                "MarketEmptySlot_" + index,
-                position,
-                new Vector2(390f, 310f),
-                new Color(0.16f, 0.52f, 0.72f, 0.36f),
-                new Color(0.72f, 0.90f, 1f, 0.62f));
+            GetMarketRarity(index, out string rarity, out Color fill, out Color outline);
+            CreateLockedSkinSlot(parent, index, rarity, fill, outline, position);
+        }
+    }
 
-            Image slotImage = slot.GetComponent<Image>();
-            if (slotImage != null)
-            {
-                slotImage.raycastTarget = false;
-            }
+    private static void GetMarketRarity(
+        int index,
+        out string rarity,
+        out Color fill,
+        out Color outline)
+    {
+        int tier = Mathf.Clamp(index / 3, 0, 4);
+        switch (tier)
+        {
+            case 0:
+                rarity = "COMMON";
+                fill = MarketCommon;
+                outline = new Color(0.73f, 0.81f, 0.88f, 0.78f);
+                break;
+            case 1:
+                rarity = "UNCOMMON";
+                fill = MarketUncommon;
+                outline = new Color(0.44f, 1f, 0.68f, 0.82f);
+                break;
+            case 2:
+                rarity = "RARE";
+                fill = MarketRare;
+                outline = new Color(0.38f, 0.78f, 1f, 0.86f);
+                break;
+            case 3:
+                rarity = "EPIC";
+                fill = MarketEpic;
+                outline = new Color(0.85f, 0.48f, 1f, 0.88f);
+                break;
+            default:
+                rarity = "LEGENDARY";
+                fill = MarketLegendary;
+                outline = new Color(1f, 0.89f, 0.35f, 0.92f);
+                break;
+        }
+    }
 
-            Image innerHighlight = CreateImage(
-                slot,
-                "EmptySlotHighlight",
-                new Vector2(0f, 22f),
-                new Vector2(330f, 220f),
-                new Color(1f, 1f, 1f, 0.055f),
-                false);
-            innerHighlight.raycastTarget = false;
+    private static void CreateLockedSkinSlot(
+        Transform parent,
+        int index,
+        string rarity,
+        Color fill,
+        Color outline,
+        Vector2 position)
+    {
+        RectTransform card = CreateCard(
+            parent,
+            "MarketSkinSlot_" + (index + 1),
+            position,
+            new Vector2(250f, 190f),
+            fill,
+            outline);
+
+        Image sheen = CreateImage(
+            card,
+            "RaritySheen",
+            new Vector2(0f, 48f),
+            new Vector2(220f, 72f),
+            new Color(1f, 1f, 1f, 0.10f),
+            false);
+        sheen.raycastTarget = false;
+
+        CreateBalloonDogSilhouette(card, new Vector2(-4f, 24f), new Color(0.015f, 0.05f, 0.09f, 0.66f), 0.72f);
+
+        CreateText(
+            card,
+            "MysteryMark",
+            "?",
+            new Vector2(0f, 25f),
+            new Vector2(95f, 100f),
+            58f,
+            Color.white,
+            FontStyles.Bold,
+            TextAlignmentOptions.Center);
+
+        CreateText(
+            card,
+            "RarityLabel",
+            rarity,
+            new Vector2(0f, -67f),
+            new Vector2(220f, 32f),
+            18f,
+            Color.white,
+            FontStyles.Bold,
+            TextAlignmentOptions.Center);
+    }
+
+    private static void CreateBalloonDogSilhouette(
+        Transform parent,
+        Vector2 center,
+        Color color,
+        float scale)
+    {
+        Image body = CreateImage(
+            parent,
+            "DogSilhouetteBody",
+            center + new Vector2(-7f, 8f) * scale,
+            new Vector2(116f, 58f) * scale,
+            color,
+            false);
+        Image head = CreateImage(
+            parent,
+            "DogSilhouetteHead",
+            center + new Vector2(58f, 25f) * scale,
+            Vector2.one * 58f * scale,
+            color,
+            true);
+        Image frontLeg = CreateImage(
+            parent,
+            "DogSilhouetteFrontLeg",
+            center + new Vector2(30f, -30f) * scale,
+            new Vector2(21f, 54f) * scale,
+            color,
+            false);
+        Image backLeg = CreateImage(
+            parent,
+            "DogSilhouetteBackLeg",
+            center + new Vector2(-42f, -30f) * scale,
+            new Vector2(21f, 54f) * scale,
+            color,
+            false);
+        Image tail = CreateImage(
+            parent,
+            "DogSilhouetteTail",
+            center + new Vector2(-72f, 30f) * scale,
+            new Vector2(17f, 62f) * scale,
+            color,
+            false);
+        tail.rectTransform.localEulerAngles = new Vector3(0f, 0f, -42f);
+
+        body.raycastTarget = false;
+        head.raycastTarget = false;
+        frontLeg.raycastTarget = false;
+        backLeg.raycastTarget = false;
+        tail.raycastTarget = false;
+    }
+
+    private void BuildMarketExtras(Transform parent)
+    {
+        CreateText(
+            parent,
+            "MarketExtrasTitle",
+            "CURRENCY & UPGRADES",
+            new Vector2(0f, 505f),
+            new Vector2(760f, 55f),
+            28f,
+            Color.white,
+            FontStyles.Bold,
+            TextAlignmentOptions.Center);
+
+        CreateStoreOfferCard(
+            parent,
+            "CoinsOffer",
+            "COINS",
+            "COIN PACKS",
+            new Vector2(-205f, 245f),
+            new Color(0.86f, 0.55f, 0.08f, 0.98f),
+            0);
+        CreateStoreOfferCard(
+            parent,
+            "GemsOffer",
+            "GEMS",
+            "PREMIUM CURRENCY",
+            new Vector2(205f, 245f),
+            new Color(0.06f, 0.60f, 0.82f, 0.98f),
+            1);
+        CreateStoreOfferCard(
+            parent,
+            "NoAdsOffer",
+            "NO ADS",
+            "REMOVE INTERRUPTIONS",
+            new Vector2(-205f, -210f),
+            new Color(0.44f, 0.22f, 0.72f, 0.98f),
+            2);
+        CreateStoreOfferCard(
+            parent,
+            "StarterOffer",
+            "STARTER PACK",
+            "COINS + GEMS + SKIN",
+            new Vector2(205f, -210f),
+            new Color(0.18f, 0.60f, 0.35f, 0.98f),
+            3);
+
+        CreateText(
+            parent,
+            "StoreIntegrationNote",
+            "STORE CONNECTION WILL BE ADDED WITH IAP",
+            new Vector2(0f, -485f),
+            new Vector2(760f, 40f),
+            18f,
+            new Color(0.72f, 0.86f, 0.94f, 1f),
+            FontStyles.Bold,
+            TextAlignmentOptions.Center);
+    }
+
+    private void CreateStoreOfferCard(
+        Transform parent,
+        string objectName,
+        string title,
+        string subtitle,
+        Vector2 position,
+        Color fill,
+        int iconStyle)
+    {
+        RectTransform card = CreateCard(
+            parent,
+            objectName,
+            position,
+            new Vector2(370f, 390f),
+            fill,
+            new Color(1f, 1f, 1f, 0.30f));
+
+        CreateStoreOfferIcon(card, iconStyle);
+
+        CreateText(
+            card,
+            "OfferTitle",
+            title,
+            new Vector2(0f, 48f),
+            new Vector2(330f, 58f),
+            31f,
+            Color.white,
+            FontStyles.Bold,
+            TextAlignmentOptions.Center);
+        CreateText(
+            card,
+            "OfferSubtitle",
+            subtitle,
+            new Vector2(0f, -8f),
+            new Vector2(330f, 44f),
+            18f,
+            new Color(0.91f, 0.96f, 1f, 1f),
+            FontStyles.Bold,
+            TextAlignmentOptions.Center);
+
+        CreateButton(
+            card,
+            "StoreOfferButton",
+            "COMING SOON",
+            new Vector2(0f, -125f),
+            new Vector2(300f, 82f),
+            MenuBlue,
+            Color.white,
+            () => ShowToast(title + " COMING SOON"),
+            22f);
+    }
+
+    private static void CreateStoreOfferIcon(Transform parent, int style)
+    {
+        Color white = new Color(1f, 1f, 1f, 0.92f);
+        switch (style)
+        {
+            case 0:
+                CreateImage(parent, "CoinOuter", new Vector2(0f, 132f), new Vector2(106f, 106f), white, true);
+                CreateImage(parent, "CoinInner", new Vector2(0f, 132f), new Vector2(72f, 72f), new Color(1f, 0.72f, 0.10f, 1f), true);
+                break;
+            case 1:
+                Image gem = CreateImage(parent, "GemIcon", new Vector2(0f, 132f), new Vector2(88f, 88f), white, false);
+                gem.rectTransform.localEulerAngles = new Vector3(0f, 0f, 45f);
+                break;
+            case 2:
+                CreateText(
+                    parent,
+                    "NoAdsIcon",
+                    "ADS OFF",
+                    new Vector2(0f, 132f),
+                    new Vector2(240f, 88f),
+                    30f,
+                    white,
+                    FontStyles.Bold,
+                    TextAlignmentOptions.Center);
+                break;
+            default:
+                CreateBalloonDogSilhouette(parent, new Vector2(0f, 132f), white, 0.82f);
+                break;
+        }
+    }
+
+    private void ShowMarketTab(bool showSkins)
+    {
+        if (marketSkinOffersPanel == null || marketExtrasPanel == null)
+        {
+            return;
         }
 
-        CreateRoundNavButton(marketScreen.transform, "MarketClose", "HOME", new Vector2(-90f, -1035f), ShowMainScreen);
-        CreateRoundNavButton(marketScreen.transform, "MarketSkins", "SKINS", new Vector2(90f, -1035f), ShowSkinsScreen);
+        marketSkinOffersPanel.SetActive(showSkins);
+        marketExtrasPanel.SetActive(!showSkins);
+
+        if (marketSkinsTabButton != null)
+        {
+            Image image = marketSkinsTabButton.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = showSkins ? MenuGreen : MenuBlue;
+            }
+        }
+
+        if (marketExtrasTabButton != null)
+        {
+            Image image = marketExtrasTabButton.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = showSkins ? MenuBlue : MenuGreen;
+            }
+        }
     }
 
     private void BuildSkinsScreen()
@@ -1389,6 +1738,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         HideAllScreens();
         gameplayOverlay.SetActive(false);
         marketScreen.SetActive(true);
+        ShowMarketTab(true);
         RefreshPersistentViews();
     }
 
