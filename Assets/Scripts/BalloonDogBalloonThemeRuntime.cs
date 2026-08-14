@@ -24,6 +24,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
     private static Sprite gearIconSprite;
     private static Sprite marketIconSprite;
     private static Sprite skinsIconSprite;
+    private static Sprite secondaryBackgroundSprite;
     private static readonly HashSet<EntityId> PolishedTextIds = new HashSet<EntityId>();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -347,9 +348,15 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
     private void FixSecondaryScreens()
     {
+        StyleSecondaryBackground("ModernSettingsScreen");
+        StyleSecondaryBackground("ModernSkinsScreen");
+        StyleSecondaryBackground("ModernMarketScreen");
+        StyleSecondaryBackground("ModernPrivacyScreen");
+
         StyleSecondaryTypography("ModernSettingsScreen");
         StyleSecondaryTypography("ModernSkinsScreen");
         StyleSecondaryTypography("ModernMarketScreen");
+        StyleSecondaryTypography("ModernPrivacyScreen");
 
         StyleSecondaryCoin("SettingsTokens");
         StyleSecondaryCoin("SkinsTokens");
@@ -363,11 +370,73 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         StyleSkinControls();
         StyleMarketTabs();
 
-        StyleNavigationButton("SettingsClose", "DONE", new Vector2(0f, -1035f), new Vector2(330f, 100f));
-        StyleNavigationButton("SkinsMarket", "MARKET", new Vector2(-190f, -1035f), new Vector2(300f, 100f));
-        StyleNavigationButton("SkinsClose", "HOME", new Vector2(190f, -1035f), new Vector2(300f, 100f));
-        StyleNavigationButton("MarketClose", "HOME", new Vector2(-190f, -1035f), new Vector2(300f, 100f));
-        StyleNavigationButton("MarketSkins", "COLLECTION", new Vector2(190f, -1035f), new Vector2(380f, 100f));
+        StyleNavigationButton("SettingsClose", "DONE", new Vector2(0f, -1035f), new Vector2(420f, 104f));
+        StyleNavigationButton("SkinsMarket", "MARKET", new Vector2(-225f, -1035f), new Vector2(370f, 104f));
+        StyleNavigationButton("SkinsClose", "HOME", new Vector2(225f, -1035f), new Vector2(370f, 104f));
+        StyleNavigationButton("MarketClose", "HOME", new Vector2(-230f, -1035f), new Vector2(350f, 104f));
+        StyleNavigationButton("MarketSkins", "COLLECTION", new Vector2(210f, -1035f), new Vector2(430f, 104f));
+
+        RemoveSecondaryOutlines("ModernSettingsScreen");
+        RemoveSecondaryOutlines("ModernSkinsScreen");
+        RemoveSecondaryOutlines("ModernMarketScreen");
+        RemoveSecondaryOutlines("ModernPrivacyScreen");
+    }
+
+    private static void StyleSecondaryBackground(string screenName)
+    {
+        GameObject screen = FindSceneObject(screenName);
+        if (screen == null)
+        {
+            return;
+        }
+
+        if (secondaryBackgroundSprite == null)
+        {
+            secondaryBackgroundSprite = Resources.Load<Sprite>("ModernUI/SecondaryGradientBackground");
+        }
+
+        Image background = screen.GetComponent<Image>();
+        if (background != null && secondaryBackgroundSprite != null)
+        {
+            background.enabled = true;
+            background.sprite = secondaryBackgroundSprite;
+            background.type = Image.Type.Simple;
+            background.preserveAspect = false;
+            background.color = Color.white;
+        }
+
+        UiVerticalGradient gradient = screen.GetComponent<UiVerticalGradient>();
+        if (gradient != null)
+        {
+            gradient.enabled = false;
+        }
+
+        SetChildActive(screen.transform, "FigmaPattern", false);
+
+        foreach (Transform child in screen.GetComponentsInChildren<Transform>(true))
+        {
+            if (child != null && child.name.Contains("TreeBubble"))
+            {
+                child.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private static void RemoveSecondaryOutlines(string screenName)
+    {
+        GameObject screen = FindSceneObject(screenName);
+        if (screen == null)
+        {
+            return;
+        }
+
+        foreach (Outline outline in screen.GetComponentsInChildren<Outline>(true))
+        {
+            if (outline != null)
+            {
+                outline.enabled = false;
+            }
+        }
     }
 
     private static void StyleSecondaryTypography(string screenName)
@@ -607,8 +676,18 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
         rect.anchoredPosition = position;
         rect.sizeDelta = size;
-        StyleButton(rect, new Color(0.18f, 0.54f, 0.96f, 1f), label, 27f);
-        SoftenPillOutline(rect, 0.035f, 0.12f);
+        StyleButton(rect, new Color(0.12f, 0.48f, 0.94f, 1f), label, 28f);
+
+        TMP_Text text = rect.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+        {
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 15f;
+            text.fontSizeMax = 28f;
+            text.overflowMode = TextOverflowModes.Overflow;
+            text.characterSpacing = -0.5f;
+            text.margin = new Vector4(10f, 4f, 10f, 6f);
+        }
 
         Transform oldIcon = rect.Find("ThemeIcon");
         if (oldIcon != null)
@@ -1038,12 +1117,16 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         label.enabled = true;
         label.text = labelValue;
         label.fontSize = fontSize;
+        label.enableAutoSizing = true;
+        label.fontSizeMin = Mathf.Min(14f, fontSize);
+        label.fontSizeMax = fontSize;
         label.alignment = TextAlignmentOptions.Center;
         label.color = Color.white;
         label.raycastTarget = false;
         label.enableWordWrapping = false;
+        label.overflowMode = TextOverflowModes.Overflow;
         label.characterSpacing = 0f;
-        label.margin = new Vector4(12f, 6f, 12f, 8f);
+        label.margin = new Vector4(10f, 5f, 10f, 7f);
         ApplySmoothLowPolyText(label, 0f);
     }
 
@@ -1184,32 +1267,31 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         }
 
         Outline outline = rect.GetComponent<Outline>();
-        if (outline == null)
+        if (outline != null)
         {
-            outline = rect.gameObject.AddComponent<Outline>();
+            outline.enabled = false;
         }
-        outline.effectColor = new Color(1f, 1f, 1f, 0.15f);
-        outline.effectDistance = new Vector2(1f, 1f);
 
         Shadow shadow = rect.GetComponent<Shadow>();
         if (shadow == null)
         {
             shadow = rect.gameObject.AddComponent<Shadow>();
         }
-        shadow.effectColor = new Color(0f, 0f, 0f, 0.20f);
-        shadow.effectDistance = new Vector2(0f, -4f);
+        shadow.enabled = true;
+        shadow.effectColor = new Color(0.015f, 0.08f, 0.22f, 0.30f);
+        shadow.effectDistance = new Vector2(0f, -7f);
 
-        Image topGloss = EnsureOverlayImage(rect, "ThemeTopGloss", new Color(1f, 1f, 1f, 0.14f));
+        Image topGloss = EnsureOverlayImage(rect, "ThemeTopGloss", new Color(1f, 1f, 1f, 0.18f));
         RectTransform topRect = topGloss.rectTransform;
-        topRect.anchorMin = new Vector2(0.04f, 0.52f);
-        topRect.anchorMax = new Vector2(0.96f, 0.95f);
+        topRect.anchorMin = new Vector2(0.06f, 0.58f);
+        topRect.anchorMax = new Vector2(0.94f, 0.92f);
         topRect.offsetMin = Vector2.zero;
         topRect.offsetMax = Vector2.zero;
 
-        Image bottomShade = EnsureOverlayImage(rect, "ThemeBottomShade", new Color(0f, 0f, 0f, 0.08f));
+        Image bottomShade = EnsureOverlayImage(rect, "ThemeBottomShade", new Color(0.01f, 0.08f, 0.24f, 0.13f));
         RectTransform shadeRect = bottomShade.rectTransform;
-        shadeRect.anchorMin = new Vector2(0.03f, 0.05f);
-        shadeRect.anchorMax = new Vector2(0.97f, 0.40f);
+        shadeRect.anchorMin = new Vector2(0.04f, 0.05f);
+        shadeRect.anchorMax = new Vector2(0.96f, 0.42f);
         shadeRect.offsetMin = Vector2.zero;
         shadeRect.offsetMax = Vector2.zero;
     }
