@@ -369,7 +369,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         coinText = CreatePillText(
             mainScreen.transform,
             "MainTokens",
-            "◉  0",
+            "0",
             new Vector2(-365f, 1030f),
             new Vector2(290f, 92f),
             new Color(0.25f, 0.03f, 0.67f, 0.95f),
@@ -378,7 +378,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreateButton(
             mainScreen.transform,
             "MainSettingsButton",
-            "⚙",
+            string.Empty,
             new Vector2(430f, 1030f),
             new Vector2(105f, 105f),
             new Color(0.25f, 0.03f, 0.67f, 0.95f),
@@ -580,8 +580,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             innerHighlight.raycastTarget = false;
         }
 
-        CreateRoundNavButton(marketScreen.transform, "MarketClose", "×", new Vector2(-90f, -1035f), ShowMainScreen);
-        CreateRoundNavButton(marketScreen.transform, "MarketSkins", "♛", new Vector2(90f, -1035f), ShowSkinsScreen);
+        CreateRoundNavButton(marketScreen.transform, "MarketClose", "HOME", new Vector2(-90f, -1035f), ShowMainScreen);
+        CreateRoundNavButton(marketScreen.transform, "MarketSkins", "SKINS", new Vector2(90f, -1035f), ShowSkinsScreen);
     }
 
     private void BuildSkinsScreen()
@@ -628,8 +628,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             TextAlignmentOptions.Center);
         BuildSkinGrid(collection, false);
 
-        CreateRoundNavButton(skinsScreen.transform, "SkinsMarket", "▣", new Vector2(-90f, -1035f), ShowMarketScreen);
-        CreateRoundNavButton(skinsScreen.transform, "SkinsClose", "×", new Vector2(90f, -1035f), ShowMainScreen);
+        CreateRoundNavButton(skinsScreen.transform, "SkinsMarket", "MARKET", new Vector2(-90f, -1035f), ShowMarketScreen);
+        CreateRoundNavButton(skinsScreen.transform, "SkinsClose", "HOME", new Vector2(90f, -1035f), ShowMainScreen);
     }
 
     private void BuildSkinGrid(Transform parent, bool marketMode)
@@ -798,7 +798,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             28f);
 
         CreateInfoRow(card, "CONTROL", "DRAG LEFT / RIGHT", new Vector2(0f, -480f));
-        CreateRoundNavButton(settingsScreen.transform, "SettingsClose", "×", new Vector2(0f, -1035f), CloseSettings);
+        CreateRoundNavButton(settingsScreen.transform, "SettingsClose", "DONE", new Vector2(0f, -1035f), CloseSettings);
     }
 
     private void BuildPrivacyScreen()
@@ -1118,7 +1118,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreatePillText(
             parent,
             title + "Coins",
-            "◉  " + BalloonDogEconomy.Coins,
+            BalloonDogEconomy.Coins.ToString("N0"),
             new Vector2(350f, 755f),
             new Vector2(270f, 80f),
             Orange,
@@ -1130,7 +1130,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreatePillText(
             parent,
             screenName + "Tokens",
-            "◉  " + BalloonDogEconomy.Coins,
+            BalloonDogEconomy.Coins.ToString("N0"),
             new Vector2(-365f, 1030f),
             new Vector2(290f, 92f),
             MenuCream,
@@ -1139,7 +1139,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreateButton(
             parent,
             screenName + "TopButton",
-            screenName == "Settings" || screenName == "Privacy" ? "X" : "⚙",
+            screenName == "Settings" || screenName == "Privacy" ? "X" : string.Empty,
             new Vector2(430f, 1030f),
             new Vector2(105f, 105f),
             MenuBlue,
@@ -1667,7 +1667,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         if (coinText != null)
         {
-            coinText.text = "◉  " + coins.ToString("N0");
+            coinText.text = coins.ToString("N0");
         }
         if (mainBestText != null)
         {
@@ -1703,7 +1703,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             TMP_Text text = label.GetComponent<TMP_Text>();
             if (text != null)
             {
-                text.text = "◉  " + coins.ToString("N0");
+                text.text = coins.ToString("N0");
             }
         }
 
