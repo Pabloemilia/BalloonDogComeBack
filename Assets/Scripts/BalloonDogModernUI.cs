@@ -369,7 +369,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         coinText = CreatePillText(
             mainScreen.transform,
             "MainTokens",
-            "◉  0",
+            "0",
             new Vector2(-365f, 1030f),
             new Vector2(290f, 92f),
             new Color(0.25f, 0.03f, 0.67f, 0.95f),
@@ -378,7 +378,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreateButton(
             mainScreen.transform,
             "MainSettingsButton",
-            "⚙",
+            string.Empty,
             new Vector2(430f, 1030f),
             new Vector2(105f, 105f),
             new Color(0.25f, 0.03f, 0.67f, 0.95f),
@@ -1130,7 +1130,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreatePillText(
             parent,
             screenName + "Tokens",
-            "◉  " + BalloonDogEconomy.Coins,
+            BalloonDogEconomy.Coins.ToString("N0"),
             new Vector2(-365f, 1030f),
             new Vector2(290f, 92f),
             MenuCream,
@@ -1667,7 +1667,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         if (coinText != null)
         {
-            coinText.text = "◉  " + coins.ToString("N0");
+            coinText.text = coins.ToString("N0");
         }
         if (mainBestText != null)
         {
