@@ -361,12 +361,13 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
         StyleSettingsControls();
         StyleSkinControls();
+        StyleMarketTabs();
 
         StyleNavigationButton("SettingsClose", "DONE", new Vector2(0f, -1035f), new Vector2(330f, 100f));
         StyleNavigationButton("SkinsMarket", "MARKET", new Vector2(-190f, -1035f), new Vector2(300f, 100f));
         StyleNavigationButton("SkinsClose", "HOME", new Vector2(190f, -1035f), new Vector2(300f, 100f));
         StyleNavigationButton("MarketClose", "HOME", new Vector2(-190f, -1035f), new Vector2(300f, 100f));
-        StyleNavigationButton("MarketSkins", "SKINS", new Vector2(190f, -1035f), new Vector2(300f, 100f));
+        StyleNavigationButton("MarketSkins", "COLLECTION", new Vector2(190f, -1035f), new Vector2(380f, 100f));
     }
 
     private static void StyleSecondaryTypography(string screenName)
@@ -533,6 +534,62 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
             rect.sizeDelta = new Vector2(310f, 80f);
             StyleButton(rect, fill, value, 25f);
+        }
+    }
+
+    private static void StyleMarketTabs()
+    {
+        GameObject skinsPanel = FindSceneObject("MarketSkinOffersPanel");
+        bool skinsActive = skinsPanel != null && skinsPanel.activeSelf;
+
+        RectTransform skinsTab = FindRect("MarketSkinsTabButton");
+        if (skinsTab != null)
+        {
+            StyleButton(
+                skinsTab,
+                skinsActive
+                    ? new Color(0.35f, 0.84f, 0.23f, 1f)
+                    : new Color(0.18f, 0.54f, 0.96f, 1f),
+                "SKINS",
+                29f);
+            SoftenPillOutline(skinsTab, 0.04f, 0.12f);
+        }
+
+        RectTransform extrasTab = FindRect("MarketExtrasTabButton");
+        if (extrasTab != null)
+        {
+            StyleButton(
+                extrasTab,
+                skinsActive
+                    ? new Color(0.18f, 0.54f, 0.96f, 1f)
+                    : new Color(0.35f, 0.84f, 0.23f, 1f),
+                "EXTRAS",
+                29f);
+            SoftenPillOutline(extrasTab, 0.04f, 0.12f);
+        }
+
+        GameObject extrasPanel = FindSceneObject("MarketExtrasPanel");
+        if (extrasPanel == null)
+        {
+            return;
+        }
+
+        foreach (Button button in extrasPanel.GetComponentsInChildren<Button>(true))
+        {
+            if (button == null || button.name != "StoreOfferButton")
+            {
+                continue;
+            }
+
+            RectTransform rect = button.transform as RectTransform;
+            if (rect != null)
+            {
+                StyleButton(
+                    rect,
+                    new Color(0.18f, 0.54f, 0.96f, 1f),
+                    "COMING SOON",
+                    22f);
+            }
         }
     }
 
