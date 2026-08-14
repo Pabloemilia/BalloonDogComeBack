@@ -94,8 +94,28 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         }
 
         FixSecondaryScreens();
+        FixPauseScreen();
         FixGameplayHud();
         FixResultScreen();
+    }
+
+    private static void FixPauseScreen()
+    {
+        GameObject screen = FindSceneObject("ModernPauseScreen");
+        if (screen == null)
+        {
+            return;
+        }
+
+        foreach (TMP_Text text in screen.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (text == null || text.name.Contains("IconGlyph"))
+            {
+                continue;
+            }
+
+            ApplySmoothLowPolyText(text, text.characterSpacing);
+        }
     }
 
     private void StyleBackground(GameObject mainScreen)

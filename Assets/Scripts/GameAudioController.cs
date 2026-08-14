@@ -41,6 +41,11 @@ public sealed class GameAudioController : MonoBehaviour
     public static void PlayTransform() => Play(instance != null ? instance.transformClip : null, 0.65f);
     public static void PlayFinish() => Play(instance != null ? instance.finishClip : null, 0.8f);
 
+    public static void SetPaused(bool paused)
+    {
+        AudioListener.pause = paused;
+    }
+
     private static void Play(AudioClip clip, float volume)
     {
         if (instance != null && instance.source != null && clip != null)
@@ -72,5 +77,16 @@ public sealed class GameAudioController : MonoBehaviour
         AudioClip clip = AudioClip.Create(clipName, sampleCount, 1, sampleRate, false);
         clip.SetData(samples, 0);
         return clip;
+    }
+
+    private void OnDestroy()
+    {
+        if (instance != this)
+        {
+            return;
+        }
+
+        AudioListener.pause = false;
+        instance = null;
     }
 }

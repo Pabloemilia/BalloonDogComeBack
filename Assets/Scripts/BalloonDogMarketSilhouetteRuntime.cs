@@ -13,8 +13,8 @@ public sealed class BalloonDogMarketSilhouetteRuntime : MonoBehaviour
     private const int PreviewLayer = 31;
 
     private static RenderTexture silhouetteTexture;
+    private static bool renderAttempted;
     private float nextRefreshTime;
-    private bool renderAttempted;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateRuntime()
@@ -44,11 +44,7 @@ public sealed class BalloonDogMarketSilhouetteRuntime : MonoBehaviour
             return;
         }
 
-        if (silhouetteTexture == null && !renderAttempted)
-        {
-            renderAttempted = true;
-            silhouetteTexture = RenderActualBalloonDog();
-        }
+        GetOrCreateSilhouetteTexture();
 
         if (silhouetteTexture != null)
         {
@@ -64,6 +60,23 @@ public sealed class BalloonDogMarketSilhouetteRuntime : MonoBehaviour
             Destroy(silhouetteTexture);
             silhouetteTexture = null;
         }
+        renderAttempted = false;
+    }
+
+    public static RenderTexture GetOrCreateSilhouetteTexture()
+    {
+        if (silhouetteTexture != null || renderAttempted)
+        {
+            return silhouetteTexture;
+        }
+
+        renderAttempted = true;
+        silhouetteTexture = RenderActualBalloonDog();
+        if (silhouetteTexture == null)
+        {
+            renderAttempted = false;
+        }
+        return silhouetteTexture;
     }
 
     private static void ApplyToMarketCards(GameObject market)

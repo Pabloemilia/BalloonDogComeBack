@@ -25,6 +25,11 @@ public sealed class MainMenuController : MonoBehaviour
     private TMP_Text vibrationButtonLabel;
     private bool soundEnabled;
     private StartCountdownController countdownController;
+    private bool pauseStateCaptured;
+    private bool runnerMovementBeforePause;
+    private bool horizontalEnabledBeforePause;
+    private bool formEnabledBeforePause;
+    private bool sizeEnabledBeforePause;
 
     private static Sprite cachedCircleSprite;
     private static Sprite cachedRoundedSprite;
@@ -66,6 +71,7 @@ public sealed class MainMenuController : MonoBehaviour
 
     public void StartGame()
     {
+        pauseStateCaptured = false;
         airController?.ResetToFull();
         sizeController?.SnapToCurrentAir();
 
@@ -129,6 +135,79 @@ public sealed class MainMenuController : MonoBehaviour
             settingsPanel.transform.SetAsLastSibling();
             settingsPanel.SetActive(true);
         }
+    }
+
+    /// <summary>
+    /// Temporarily freezes only gameplay controls without applying the menu
+    /// reset rules (force balloon form / cancel shrink). The previous enabled
+    /// states are restored exactly when the pause menu closes.
+    /// </summary>
+    public void SetGameplayPaused(bool paused)
+    {
+        if (runner == null || horizontalController == null ||
+            formController == null || sizeController == null ||
+            playerBody == null)
+        {
+            ResolveReferences();
+        }
+
+        if (paused)
+        {
+            if (pauseStateCaptured)
+            {
+                return;
+            }
+
+            runnerMovementBeforePause =
+                runner != null && runner.MovementEnabled;
+            horizontalEnabledBeforePause =
+                horizontalController != null && horizontalController.enabled;
+            formEnabledBeforePause =
+                formController != null && formController.enabled;
+            sizeEnabledBeforePause =
+                sizeController != null && sizeController.enabled;
+
+            runner?.SetMovementEnabled(false);
+            if (horizontalController != null)
+            {
+                horizontalController.enabled = false;
+            }
+            if (formController != null)
+            {
+                formController.enabled = false;
+            }
+            if (sizeController != null)
+            {
+                sizeController.enabled = false;
+            }
+            playerBody?.Sleep();
+            pauseStateCaptured = true;
+            return;
+        }
+
+        if (!pauseStateCaptured)
+        {
+            return;
+        }
+
+        if (runner != null)
+        {
+            runner.SetMovementEnabled(runnerMovementBeforePause);
+        }
+        if (horizontalController != null)
+        {
+            horizontalController.enabled = horizontalEnabledBeforePause;
+        }
+        if (formController != null)
+        {
+            formController.enabled = formEnabledBeforePause;
+        }
+        if (sizeController != null)
+        {
+            sizeController.enabled = sizeEnabledBeforePause;
+        }
+        playerBody?.WakeUp();
+        pauseStateCaptured = false;
     }
 
     public void ToggleSound()

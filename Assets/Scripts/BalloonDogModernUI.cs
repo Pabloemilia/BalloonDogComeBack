@@ -69,7 +69,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private ScoreController scoreController;
 
     private Canvas canvas;
+    private Canvas pauseCanvas;
     private RectTransform safeRoot;
+    private RectTransform pauseSafeRoot;
     private GameObject mainScreen;
     private GameObject marketScreen;
     private GameObject skinsScreen;
@@ -90,6 +92,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private TMP_Text resultBestText;
     private TMP_Text resultRewardText;
     private TMP_Text gameplaySkinText;
+    private TMP_Text pauseScoreText;
+    private TMP_Text pauseTokenText;
     private TMP_Text wheelNextText;
     private TMP_Text wheelButtonLabel;
     private TMP_Text toastText;
@@ -113,6 +117,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private RectTransform wheelTransform;
     private Button wheelButton;
     private bool wheelSpinning;
+    private bool pauseActionInProgress;
+    private BalloonDogPauseScreenAnimator pauseAnimator;
     private Coroutine rebuildRoutine;
     private bool economySubscribed;
 
@@ -174,6 +180,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         {
             Destroy(canvas.gameObject);
         }
+        if (pauseCanvas != null)
+        {
+            Destroy(pauseCanvas.gameObject);
+        }
 
         yield return null;
 
@@ -214,7 +224,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private void ResetRuntimeReferences()
     {
         canvas = null;
+        pauseCanvas = null;
         safeRoot = null;
+        pauseSafeRoot = null;
         mainScreen = null;
         marketScreen = null;
         skinsScreen = null;
@@ -236,6 +248,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultBestText = null;
         resultRewardText = null;
         gameplaySkinText = null;
+        pauseScoreText = null;
+        pauseTokenText = null;
         wheelNextText = null;
         wheelButtonLabel = null;
         wheelTransform = null;
@@ -246,6 +260,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         toastText = null;
         toastGroup = null;
         wheelSpinning = false;
+        pauseActionInProgress = false;
+        pauseAnimator = null;
         toastTimer = 0f;
         lastKnownCoins = -1;
         lastKnownSkin = string.Empty;
@@ -1346,43 +1362,470 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildPauseScreen()
     {
-        pauseScreen = CreateScreen("ModernPauseScreen", new Color(0.24f, 0.025f, 0.55f, 0.98f), new Color(0.02f, 0.015f, 0.06f, 0.98f));
+        GameObject pauseCanvasObject = new GameObject(
+            "PauseCanvas",
+            typeof(RectTransform),
+            typeof(Canvas),
+            typeof(CanvasScaler),
+            typeof(GraphicRaycaster));
+        pauseCanvasObject.transform.SetParent(transform, false);
 
-        RectTransform card = CreateCard(
-            pauseScreen.transform,
-            "PauseCard",
+        pauseCanvas = pauseCanvasObject.GetComponent<Canvas>();
+        pauseCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        pauseCanvas.sortingOrder = 650;
+
+        CanvasScaler scaler = pauseCanvasObject.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1080f, 1920f);
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        scaler.matchWidthOrHeight = 0.5f;
+
+        pauseSafeRoot = CreateRect("PauseSafeArea", pauseCanvasObject.transform);
+        Stretch(pauseSafeRoot);
+        pauseSafeRoot.gameObject.AddComponent<BalloonDogSafeArea>();
+
+        RectTransform root = CreateRect("ModernPauseScreen", pauseSafeRoot);
+        Stretch(root);
+        pauseScreen = root.gameObject;
+
+        CanvasGroup canvasGroup = root.gameObject.AddComponent<CanvasGroup>();
+        Image background = root.gameObject.AddComponent<Image>();
+        background.sprite =
+            GetResourceSprite("ModernUI/SecondaryGradientBackground");
+        background.type = Image.Type.Simple;
+        background.preserveAspect = false;
+        background.color = new Color(1f, 1f, 1f, 0.82f);
+        background.raycastTarget = true;
+        if (background.sprite == null)
+        {
+            UiVerticalGradient fallbackGradient =
+                root.gameObject.AddComponent<UiVerticalGradient>();
+            fallbackGradient.Configure(
+                new Color(0.05f, 0.32f, 0.94f, 0.82f),
+                new Color(0.18f, 0.94f, 0.48f, 0.82f));
+        }
+
+        Image softTint = CreateImage(
+            root,
+            "BackgroundOverlay",
             Vector2.zero,
-            new Vector2(800f, 1020f),
-            new Color(0.055f, 0.035f, 0.14f, 0.98f),
-            new Color(0.54f, 0.24f, 1f, 0.75f));
-        card.gameObject.AddComponent<UiPanelAnimator>();
+            new Vector2(1080f, 1920f),
+            new Color(0.01f, 0.25f, 0.60f, 0.12f),
+            false);
+        Stretch(softTint.rectTransform);
 
-        CreateText(
-            card,
+        RectTransform decorativeLayer =
+            CreateRect("DecorativeLayer", root);
+        Stretch(decorativeLayer);
+        CreatePauseCloud(
+            decorativeLayer, "Cloud_01",
+            new Vector2(0f, 710f), 1.05f, 0.16f,
+            8f, 10f, 14.5f, 0.12f);
+        CreatePauseCloud(
+            decorativeLayer, "Cloud_02",
+            new Vector2(-420f, 500f), 0.72f, 0.12f,
+            7f, 12f, 17.2f, 0.46f);
+        CreatePauseCloud(
+            decorativeLayer, "Cloud_03",
+            new Vector2(410f, -520f), 0.92f, 0.14f,
+            10f, 8f, 19.4f, 0.73f);
+        CreatePauseCloud(
+            decorativeLayer, "Cloud_04",
+            new Vector2(-390f, -700f), 0.68f, 0.11f,
+            6f, 10f, 16.1f, 0.31f);
+
+        CreatePauseDogDecoration(
+            decorativeLayer, "BalloonDog_01",
+            new Vector2(-390f, 675f), new Vector2(270f, 158f),
+            0.11f, 10f, 14f, 18.5f, 0.18f, 1.2f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "BalloonDog_02",
+            new Vector2(390f, 610f), new Vector2(245f, 144f),
+            0.10f, 8f, 12f, 15.8f, 0.61f, 1.7f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "BalloonDog_03",
+            new Vector2(-400f, -260f), new Vector2(290f, 170f),
+            0.09f, 12f, 10f, 21.2f, 0.39f, 1.4f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "BalloonDog_04",
+            new Vector2(410f, -690f), new Vector2(250f, 146f),
+            0.09f, 9f, 13f, 17.8f, 0.82f, 1.9f);
+
+        RectTransform content = CreateRect("PauseContent", root);
+        Stretch(content);
+
+        TMP_Text title = CreateText(
+            content,
             "PauseTitle",
             "PAUSED",
-            new Vector2(0f, 355f),
-            new Vector2(650f, 120f),
-            68f,
+            new Vector2(0f, 650f),
+            new Vector2(820f, 170f),
+            116f,
             Color.white,
             FontStyles.Bold,
             TextAlignmentOptions.Center);
+        title.enableAutoSizing = true;
+        title.fontSizeMin = 78f;
+        title.fontSizeMax = 116f;
+        title.overflowMode = TextOverflowModes.Overflow;
+        AddTextShadow(
+            title,
+            new Color(0.01f, 0.16f, 0.46f, 0.58f),
+            new Vector2(0f, -9f));
+        CreatePauseTitleAccents(content);
 
-        CreateButton(card, "ModernResumeButton", "RESUME", new Vector2(0f, 160f), new Vector2(610f, 120f), Lime, Ink, ResumeGame, 36f);
-        CreateButton(card, "PauseSettingsButton", "SETTINGS", new Vector2(0f, 15f), new Vector2(610f, 110f), PurpleBright, Color.white, () => ShowSettingsScreen(SettingsReturnTarget.Pause), 31f);
-        CreateButton(card, "PauseRestartButtonModern", "RESTART", new Vector2(0f, -130f), new Vector2(610f, 110f), Orange, Ink, RestartGame, 31f);
-        CreateButton(card, "PauseMenuButtonModern", "MAIN MENU", new Vector2(0f, -275f), new Vector2(610f, 105f), InkSoft, Color.white, ReturnToMainMenu, 29f);
+        RectTransform stats = CreateCard(
+            content,
+            "StatsPanel",
+            new Vector2(0f, 395f),
+            new Vector2(780f, 220f),
+            new Color(0.22f, 0.72f, 0.95f, 0.32f),
+            new Color(0.75f, 0.94f, 1f, 0.42f));
+        UiVerticalGradient statsGradient =
+            stats.gameObject.AddComponent<UiVerticalGradient>();
+        statsGradient.Configure(
+            new Color(0.58f, 0.86f, 1f, 0.34f),
+            new Color(0.05f, 0.67f, 0.85f, 0.38f));
+        CreateImage(
+            stats, "StatsDivider", Vector2.zero,
+            new Vector2(3f, 132f),
+            new Color(1f, 1f, 1f, 0.34f), false);
 
         CreateText(
-            card,
-            "PauseHint",
-            "YOUR RUN IS WAITING",
-            new Vector2(0f, -405f),
-            new Vector2(600f, 45f),
-            20f,
-            Muted,
+            stats, "ScoreLabel", "SCORE",
+            new Vector2(-195f, 53f),
+            new Vector2(260f, 52f),
+            37f,
+            new Color(0.02f, 0.32f, 0.80f, 1f),
             FontStyles.Bold,
             TextAlignmentOptions.Center);
+        pauseScoreText = CreateText(
+            stats, "ScoreValue", "0",
+            new Vector2(-170f, -42f),
+            new Vector2(280f, 88f),
+            58f, Color.white,
+            FontStyles.Bold,
+            TextAlignmentOptions.Center);
+        pauseScoreText.enableAutoSizing = true;
+        pauseScoreText.fontSizeMin = 36f;
+        pauseScoreText.fontSizeMax = 58f;
+        CreatePauseCrownIcon(
+            stats, new Vector2(-320f, -38f));
+
+        CreateText(
+            stats, "TokenLabel", "TOKENS",
+            new Vector2(205f, 53f),
+            new Vector2(280f, 52f),
+            37f,
+            new Color(0.02f, 0.32f, 0.80f, 1f),
+            FontStyles.Bold,
+            TextAlignmentOptions.Center);
+        pauseTokenText = CreateText(
+            stats, "TokenValue", "0",
+            new Vector2(235f, -42f),
+            new Vector2(255f, 88f),
+            58f, Color.white,
+            FontStyles.Bold,
+            TextAlignmentOptions.Center);
+        pauseTokenText.enableAutoSizing = true;
+        pauseTokenText.fontSizeMin = 36f;
+        pauseTokenText.fontSizeMax = 58f;
+        CreatePauseTokenIcon(
+            stats, new Vector2(90f, -38f));
+
+        Button resume = CreatePauseActionButton(
+            content,
+            "ModernResumeButton",
+            "RESUME",
+            "▶",
+            new Vector2(0f, 105f),
+            new Vector2(700f, 155f),
+            new Color(0.16f, 0.88f, 0.25f, 1f),
+            new Color(0.04f, 0.42f, 0.17f, 1f),
+            ResumeGame,
+            50f);
+        Button restart = CreatePauseActionButton(
+            content,
+            "PauseRestartButtonModern",
+            "RESTART",
+            "↻",
+            new Vector2(0f, -115f),
+            new Vector2(650f, 122f),
+            new Color(0.18f, 0.54f, 0.98f, 1f),
+            new Color(0.04f, 0.29f, 0.78f, 1f),
+            RestartGame,
+            39f);
+        Button settings = CreatePauseActionButton(
+            content,
+            "PauseSettingsButton",
+            "SETTINGS",
+            "⚙",
+            new Vector2(0f, -275f),
+            new Vector2(650f, 122f),
+            new Color(0.16f, 0.62f, 0.95f, 1f),
+            new Color(0.03f, 0.34f, 0.76f, 1f),
+            OpenPauseSettings,
+            39f);
+        Button mainMenu = CreatePauseActionButton(
+            content,
+            "PauseMenuButtonModern",
+            "MAIN MENU",
+            "⌂",
+            new Vector2(0f, -435f),
+            new Vector2(650f, 122f),
+            new Color(0.12f, 0.53f, 0.91f, 1f),
+            new Color(0.02f, 0.28f, 0.70f, 1f),
+            ReturnToMainMenu,
+            38f);
+
+        TMP_Text hint = CreateText(
+            content,
+            "PauseHint",
+            "—  GAME IS SAFE  —",
+            new Vector2(0f, -610f),
+            new Vector2(620f, 52f),
+            26f,
+            new Color(0.02f, 0.48f, 0.55f, 0.82f),
+            FontStyles.Bold,
+            TextAlignmentOptions.Center);
+        hint.characterSpacing = 2f;
+
+        pauseAnimator =
+            root.gameObject.AddComponent<BalloonDogPauseScreenAnimator>();
+        pauseAnimator.Configure(
+            canvasGroup,
+            content,
+            new[]
+            {
+                title.rectTransform,
+                stats,
+                resume.transform.parent as RectTransform,
+                restart.transform.parent as RectTransform,
+                settings.transform.parent as RectTransform,
+                mainMenu.transform.parent as RectTransform
+            });
+    }
+
+    private static void CreatePauseCloud(
+        Transform parent,
+        string name,
+        Vector2 position,
+        float scale,
+        float opacity,
+        float horizontalAmplitude,
+        float verticalAmplitude,
+        float duration,
+        float phase)
+    {
+        RectTransform root = CreateRect(name, parent);
+        SetRect(root, position, new Vector2(220f, 110f) * scale);
+
+        Color cloudColor = new Color(1f, 1f, 1f, opacity);
+        CreateImage(
+            root, "CloudBase", new Vector2(0f, -20f) * scale,
+            new Vector2(190f, 58f) * scale,
+            cloudColor, false);
+        CreateImage(
+            root, "CloudLeft", new Vector2(-55f, 0f) * scale,
+            new Vector2(92f, 78f) * scale,
+            cloudColor, true);
+        CreateImage(
+            root, "CloudCenter", new Vector2(4f, 15f) * scale,
+            new Vector2(118f, 102f) * scale,
+            cloudColor, true);
+        CreateImage(
+            root, "CloudRight", new Vector2(66f, -2f) * scale,
+            new Vector2(86f, 72f) * scale,
+            cloudColor, true);
+
+        BalloonDogPauseDecorativeFloat motion =
+            root.gameObject.AddComponent<BalloonDogPauseDecorativeFloat>();
+        motion.Configure(
+            horizontalAmplitude,
+            verticalAmplitude,
+            duration,
+            phase,
+            0.25f);
+    }
+
+    private static void CreatePauseDogDecoration(
+        Transform parent,
+        string name,
+        Vector2 position,
+        Vector2 size,
+        float opacity,
+        float horizontalAmplitude,
+        float verticalAmplitude,
+        float duration,
+        float phase,
+        float rotationAmplitude)
+    {
+        RectTransform rect = CreateRect(name, parent);
+        SetRect(rect, position, size);
+        RawImage image = rect.gameObject.AddComponent<RawImage>();
+        image.texture =
+            BalloonDogMarketSilhouetteRuntime.GetOrCreateSilhouetteTexture();
+        image.color = new Color(1f, 1f, 1f, opacity);
+        image.raycastTarget = false;
+        image.uvRect = new Rect(0f, 0f, 1f, 1f);
+
+        BalloonDogPauseDecorativeFloat motion =
+            rect.gameObject.AddComponent<BalloonDogPauseDecorativeFloat>();
+        motion.Configure(
+            horizontalAmplitude,
+            verticalAmplitude,
+            duration,
+            phase,
+            rotationAmplitude);
+    }
+
+    private static Button CreatePauseActionButton(
+        Transform parent,
+        string name,
+        string label,
+        string icon,
+        Vector2 position,
+        Vector2 size,
+        Color topColor,
+        Color bottomColor,
+        UnityAction action,
+        float fontSize)
+    {
+        RectTransform stage = CreateRect(name + "Stage", parent);
+        SetRect(stage, position, size);
+
+        Button button = CreateButton(
+            stage,
+            name,
+            label,
+            Vector2.zero,
+            size,
+            topColor,
+            Color.white,
+            action,
+            fontSize);
+
+        Image baseImage = button.GetComponent<Image>();
+        UiVerticalGradient gradient =
+            baseImage.gameObject.AddComponent<UiVerticalGradient>();
+        gradient.Configure(topColor, bottomColor);
+
+        Image gloss = CreateImage(
+            button.transform,
+            "PauseButtonGloss",
+            new Vector2(0f, size.y * 0.23f),
+            new Vector2(size.x * 0.90f, size.y * 0.34f),
+            new Color(1f, 1f, 1f, 0.17f),
+            false);
+        gloss.transform.SetAsFirstSibling();
+
+        TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+        {
+            SetRect(
+                text.rectTransform,
+                new Vector2(60f, 0f),
+                new Vector2(size.x - 205f, size.y - 22f));
+            text.enableAutoSizing = true;
+            text.fontSizeMin = Mathf.Max(24f, fontSize * 0.68f);
+            text.fontSizeMax = fontSize;
+            text.overflowMode = TextOverflowModes.Overflow;
+            text.margin = new Vector4(8f, 4f, 8f, 6f);
+        }
+
+        TMP_Text iconText = CreateText(
+            button.transform,
+            "IconGlyph",
+            icon,
+            new Vector2(-size.x * 0.32f, 2f),
+            new Vector2(112f, size.y - 18f),
+            fontSize * 1.25f,
+            Color.white,
+            FontStyles.Bold,
+            TextAlignmentOptions.Center);
+        iconText.overflowMode = TextOverflowModes.Overflow;
+        AddTextShadow(
+            iconText,
+            new Color(0.01f, 0.16f, 0.42f, 0.45f),
+            new Vector2(0f, -4f));
+        return button;
+    }
+
+    private static void CreatePauseCrownIcon(
+        Transform parent,
+        Vector2 position)
+    {
+        RectTransform root = CreateRect("ScoreIcon", parent);
+        SetRect(root, position, new Vector2(90f, 80f));
+        Color gold = new Color(1f, 0.78f, 0.05f, 1f);
+
+        Image left = CreateImage(
+            root, "CrownLeft", new Vector2(-24f, 5f),
+            new Vector2(20f, 58f), gold, false);
+        left.rectTransform.localEulerAngles =
+            new Vector3(0f, 0f, -25f);
+        Image right = CreateImage(
+            root, "CrownRight", new Vector2(24f, 5f),
+            new Vector2(20f, 58f), gold, false);
+        right.rectTransform.localEulerAngles =
+            new Vector3(0f, 0f, 25f);
+        CreateImage(
+            root, "CrownCenter", new Vector2(0f, 3f),
+            new Vector2(22f, 64f), gold, false);
+        CreateImage(
+            root, "CrownBase", new Vector2(0f, -25f),
+            new Vector2(76f, 18f), gold, false);
+    }
+
+    private static void CreatePauseTokenIcon(
+        Transform parent,
+        Vector2 position)
+    {
+        Image coin = CreateResourceImage(
+            parent,
+            "TokenIcon",
+            "CustomCoin",
+            position,
+            new Vector2(82f, 82f));
+
+        if (coin.sprite != null)
+        {
+            return;
+        }
+
+        coin.sprite = GetCircleSprite();
+        coin.color = new Color(1f, 0.72f, 0.04f, 1f);
+        CreateImage(
+            coin.transform,
+            "TokenInner",
+            Vector2.zero,
+            new Vector2(56f, 56f),
+            new Color(1f, 0.88f, 0.16f, 1f),
+            true);
+    }
+
+    private static void CreatePauseTitleAccents(Transform parent)
+    {
+        for (int side = -1; side <= 1; side += 2)
+        {
+            for (int index = 0; index < 3; index++)
+            {
+                Image accent = CreateImage(
+                    parent,
+                    "PauseTitleAccent",
+                    new Vector2(
+                        side * (415f + index * 13f),
+                        650f + (index - 1) * 31f),
+                    new Vector2(44f, 12f),
+                    new Color(1f, 1f, 1f, 0.92f),
+                    false);
+                accent.rectTransform.localEulerAngles =
+                    new Vector3(
+                        0f,
+                        0f,
+                        side * (index - 1) * 22f);
+            }
+        }
     }
 
     private void BuildGameplayOverlay()
@@ -1683,48 +2126,171 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         resultRewardGranted = false;
         lastRunReward = 0;
+        pauseActionInProgress = false;
+        GameAudioController.SetPaused(false);
         HideAllScreens();
         gameplayOverlay.SetActive(true);
         menuController ??= FindAnyObjectByType<MainMenuController>();
+        menuController?.SetGameplayPaused(false);
         menuController?.StartGame();
     }
 
     private void PauseGame()
     {
-        if (gameManager != null && gameManager.IsGameOver)
+        if (pauseActionInProgress ||
+            (gameManager != null && gameManager.IsGameOver) ||
+            (pauseScreen != null && pauseScreen.activeSelf))
         {
             return;
         }
 
+        menuController ??= FindAnyObjectByType<MainMenuController>();
+        scoreController ??= FindAnyObjectByType<ScoreController>();
+        menuController?.SetGameplayPaused(true);
+        GameAudioController.SetPaused(true);
         Time.timeScale = 0f;
         gameplayOverlay.SetActive(false);
         HideAllScreens();
         pauseScreen.SetActive(true);
+        pauseScreen.transform.SetAsLastSibling();
+        RefreshPauseStats();
+        pauseAnimator?.PlayShow();
     }
 
     private void ResumeGame()
     {
+        if (pauseActionInProgress)
+        {
+            return;
+        }
+
+        pauseActionInProgress = true;
+        if (pauseAnimator != null)
+        {
+            pauseAnimator.PlayHide(CompleteResume);
+            return;
+        }
+
+        CompleteResume();
+    }
+
+    private void CompleteResume()
+    {
         HideAllScreens();
         gameplayOverlay.SetActive(true);
+        menuController ??= FindAnyObjectByType<MainMenuController>();
+        menuController?.SetGameplayPaused(false);
+        GameAudioController.SetPaused(false);
         Time.timeScale = 1f;
+        pauseActionInProgress = false;
     }
 
     private void RestartGame()
     {
-        Time.timeScale = 1f;
+        if (!BeginPauseExit())
+        {
+            return;
+        }
+
+        if (pauseAnimator != null)
+        {
+            pauseAnimator.PlayHide(CompleteRestart);
+            return;
+        }
+
+        CompleteRestart();
+    }
+
+    private void CompleteRestart()
+    {
+        PreparePauseSceneTransition();
         gameManager ??= GameManager.Instance ?? FindAnyObjectByType<GameManager>();
-        gameManager?.RestartGame();
+        if (gameManager == null)
+        {
+            RestorePauseAfterFailedSceneAction();
+            return;
+        }
+
+        gameManager.RestartGame();
     }
 
     private void ReturnToMainMenu()
     {
-        Time.timeScale = 1f;
+        if (!BeginPauseExit())
+        {
+            return;
+        }
+
+        if (pauseAnimator != null)
+        {
+            pauseAnimator.PlayHide(CompleteReturnToMainMenu);
+            return;
+        }
+
+        CompleteReturnToMainMenu();
+    }
+
+    private void CompleteReturnToMainMenu()
+    {
+        PreparePauseSceneTransition();
         gameManager ??= GameManager.Instance ?? FindAnyObjectByType<GameManager>();
-        gameManager?.ReturnToMainMenu();
+        if (gameManager == null)
+        {
+            RestorePauseAfterFailedSceneAction();
+            return;
+        }
+
+        gameManager.ReturnToMainMenu();
+    }
+
+    private void OpenPauseSettings()
+    {
+        if (pauseActionInProgress)
+        {
+            return;
+        }
+
+        ShowSettingsScreen(SettingsReturnTarget.Pause);
+    }
+
+    private bool BeginPauseExit()
+    {
+        if (pauseActionInProgress)
+        {
+            return false;
+        }
+
+        pauseActionInProgress = true;
+        return true;
+    }
+
+    private void PreparePauseSceneTransition()
+    {
+        menuController ??= FindAnyObjectByType<MainMenuController>();
+        menuController?.SetGameplayPaused(false);
+        GameAudioController.SetPaused(false);
+        Time.timeScale = 1f;
+    }
+
+    private void RestorePauseAfterFailedSceneAction()
+    {
+        pauseActionInProgress = false;
+        menuController?.SetGameplayPaused(true);
+        GameAudioController.SetPaused(true);
+        Time.timeScale = 0f;
+        if (pauseScreen != null)
+        {
+            pauseScreen.SetActive(true);
+            pauseAnimator?.PlayShow();
+        }
     }
 
     private void ShowMainScreen()
     {
+        pauseActionInProgress = false;
+        GameAudioController.SetPaused(false);
+        menuController ??= FindAnyObjectByType<MainMenuController>();
+        menuController?.SetGameplayPaused(false);
         Time.timeScale = 0f;
         HideAllScreens();
         gameplayOverlay.SetActive(false);
@@ -1766,6 +2332,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         {
             HideAllScreens();
             pauseScreen.SetActive(true);
+            RefreshPauseStats();
+            pauseAnimator?.PlayShow();
             return;
         }
 
@@ -2008,6 +2576,24 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
     }
 
+    private void RefreshPauseStats()
+    {
+        scoreController ??= FindAnyObjectByType<ScoreController>();
+        if (pauseScoreText != null)
+        {
+            int score = scoreController != null
+                ? scoreController.CurrentScore
+                : 0;
+            pauseScoreText.text = score.ToString("N0");
+        }
+
+        if (pauseTokenText != null)
+        {
+            pauseTokenText.text =
+                BalloonDogEconomy.Coins.ToString("N0");
+        }
+    }
+
     private void RefreshPersistentViews()
     {
         int coins = BalloonDogEconomy.Coins;
@@ -2059,6 +2645,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         RefreshWheelView();
         RefreshSettingsViews();
+        RefreshPauseStats();
     }
 
     private void RefreshWheelView()
@@ -2627,6 +3214,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (pauseScreen != null && pauseScreen.activeSelf)
+        {
+            menuController?.SetGameplayPaused(false);
+            GameAudioController.SetPaused(false);
+            Time.timeScale = 1f;
+        }
+
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         if (economySubscribed)
         {
