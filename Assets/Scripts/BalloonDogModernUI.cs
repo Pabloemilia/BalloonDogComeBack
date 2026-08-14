@@ -1380,11 +1380,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         scaler.matchWidthOrHeight = 0.5f;
 
-        pauseSafeRoot = CreateRect("PauseSafeArea", pauseCanvasObject.transform);
-        Stretch(pauseSafeRoot);
-        pauseSafeRoot.gameObject.AddComponent<BalloonDogSafeArea>();
-
-        RectTransform root = CreateRect("ModernPauseScreen", pauseSafeRoot);
+        RectTransform root = CreateRect("ModernPauseScreen", pauseCanvasObject.transform);
         Stretch(root);
         pauseScreen = root.gameObject;
 
@@ -1394,15 +1390,15 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             GetResourceSprite("ModernUI/SecondaryGradientBackground");
         background.type = Image.Type.Simple;
         background.preserveAspect = false;
-        background.color = new Color(1f, 1f, 1f, 0.82f);
+        background.color = Color.white;
         background.raycastTarget = true;
         if (background.sprite == null)
         {
             UiVerticalGradient fallbackGradient =
                 root.gameObject.AddComponent<UiVerticalGradient>();
             fallbackGradient.Configure(
-                new Color(0.05f, 0.32f, 0.94f, 0.82f),
-                new Color(0.18f, 0.94f, 0.48f, 0.82f));
+                new Color(0.04f, 0.27f, 0.94f, 1f),
+                new Color(0.23f, 0.96f, 0.44f, 1f));
         }
 
         Image softTint = CreateImage(
@@ -1410,7 +1406,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "BackgroundOverlay",
             Vector2.zero,
             new Vector2(1080f, 1920f),
-            new Color(0.01f, 0.25f, 0.60f, 0.12f),
+            new Color(0.01f, 0.31f, 0.64f, 0.10f),
             false);
         Stretch(softTint.rectTransform);
 
@@ -1451,34 +1447,38 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(410f, -690f), new Vector2(250f, 146f),
             0.09f, 9f, 13f, 17.8f, 0.82f, 1.9f);
 
-        RectTransform content = CreateRect("PauseContent", root);
+        pauseSafeRoot = CreateRect("PauseSafeArea", root);
+        Stretch(pauseSafeRoot);
+        pauseSafeRoot.gameObject.AddComponent<BalloonDogSafeArea>();
+
+        RectTransform content = CreateRect("PauseContent", pauseSafeRoot);
         Stretch(content);
 
-        TMP_Text title = CreateText(
+        TMP_Text title = CreatePauseText(
             content,
             "PauseTitle",
             "PAUSED",
-            new Vector2(0f, 650f),
-            new Vector2(820f, 170f),
-            116f,
+            new Vector2(0f, 600f),
+            new Vector2(840f, 185f),
+            124f,
             Color.white,
-            FontStyles.Bold,
+            BalloonDogFredokaFont.Weight.Bold,
             TextAlignmentOptions.Center);
         title.enableAutoSizing = true;
-        title.fontSizeMin = 78f;
-        title.fontSizeMax = 116f;
+        title.fontSizeMin = 86f;
+        title.fontSizeMax = 124f;
         title.overflowMode = TextOverflowModes.Overflow;
         AddTextShadow(
             title,
             new Color(0.01f, 0.16f, 0.46f, 0.58f),
             new Vector2(0f, -9f));
-        CreatePauseTitleAccents(content);
+        CreatePauseTitleAccents(content, 600f);
 
         RectTransform stats = CreateCard(
             content,
             "StatsPanel",
-            new Vector2(0f, 395f),
-            new Vector2(780f, 220f),
+            new Vector2(0f, 335f),
+            new Vector2(800f, 235f),
             new Color(0.22f, 0.72f, 0.95f, 0.32f),
             new Color(0.75f, 0.94f, 1f, 0.42f));
         UiVerticalGradient statsGradient =
@@ -1488,48 +1488,48 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.05f, 0.67f, 0.85f, 0.38f));
         CreateImage(
             stats, "StatsDivider", Vector2.zero,
-            new Vector2(3f, 132f),
+            new Vector2(3f, 145f),
             new Color(1f, 1f, 1f, 0.34f), false);
 
-        CreateText(
+        CreatePauseText(
             stats, "ScoreLabel", "SCORE",
-            new Vector2(-195f, 53f),
+            new Vector2(-200f, 60f),
             new Vector2(260f, 52f),
             37f,
             new Color(0.02f, 0.32f, 0.80f, 1f),
-            FontStyles.Bold,
+            BalloonDogFredokaFont.Weight.SemiBold,
             TextAlignmentOptions.Center);
-        pauseScoreText = CreateText(
+        pauseScoreText = CreatePauseText(
             stats, "ScoreValue", "0",
-            new Vector2(-170f, -42f),
+            new Vector2(-170f, -43f),
             new Vector2(280f, 88f),
-            58f, Color.white,
-            FontStyles.Bold,
+            62f, Color.white,
+            BalloonDogFredokaFont.Weight.Bold,
             TextAlignmentOptions.Center);
         pauseScoreText.enableAutoSizing = true;
         pauseScoreText.fontSizeMin = 36f;
-        pauseScoreText.fontSizeMax = 58f;
+        pauseScoreText.fontSizeMax = 62f;
         CreatePauseCrownIcon(
-            stats, new Vector2(-320f, -38f));
+            stats, new Vector2(-320f, -40f));
 
-        CreateText(
+        CreatePauseText(
             stats, "TokenLabel", "TOKENS",
-            new Vector2(205f, 53f),
+            new Vector2(205f, 60f),
             new Vector2(280f, 52f),
             37f,
             new Color(0.02f, 0.32f, 0.80f, 1f),
-            FontStyles.Bold,
+            BalloonDogFredokaFont.Weight.SemiBold,
             TextAlignmentOptions.Center);
-        pauseTokenText = CreateText(
+        pauseTokenText = CreatePauseText(
             stats, "TokenValue", "0",
-            new Vector2(235f, -42f),
+            new Vector2(235f, -43f),
             new Vector2(255f, 88f),
-            58f, Color.white,
-            FontStyles.Bold,
+            62f, Color.white,
+            BalloonDogFredokaFont.Weight.Bold,
             TextAlignmentOptions.Center);
         pauseTokenText.enableAutoSizing = true;
         pauseTokenText.fontSizeMin = 36f;
-        pauseTokenText.fontSizeMax = 58f;
+        pauseTokenText.fontSizeMax = 62f;
         CreatePauseTokenIcon(
             stats, new Vector2(90f, -38f));
 
@@ -1537,56 +1537,56 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "ModernResumeButton",
             "RESUME",
-            "▶",
-            new Vector2(0f, 105f),
-            new Vector2(700f, 155f),
-            new Color(0.16f, 0.88f, 0.25f, 1f),
-            new Color(0.04f, 0.42f, 0.17f, 1f),
+            BalloonDogPauseIconGraphic.IconType.Play,
+            new Vector2(0f, 35f),
+            new Vector2(740f, 170f),
+            new Color(0.43f, 1f, 0.12f, 1f),
+            new Color(0.02f, 0.77f, 0.32f, 1f),
             ResumeGame,
-            50f);
+            56f);
         Button restart = CreatePauseActionButton(
             content,
             "PauseRestartButtonModern",
             "RESTART",
-            "↻",
-            new Vector2(0f, -115f),
-            new Vector2(650f, 122f),
-            new Color(0.18f, 0.54f, 0.98f, 1f),
-            new Color(0.04f, 0.29f, 0.78f, 1f),
+            BalloonDogPauseIconGraphic.IconType.Restart,
+            new Vector2(0f, -185f),
+            new Vector2(700f, 132f),
+            new Color(0.35f, 0.68f, 1f, 1f),
+            new Color(0.04f, 0.36f, 0.91f, 1f),
             RestartGame,
-            39f);
+            43f);
         Button settings = CreatePauseActionButton(
             content,
             "PauseSettingsButton",
             "SETTINGS",
-            "⚙",
-            new Vector2(0f, -275f),
-            new Vector2(650f, 122f),
-            new Color(0.16f, 0.62f, 0.95f, 1f),
-            new Color(0.03f, 0.34f, 0.76f, 1f),
+            BalloonDogPauseIconGraphic.IconType.Settings,
+            new Vector2(0f, -355f),
+            new Vector2(700f, 132f),
+            new Color(0.31f, 0.69f, 1f, 1f),
+            new Color(0.03f, 0.37f, 0.88f, 1f),
             OpenPauseSettings,
-            39f);
+            43f);
         Button mainMenu = CreatePauseActionButton(
             content,
             "PauseMenuButtonModern",
             "MAIN MENU",
-            "⌂",
-            new Vector2(0f, -435f),
-            new Vector2(650f, 122f),
-            new Color(0.12f, 0.53f, 0.91f, 1f),
-            new Color(0.02f, 0.28f, 0.70f, 1f),
+            BalloonDogPauseIconGraphic.IconType.Home,
+            new Vector2(0f, -525f),
+            new Vector2(700f, 132f),
+            new Color(0.28f, 0.66f, 0.98f, 1f),
+            new Color(0.03f, 0.34f, 0.83f, 1f),
             ReturnToMainMenu,
-            38f);
+            42f);
 
-        TMP_Text hint = CreateText(
+        TMP_Text hint = CreatePauseText(
             content,
             "PauseHint",
             "—  GAME IS SAFE  —",
-            new Vector2(0f, -610f),
+            new Vector2(0f, -705f),
             new Vector2(620f, 52f),
             26f,
             new Color(0.02f, 0.48f, 0.55f, 0.82f),
-            FontStyles.Bold,
+            BalloonDogFredokaFont.Weight.Medium,
             TextAlignmentOptions.Center);
         hint.characterSpacing = 2f;
 
@@ -1683,7 +1683,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Transform parent,
         string name,
         string label,
-        string icon,
+        BalloonDogPauseIconGraphic.IconType icon,
         Vector2 position,
         Vector2 size,
         Color topColor,
@@ -1693,6 +1693,19 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         RectTransform stage = CreateRect(name + "Stage", parent);
         SetRect(stage, position, size);
+
+        Image depth = CreateImage(
+            stage,
+            "ButtonDepth",
+            new Vector2(0f, -14f),
+            new Vector2(size.x, size.y - 2f),
+            new Color(
+                bottomColor.r * 0.48f,
+                bottomColor.g * 0.58f,
+                bottomColor.b * 0.72f,
+                0.92f),
+            false);
+        depth.transform.SetAsFirstSibling();
 
         Button button = CreateButton(
             stage,
@@ -1704,6 +1717,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             Color.white,
             action,
             fontSize);
+        RectTransform buttonRect = button.transform as RectTransform;
+        if (buttonRect != null)
+        {
+            buttonRect.anchoredPosition = new Vector2(0f, 5f);
+            buttonRect.sizeDelta = new Vector2(size.x, size.y - 10f);
+        }
 
         Image baseImage = button.GetComponent<Image>();
         UiVerticalGradient gradient =
@@ -1713,9 +1732,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Image gloss = CreateImage(
             button.transform,
             "PauseButtonGloss",
-            new Vector2(0f, size.y * 0.23f),
-            new Vector2(size.x * 0.90f, size.y * 0.34f),
-            new Color(1f, 1f, 1f, 0.17f),
+            new Vector2(0f, size.y * 0.24f),
+            new Vector2(size.x * 0.88f, size.y * 0.27f),
+            new Color(1f, 1f, 1f, 0.22f),
             false);
         gloss.transform.SetAsFirstSibling();
 
@@ -1724,31 +1743,60 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         {
             SetRect(
                 text.rectTransform,
-                new Vector2(60f, 0f),
-                new Vector2(size.x - 205f, size.y - 22f));
+                new Vector2(65f, 0f),
+                new Vector2(size.x - 230f, size.y - 26f));
             text.enableAutoSizing = true;
             text.fontSizeMin = Mathf.Max(24f, fontSize * 0.68f);
             text.fontSizeMax = fontSize;
             text.overflowMode = TextOverflowModes.Overflow;
-            text.margin = new Vector4(8f, 4f, 8f, 6f);
+            text.margin = new Vector4(12f, 5f, 12f, 8f);
+            BalloonDogFredokaFont.Apply(
+                text,
+                BalloonDogFredokaFont.Weight.Bold);
+            AddTextShadow(
+                text,
+                new Color(0.01f, 0.16f, 0.42f, 0.38f),
+                new Vector2(0f, -4f));
         }
 
-        TMP_Text iconText = CreateText(
-            button.transform,
-            "IconGlyph",
-            icon,
-            new Vector2(-size.x * 0.32f, 2f),
-            new Vector2(112f, size.y - 18f),
-            fontSize * 1.25f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-        iconText.overflowMode = TextOverflowModes.Overflow;
-        AddTextShadow(
-            iconText,
+        RectTransform iconRect = CreateRect("PauseVectorIcon", button.transform);
+        SetRect(
+            iconRect,
+            new Vector2(-size.x * 0.31f, 2f),
+            new Vector2(104f, Mathf.Min(104f, size.y - 34f)));
+        BalloonDogPauseIconGraphic iconGraphic =
+            iconRect.gameObject.AddComponent<BalloonDogPauseIconGraphic>();
+        iconGraphic.Configure(icon, Color.white);
+        AddGraphicShadow(
+            iconGraphic,
             new Color(0.01f, 0.16f, 0.42f, 0.45f),
             new Vector2(0f, -4f));
         return button;
+    }
+
+    private static TMP_Text CreatePauseText(
+        Transform parent,
+        string name,
+        string text,
+        Vector2 position,
+        Vector2 size,
+        float fontSize,
+        Color color,
+        BalloonDogFredokaFont.Weight weight,
+        TextAlignmentOptions alignment)
+    {
+        TMP_Text label = CreateText(
+            parent,
+            name,
+            text,
+            position,
+            size,
+            fontSize,
+            color,
+            FontStyles.Normal,
+            alignment);
+        BalloonDogFredokaFont.Apply(label, weight);
+        return label;
     }
 
     private static void CreatePauseCrownIcon(
@@ -1756,25 +1804,15 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Vector2 position)
     {
         RectTransform root = CreateRect("ScoreIcon", parent);
-        SetRect(root, position, new Vector2(90f, 80f));
+        SetRect(root, position, new Vector2(88f, 78f));
         Color gold = new Color(1f, 0.78f, 0.05f, 1f);
-
-        Image left = CreateImage(
-            root, "CrownLeft", new Vector2(-24f, 5f),
-            new Vector2(20f, 58f), gold, false);
-        left.rectTransform.localEulerAngles =
-            new Vector3(0f, 0f, -25f);
-        Image right = CreateImage(
-            root, "CrownRight", new Vector2(24f, 5f),
-            new Vector2(20f, 58f), gold, false);
-        right.rectTransform.localEulerAngles =
-            new Vector3(0f, 0f, 25f);
-        CreateImage(
-            root, "CrownCenter", new Vector2(0f, 3f),
-            new Vector2(22f, 64f), gold, false);
-        CreateImage(
-            root, "CrownBase", new Vector2(0f, -25f),
-            new Vector2(76f, 18f), gold, false);
+        BalloonDogPauseIconGraphic crown =
+            root.gameObject.AddComponent<BalloonDogPauseIconGraphic>();
+        crown.Configure(BalloonDogPauseIconGraphic.IconType.Crown, gold);
+        AddGraphicShadow(
+            crown,
+            new Color(0.62f, 0.30f, 0.01f, 0.52f),
+            new Vector2(0f, -4f));
     }
 
     private static void CreatePauseTokenIcon(
@@ -1804,7 +1842,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             true);
     }
 
-    private static void CreatePauseTitleAccents(Transform parent)
+    private static void CreatePauseTitleAccents(Transform parent, float titleY)
     {
         for (int side = -1; side <= 1; side += 2)
         {
@@ -1815,7 +1853,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                     "PauseTitleAccent",
                     new Vector2(
                         side * (415f + index * 13f),
-                        650f + (index - 1) * 31f),
+                        titleY + (index - 1) * 31f),
                     new Vector2(44f, 12f),
                     new Color(1f, 1f, 1f, 0.92f),
                     false);

@@ -109,12 +109,24 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
         foreach (TMP_Text text in screen.GetComponentsInChildren<TMP_Text>(true))
         {
-            if (text == null || text.name.Contains("IconGlyph"))
+            if (text == null)
             {
                 continue;
             }
 
-            ApplySmoothLowPolyText(text, text.characterSpacing);
+            BalloonDogFredokaFont.Weight weight =
+                BalloonDogFredokaFont.Weight.Bold;
+            if (text.name.Contains("PauseHint"))
+            {
+                weight = BalloonDogFredokaFont.Weight.Medium;
+            }
+            else if (text.name.Contains("ScoreLabel") ||
+                     text.name.Contains("TokenLabel"))
+            {
+                weight = BalloonDogFredokaFont.Weight.SemiBold;
+            }
+
+            BalloonDogFredokaFont.Apply(text, weight);
         }
     }
 
