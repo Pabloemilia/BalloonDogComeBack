@@ -24,6 +24,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
     private static Sprite gearIconSprite;
     private static Sprite marketIconSprite;
     private static Sprite skinsIconSprite;
+    private static readonly HashSet<int> PolishedTextIds = new HashSet<int>();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateRuntime()
@@ -72,6 +73,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
     {
         titleRoot = null;
         builtTitle = string.Empty;
+        PolishedTextIds.Clear();
         RemoveOld3DLetterObjects();
         LoadLetterSprites();
         RefreshNow();
@@ -90,6 +92,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             FixLevelSelector();
         }
 
+        FixSecondaryScreens();
         FixGameplayHud();
         FixResultScreen();
     }
@@ -243,7 +246,13 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
                 image.raycastTarget = false;
 
                 BalloonDogFloatingLetter floatAnim = letterObject.AddComponent<BalloonDogFloatingLetter>();
-                floatAnim.Configure(index, Mathf.Lerp(10f, 18f, Random.value), Mathf.Lerp(1.0f, 1.8f, Random.value), Random.Range(0f, 6.28318f));
+                // Keep the playful balloon motion subtle. The old 10-18 px
+                // amplitude could pull an O far away from the rest of the word.
+                floatAnim.Configure(
+                    index,
+                    Mathf.Lerp(2.5f, 4.5f, Random.value),
+                    Mathf.Lerp(0.65f, 0.95f, Random.value),
+                    Random.Range(0f, 6.28318f));
             }
 
             cursor += width + spacing;
@@ -333,6 +342,221 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             settings.sizeDelta = new Vector2(112f, 112f);
             StyleIconButton(settings, new Color(0.24f, 0.50f, 0.94f, 1f), GetGearIconSprite());
             SoftenPillOutline(settings, 0.02f, 0.10f);
+        }
+    }
+
+    private void FixSecondaryScreens()
+    {
+        StyleSecondaryTypography("ModernSettingsScreen");
+        StyleSecondaryTypography("ModernSkinsScreen");
+        StyleSecondaryTypography("ModernMarketScreen");
+
+        StyleSecondaryCoin("SettingsTokens");
+        StyleSecondaryCoin("SkinsTokens");
+        StyleSecondaryCoin("MarketTokens");
+
+        StyleSecondaryTopButton("SettingsTopButton", true);
+        StyleSecondaryTopButton("SkinsTopButton", false);
+        StyleSecondaryTopButton("MarketTopButton", false);
+
+        StyleSettingsControls();
+        StyleSkinControls();
+
+        StyleNavigationButton("SettingsClose", "DONE", new Vector2(0f, -1035f), new Vector2(330f, 100f));
+        StyleNavigationButton("SkinsMarket", "MARKET", new Vector2(-190f, -1035f), new Vector2(300f, 100f));
+        StyleNavigationButton("SkinsClose", "HOME", new Vector2(190f, -1035f), new Vector2(300f, 100f));
+        StyleNavigationButton("MarketClose", "HOME", new Vector2(-190f, -1035f), new Vector2(300f, 100f));
+        StyleNavigationButton("MarketSkins", "SKINS", new Vector2(190f, -1035f), new Vector2(300f, 100f));
+    }
+
+    private static void StyleSecondaryTypography(string screenName)
+    {
+        GameObject screen = FindSceneObject(screenName);
+        if (screen == null)
+        {
+            return;
+        }
+
+        foreach (TMP_Text text in screen.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (text == null)
+            {
+                continue;
+            }
+
+            ApplySmoothLowPolyText(text, text.characterSpacing);
+        }
+    }
+
+    private static void StyleSecondaryCoin(string objectName)
+    {
+        RectTransform coinCard = FindRect(objectName);
+        TMP_Text coin = FindComponent<TMP_Text>(objectName);
+        if (coinCard != null)
+        {
+            coinCard.anchorMin = new Vector2(0f, 1f);
+            coinCard.anchorMax = new Vector2(0f, 1f);
+            coinCard.pivot = new Vector2(0f, 1f);
+            coinCard.sizeDelta = new Vector2(258f, 86f);
+            coinCard.anchoredPosition = new Vector2(18f, -14f);
+            EnsurePillBackground(
+                coinCard,
+                new Color(0.91f, 0.86f, 0.63f, 0.96f),
+                new Color(1f, 1f, 1f, 0.03f));
+            SoftenPillOutline(coinCard, 0.015f, 0.06f);
+            SetPillIcon(coinCard, GetCoinIconSprite(), Color.white, 44f, 34f);
+        }
+
+        if (coin == null)
+        {
+            return;
+        }
+
+        coin.text = BalloonDogEconomy.Coins.ToString("N0");
+        coin.fontSize = 38f;
+        coin.fontStyle = FontStyles.Normal;
+        coin.fontWeight = FontWeight.Bold;
+        coin.alignment = TextAlignmentOptions.MidlineLeft;
+        coin.color = new Color(0.32f, 0.18f, 0.02f, 1f);
+        coin.enableWordWrapping = false;
+        ApplySmoothLowPolyText(coin, 1.2f);
+
+        RectTransform labelRect = coin.rectTransform;
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
+        coin.margin = new Vector4(76f, 0f, 18f, 0f);
+    }
+
+    private static void StyleSecondaryTopButton(string objectName, bool closeButton)
+    {
+        RectTransform rect = FindRect(objectName);
+        if (rect == null)
+        {
+            return;
+        }
+
+        rect.anchorMin = new Vector2(1f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(1f, 1f);
+        rect.anchoredPosition = new Vector2(-10f, -10f);
+        rect.sizeDelta = new Vector2(112f, 112f);
+
+        Color blue = new Color(0.24f, 0.50f, 0.94f, 1f);
+        if (closeButton)
+        {
+            StyleButton(rect, blue, "X", 38f);
+            Transform oldIcon = rect.Find("ThemeIcon");
+            if (oldIcon != null)
+            {
+                oldIcon.gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            StyleIconButton(rect, blue, GetGearIconSprite());
+        }
+
+        SoftenPillOutline(rect, 0.02f, 0.10f);
+    }
+
+    private static void StyleSettingsControls()
+    {
+        RectTransform privacy = FindRect("SettingsPrivacyButton");
+        if (privacy != null)
+        {
+            privacy.sizeDelta = new Vector2(700f, 104f);
+            StyleButton(privacy, new Color(0.35f, 0.84f, 0.23f, 1f), "PRIVACY NOTICE", 28f);
+        }
+
+        StyleToggleButton("SFXToggle");
+        StyleToggleButton("VIBRATIONToggle");
+    }
+
+    private static void StyleToggleButton(string objectName)
+    {
+        RectTransform rect = FindRect(objectName);
+        TMP_Text label = FindComponent<TMP_Text>(objectName);
+        if (rect == null || label == null)
+        {
+            return;
+        }
+
+        bool enabled = label.text == "ON";
+        rect.sizeDelta = new Vector2(190f, 76f);
+        StyleButton(
+            rect,
+            enabled
+                ? new Color(0.35f, 0.84f, 0.23f, 1f)
+                : new Color(0.08f, 0.31f, 0.46f, 1f),
+            enabled ? "ON" : "OFF",
+            23f);
+    }
+
+    private static void StyleSkinControls()
+    {
+        GameObject screen = FindSceneObject("ModernSkinsScreen");
+        if (screen == null)
+        {
+            return;
+        }
+
+        foreach (Button button in screen.GetComponentsInChildren<Button>(true))
+        {
+            if (button == null || button.name != "SkinAction")
+            {
+                continue;
+            }
+
+            RectTransform rect = button.transform as RectTransform;
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            if (rect == null || label == null)
+            {
+                continue;
+            }
+
+            string value = label.text;
+            Color fill;
+            if (value == "EQUIPPED")
+            {
+                fill = new Color(0.22f, 0.68f, 0.31f, 1f);
+            }
+            else if (value == "EQUIP")
+            {
+                fill = new Color(0.18f, 0.54f, 0.96f, 1f);
+            }
+            else
+            {
+                fill = new Color(0.08f, 0.31f, 0.46f, 1f);
+            }
+
+            rect.sizeDelta = new Vector2(310f, 80f);
+            StyleButton(rect, fill, value, 25f);
+        }
+    }
+
+    private static void StyleNavigationButton(
+        string objectName,
+        string label,
+        Vector2 position,
+        Vector2 size)
+    {
+        RectTransform rect = FindRect(objectName);
+        if (rect == null)
+        {
+            return;
+        }
+
+        rect.anchoredPosition = position;
+        rect.sizeDelta = size;
+        StyleButton(rect, new Color(0.18f, 0.54f, 0.96f, 1f), label, 27f);
+        SoftenPillOutline(rect, 0.035f, 0.12f);
+
+        Transform oldIcon = rect.Find("ThemeIcon");
+        if (oldIcon != null)
+        {
+            oldIcon.gameObject.SetActive(false);
         }
     }
 
@@ -602,6 +826,11 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         text.wordSpacing = 0f;
         text.lineSpacing = 0f;
 
+        if (!PolishedTextIds.Add(text.GetInstanceID()))
+        {
+            return;
+        }
+
         Material sourceMaterial = text.fontSharedMaterial != null ? text.fontSharedMaterial : text.fontMaterial;
         if (sourceMaterial == null)
         {
@@ -732,6 +961,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             colors.highlightedColor = new Color(1f, 1f, 1f, 0.98f);
             colors.pressedColor = new Color(0.92f, 0.92f, 0.95f, 1f);
             colors.selectedColor = Color.white;
+            colors.disabledColor = Color.white;
             colors.fadeDuration = 0.08f;
             button.colors = colors;
         }
