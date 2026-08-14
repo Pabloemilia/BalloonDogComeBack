@@ -24,7 +24,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
     private static Sprite gearIconSprite;
     private static Sprite marketIconSprite;
     private static Sprite skinsIconSprite;
-    private static readonly HashSet<int> PolishedTextIds = new HashSet<int>();
+    private static readonly HashSet<EntityId> PolishedTextIds = new HashSet<EntityId>();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateRuntime()
@@ -826,7 +826,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         text.wordSpacing = 0f;
         text.lineSpacing = 0f;
 
-        if (!PolishedTextIds.Add(text.GetInstanceID()))
+        if (!PolishedTextIds.Add(text.GetEntityId()))
         {
             return;
         }
