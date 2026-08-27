@@ -13,7 +13,7 @@ using UnityEngine.UI;
 public sealed class BalloonDogPauseDecorationPolish : MonoBehaviour
 {
     private const string RuntimeObjectName = "__BalloonDogPauseDecorationPolish";
-    private readonly HashSet<int> processedLayers = new HashSet<int>();
+    private readonly HashSet<Transform> processedLayers = new HashSet<Transform>();
     private Coroutine scanRoutine;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -70,11 +70,10 @@ public sealed class BalloonDogPauseDecorationPolish : MonoBehaviour
             Transform layer = FindDecorativeLayer();
             if (layer != null)
             {
-                int instanceId = layer.gameObject.GetInstanceID();
-                if (!processedLayers.Contains(instanceId))
+                if (!processedLayers.Contains(layer))
                 {
                     PolishLayer(layer);
-                    processedLayers.Add(instanceId);
+                    processedLayers.Add(layer);
                 }
 
                 scanRoutine = null;
