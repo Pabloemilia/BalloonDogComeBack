@@ -114,19 +114,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
                 continue;
             }
 
-            BalloonDogFredokaFont.Weight weight =
-                BalloonDogFredokaFont.Weight.Bold;
-            if (text.name.Contains("PauseHint"))
-            {
-                weight = BalloonDogFredokaFont.Weight.Medium;
-            }
-            else if (text.name.Contains("ScoreLabel") ||
-                     text.name.Contains("TokenLabel"))
-            {
-                weight = BalloonDogFredokaFont.Weight.SemiBold;
-            }
-
-            BalloonDogFredokaFont.Apply(text, weight);
+            BalloonDogTitanFont.Apply(text);
         }
     }
 

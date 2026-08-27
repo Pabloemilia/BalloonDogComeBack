@@ -1397,8 +1397,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             UiVerticalGradient fallbackGradient =
                 root.gameObject.AddComponent<UiVerticalGradient>();
             fallbackGradient.Configure(
-                new Color(0.04f, 0.27f, 0.94f, 1f),
-                new Color(0.23f, 0.96f, 0.44f, 1f));
+                new Color(0.08f, 0.62f, 0.96f, 1f),
+                new Color(0.15f, 0.88f, 0.78f, 1f));
         }
 
         Image softTint = CreateImage(
@@ -1406,7 +1406,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "BackgroundOverlay",
             Vector2.zero,
             new Vector2(1080f, 1920f),
-            new Color(0.01f, 0.31f, 0.64f, 0.10f),
+            new Color(0.02f, 0.38f, 0.68f, 0.08f),
             false);
         Stretch(softTint.rectTransform);
 
@@ -1415,36 +1415,36 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Stretch(decorativeLayer);
         CreatePauseCloud(
             decorativeLayer, "Cloud_01",
-            new Vector2(0f, 710f), 1.05f, 0.16f,
+            new Vector2(40f, 720f), new Vector2(440f, 285f), 0.16f,
             8f, 10f, 14.5f, 0.12f);
         CreatePauseCloud(
             decorativeLayer, "Cloud_02",
-            new Vector2(-420f, 500f), 0.72f, 0.12f,
+            new Vector2(-430f, 485f), new Vector2(330f, 220f), 0.12f,
             7f, 12f, 17.2f, 0.46f);
         CreatePauseCloud(
             decorativeLayer, "Cloud_03",
-            new Vector2(410f, -520f), 0.92f, 0.14f,
+            new Vector2(430f, -505f), new Vector2(390f, 260f), 0.14f,
             10f, 8f, 19.4f, 0.73f);
         CreatePauseCloud(
             decorativeLayer, "Cloud_04",
-            new Vector2(-390f, -700f), 0.68f, 0.11f,
+            new Vector2(-420f, -725f), new Vector2(305f, 205f), 0.11f,
             6f, 10f, 16.1f, 0.31f);
 
         CreatePauseDogDecoration(
             decorativeLayer, "BalloonDog_01",
-            new Vector2(-390f, 675f), new Vector2(270f, 158f),
+            new Vector2(-420f, 680f), new Vector2(330f, 300f),
             0.11f, 10f, 14f, 18.5f, 0.18f, 1.2f);
         CreatePauseDogDecoration(
             decorativeLayer, "BalloonDog_02",
-            new Vector2(390f, 610f), new Vector2(245f, 144f),
+            new Vector2(420f, 600f), new Vector2(290f, 265f),
             0.10f, 8f, 12f, 15.8f, 0.61f, 1.7f);
         CreatePauseDogDecoration(
             decorativeLayer, "BalloonDog_03",
-            new Vector2(-400f, -260f), new Vector2(290f, 170f),
+            new Vector2(-430f, -255f), new Vector2(320f, 290f),
             0.09f, 12f, 10f, 21.2f, 0.39f, 1.4f);
         CreatePauseDogDecoration(
             decorativeLayer, "BalloonDog_04",
-            new Vector2(410f, -690f), new Vector2(250f, 146f),
+            new Vector2(430f, -700f), new Vector2(300f, 275f),
             0.09f, 9f, 13f, 17.8f, 0.82f, 1.9f);
 
         pauseSafeRoot = CreateRect("PauseSafeArea", root);
@@ -1462,7 +1462,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(840f, 185f),
             124f,
             Color.white,
-            BalloonDogFredokaFont.Weight.Bold,
             TextAlignmentOptions.Center);
         title.enableAutoSizing = true;
         title.fontSizeMin = 86f;
@@ -1497,14 +1496,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(260f, 52f),
             37f,
             new Color(0.02f, 0.32f, 0.80f, 1f),
-            BalloonDogFredokaFont.Weight.SemiBold,
             TextAlignmentOptions.Center);
         pauseScoreText = CreatePauseText(
             stats, "ScoreValue", "0",
             new Vector2(-170f, -43f),
             new Vector2(280f, 88f),
             62f, Color.white,
-            BalloonDogFredokaFont.Weight.Bold,
             TextAlignmentOptions.Center);
         pauseScoreText.enableAutoSizing = true;
         pauseScoreText.fontSizeMin = 36f;
@@ -1518,14 +1515,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(280f, 52f),
             37f,
             new Color(0.02f, 0.32f, 0.80f, 1f),
-            BalloonDogFredokaFont.Weight.SemiBold,
             TextAlignmentOptions.Center);
         pauseTokenText = CreatePauseText(
             stats, "TokenValue", "0",
             new Vector2(235f, -43f),
             new Vector2(255f, 88f),
             62f, Color.white,
-            BalloonDogFredokaFont.Weight.Bold,
             TextAlignmentOptions.Center);
         pauseTokenText.enableAutoSizing = true;
         pauseTokenText.fontSizeMin = 36f;
@@ -1537,7 +1532,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "ModernResumeButton",
             "RESUME",
-            BalloonDogPauseIconGraphic.IconType.Play,
+            "PauseMenu/Icons/Play",
             new Vector2(0f, 35f),
             new Vector2(740f, 170f),
             new Color(0.43f, 1f, 0.12f, 1f),
@@ -1548,7 +1543,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "PauseRestartButtonModern",
             "RESTART",
-            BalloonDogPauseIconGraphic.IconType.Restart,
+            "PauseMenu/Icons/Restart",
             new Vector2(0f, -185f),
             new Vector2(700f, 132f),
             new Color(0.35f, 0.68f, 1f, 1f),
@@ -1559,7 +1554,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "PauseSettingsButton",
             "SETTINGS",
-            BalloonDogPauseIconGraphic.IconType.Settings,
+            "PauseMenu/Icons/Settings",
             new Vector2(0f, -355f),
             new Vector2(700f, 132f),
             new Color(0.31f, 0.69f, 1f, 1f),
@@ -1570,7 +1565,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "PauseMenuButtonModern",
             "MAIN MENU",
-            BalloonDogPauseIconGraphic.IconType.Home,
+            "PauseMenu/Icons/Home",
             new Vector2(0f, -525f),
             new Vector2(700f, 132f),
             new Color(0.28f, 0.66f, 0.98f, 1f),
@@ -1586,7 +1581,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(620f, 52f),
             26f,
             new Color(0.02f, 0.48f, 0.55f, 0.82f),
-            BalloonDogFredokaFont.Weight.Medium,
             TextAlignmentOptions.Center);
         hint.characterSpacing = 2f;
 
@@ -1610,36 +1604,24 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Transform parent,
         string name,
         Vector2 position,
-        float scale,
+        Vector2 size,
         float opacity,
         float horizontalAmplitude,
         float verticalAmplitude,
         float duration,
         float phase)
     {
-        RectTransform root = CreateRect(name, parent);
-        SetRect(root, position, new Vector2(220f, 110f) * scale);
-
-        Color cloudColor = new Color(1f, 1f, 1f, opacity);
-        CreateImage(
-            root, "CloudBase", new Vector2(0f, -20f) * scale,
-            new Vector2(190f, 58f) * scale,
-            cloudColor, false);
-        CreateImage(
-            root, "CloudLeft", new Vector2(-55f, 0f) * scale,
-            new Vector2(92f, 78f) * scale,
-            cloudColor, true);
-        CreateImage(
-            root, "CloudCenter", new Vector2(4f, 15f) * scale,
-            new Vector2(118f, 102f) * scale,
-            cloudColor, true);
-        CreateImage(
-            root, "CloudRight", new Vector2(66f, -2f) * scale,
-            new Vector2(86f, 72f) * scale,
-            cloudColor, true);
+        Image cloud = CreateResourceImage(
+            parent,
+            name,
+            "PauseMenu/Decor/CloudSilhouette",
+            position,
+            size);
+        cloud.color = new Color(1f, 1f, 1f, opacity);
+        cloud.preserveAspect = true;
 
         BalloonDogPauseDecorativeFloat motion =
-            root.gameObject.AddComponent<BalloonDogPauseDecorativeFloat>();
+            cloud.gameObject.AddComponent<BalloonDogPauseDecorativeFloat>();
         motion.Configure(
             horizontalAmplitude,
             verticalAmplitude,
@@ -1660,17 +1642,18 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         float phase,
         float rotationAmplitude)
     {
-        RectTransform rect = CreateRect(name, parent);
-        SetRect(rect, position, size);
-        RawImage image = rect.gameObject.AddComponent<RawImage>();
-        image.texture =
-            BalloonDogMarketSilhouetteRuntime.GetOrCreateSilhouetteTexture();
+        Image image = CreateResourceImage(
+            parent,
+            name,
+            "PauseMenu/Decor/BalloonDogSilhouette",
+            position,
+            size);
         image.color = new Color(1f, 1f, 1f, opacity);
         image.raycastTarget = false;
-        image.uvRect = new Rect(0f, 0f, 1f, 1f);
+        image.preserveAspect = true;
 
         BalloonDogPauseDecorativeFloat motion =
-            rect.gameObject.AddComponent<BalloonDogPauseDecorativeFloat>();
+            image.gameObject.AddComponent<BalloonDogPauseDecorativeFloat>();
         motion.Configure(
             horizontalAmplitude,
             verticalAmplitude,
@@ -1683,7 +1666,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Transform parent,
         string name,
         string label,
-        BalloonDogPauseIconGraphic.IconType icon,
+        string iconResourcePath,
         Vector2 position,
         Vector2 size,
         Color topColor,
@@ -1750,25 +1733,22 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             text.fontSizeMax = fontSize;
             text.overflowMode = TextOverflowModes.Overflow;
             text.margin = new Vector4(12f, 5f, 12f, 8f);
-            BalloonDogFredokaFont.Apply(
-                text,
-                BalloonDogFredokaFont.Weight.Bold);
+            BalloonDogTitanFont.Apply(text);
             AddTextShadow(
                 text,
                 new Color(0.01f, 0.16f, 0.42f, 0.38f),
                 new Vector2(0f, -4f));
         }
 
-        RectTransform iconRect = CreateRect("PauseVectorIcon", button.transform);
-        SetRect(
-            iconRect,
+        Image icon = CreateResourceImage(
+            button.transform,
+            "PauseButtonIcon",
+            iconResourcePath,
             new Vector2(-size.x * 0.31f, 2f),
             new Vector2(104f, Mathf.Min(104f, size.y - 34f)));
-        BalloonDogPauseIconGraphic iconGraphic =
-            iconRect.gameObject.AddComponent<BalloonDogPauseIconGraphic>();
-        iconGraphic.Configure(icon, Color.white);
+        icon.color = Color.white;
         AddGraphicShadow(
-            iconGraphic,
+            icon,
             new Color(0.01f, 0.16f, 0.42f, 0.45f),
             new Vector2(0f, -4f));
         return button;
@@ -1782,7 +1762,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Vector2 size,
         float fontSize,
         Color color,
-        BalloonDogFredokaFont.Weight weight,
         TextAlignmentOptions alignment)
     {
         TMP_Text label = CreateText(
@@ -1795,7 +1774,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             color,
             FontStyles.Normal,
             alignment);
-        BalloonDogFredokaFont.Apply(label, weight);
+        BalloonDogTitanFont.Apply(label);
         return label;
     }
 
@@ -1803,12 +1782,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Transform parent,
         Vector2 position)
     {
-        RectTransform root = CreateRect("ScoreIcon", parent);
-        SetRect(root, position, new Vector2(88f, 78f));
-        Color gold = new Color(1f, 0.78f, 0.05f, 1f);
-        BalloonDogPauseIconGraphic crown =
-            root.gameObject.AddComponent<BalloonDogPauseIconGraphic>();
-        crown.Configure(BalloonDogPauseIconGraphic.IconType.Crown, gold);
+        Image crown = CreateResourceImage(
+            parent,
+            "ScoreIcon",
+            "PauseMenu/Icons/Crown",
+            position,
+            new Vector2(88f, 78f));
+        crown.color = Color.white;
         AddGraphicShadow(
             crown,
             new Color(0.62f, 0.30f, 0.01f, 0.52f),
