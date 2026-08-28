@@ -1737,10 +1737,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             fallbackGradient.Configure(topColor, bottomColor);
         }
 
+        // The supplied background sprites already contain their intended soft
+        // shadow. Remove only the generic background shadow added by
+        // CreateButton so it cannot double the artwork; press feedback and all
+        // Button state tinting remain unchanged.
         foreach (Shadow shadow in button.GetComponents<Shadow>())
         {
-            shadow.effectColor = new Color(0.01f, 0.18f, 0.30f, 0.26f);
-            shadow.effectDistance = new Vector2(0f, -6f);
+            Destroy(shadow);
         }
 
         TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
@@ -3150,14 +3153,34 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             return null;
         }
 
+        bool resumeBackground = path.EndsWith("PauseButtonResume");
+        Rect spriteRect = resumeBackground
+            ? new Rect(31f, 108f, 1971f, 558f)
+            : new Rect(53f, 82f, 1944f, 522f);
+        Vector4 border = resumeBackground
+            ? new Vector4(325f, 215f, 325f, 215f)
+            : new Vector4(315f, 205f, 315f, 205f);
+
+        // Keep a safe fallback if the source artwork is replaced with a
+        // differently sized texture later.
+        if (spriteRect.xMax > texture.width || spriteRect.yMax > texture.height)
+        {
+            spriteRect = new Rect(0f, 0f, texture.width, texture.height);
+            border = new Vector4(
+                texture.width * 0.16f,
+                texture.height * 0.36f,
+                texture.width * 0.16f,
+                texture.height * 0.36f);
+        }
+
         Sprite sprite = Sprite.Create(
             texture,
-            new Rect(0f, 0f, texture.width, texture.height),
+            spriteRect,
             new Vector2(0.5f, 0.5f),
             100f,
             0,
             SpriteMeshType.FullRect,
-            new Vector4(86f, 72f, 86f, 72f));
+            border);
         sprite.name = path.Replace('/', '_') + "_9Slice";
         ResourceSprites[cacheKey] = sprite;
         return sprite;
