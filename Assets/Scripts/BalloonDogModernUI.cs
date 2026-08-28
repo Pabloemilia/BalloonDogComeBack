@@ -1556,7 +1556,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.02f, 0.77f, 0.32f, 1f),
             ResumeGame,
             56f,
-            96f);
+            96f,
+            36f);
         Button restart = CreatePauseActionButton(
             content,
             "PauseRestartButtonModern",
@@ -1704,7 +1705,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Color bottomColor,
         UnityAction action,
         float fontSize,
-        float iconSize)
+        float iconSize,
+        float iconOffsetX = 0f)
     {
         RectTransform stage = CreateRect(name + "Stage", parent);
         SetRect(stage, position, size);
@@ -1789,7 +1791,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             button.transform,
             "PauseButtonIcon",
             iconResourcePath,
-            new Vector2(-size.x * 0.31f, 2f),
+            new Vector2(-size.x * 0.31f + iconOffsetX, 2f),
             new Vector2(iconSize, iconSize));
         icon.color = Color.white;
         AddGraphicShadow(

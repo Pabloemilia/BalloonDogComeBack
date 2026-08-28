@@ -29,6 +29,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _BottomDepth: 0.18
     - _ColorMask: 15
     - _Softness: 0.55
     - _Stencil: 0
@@ -39,6 +40,7 @@ Material:
     - _UseUIAlphaClip: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _SatinColor: {r: 0.28, g: 0.78, b: 0.65, a: 1}
+    - _DepthUVRange: {r: 0, g: 1, b: 0, a: 0}
+    - _SatinColor: {r: 0.16, g: 0.68, b: 0.54, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

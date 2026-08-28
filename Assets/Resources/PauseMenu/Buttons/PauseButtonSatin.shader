@@ -8,6 +8,8 @@ Shader "BalloonDog/UI/Pause Button Satin"
         _Color ("Tint", Color) = (1,1,1,1)
         _SatinColor ("Satin Base Color", Color) = (0.04,0.62,0.91,1)
         _Softness ("Highlight Softening", Range(0,1)) = 0.55
+        _BottomDepth ("Bottom Edge Depth", Range(0,0.4)) = 0
+        _DepthUVRange ("Depth Sprite UV Y (min, max)", Vector) = (0,1,0,0)
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -75,6 +77,8 @@ Shader "BalloonDog/UI/Pause Button Satin"
             fixed4 _Color;
             fixed4 _SatinColor;
             half _Softness;
+            half _BottomDepth;
+            float4 _DepthUVRange;
             float4 _ClipRect;
             float _UIMaskSoftnessX;
             float _UIMaskSoftnessY;
@@ -109,6 +113,16 @@ Shader "BalloonDog/UI/Pause Button Satin"
                 half bodyWeight = smoothstep(0.5h, 0.95h, color.a);
                 color.rgb = lerp(color.rgb, _SatinColor.rgb,
                     saturate(_Softness) * bodyWeight);
+
+                // Enabled only by the mint material; zero is an exact no-op for
+                // the blue buttons. Shade the lower body, never its alpha/shadow.
+                // These standalone, full-texture sprites use UV Y 0..1. Keep
+                // the range explicit for atlas subrects; avoid object-space Y
+                // because Canvas batching can transform vertex positions.
+                float bodyY = saturate((input.texcoord.y - _DepthUVRange.x) /
+                    max(_DepthUVRange.y - _DepthUVRange.x, 0.00001));
+                half bottomWeight = 1.0h - smoothstep(0.025h, 0.20h, bodyY);
+                color.rgb *= 1.0h - saturate(_BottomDepth) * bottomWeight * bodyWeight;
 
                 // Preserve normal/highlighted/pressed/disabled tints and fades.
                 color *= input.color;
