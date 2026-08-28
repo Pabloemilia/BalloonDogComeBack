@@ -1415,37 +1415,53 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Stretch(decorativeLayer);
         CreatePauseCloud(
             decorativeLayer, "Cloud_01",
-            new Vector2(40f, 720f), new Vector2(440f, 285f), 0.16f,
-            8f, 10f, 14.5f, 0.12f);
+            new Vector2(-245f, 760f), new Vector2(315f, 205f), -5f, 0.14f,
+            7f, 9f, 14.5f, 0.12f);
         CreatePauseCloud(
             decorativeLayer, "Cloud_02",
-            new Vector2(-430f, 485f), new Vector2(330f, 220f), 0.12f,
-            7f, 12f, 17.2f, 0.46f);
+            new Vector2(405f, 650f), new Vector2(235f, 158f), 7f, 0.11f,
+            6f, 11f, 17.2f, 0.46f);
         CreatePauseCloud(
             decorativeLayer, "Cloud_03",
-            new Vector2(430f, -505f), new Vector2(390f, 260f), 0.14f,
-            10f, 8f, 19.4f, 0.73f);
+            new Vector2(-445f, 285f), new Vector2(275f, 184f), 3f, 0.16f,
+            9f, 7f, 19.4f, 0.73f);
         CreatePauseCloud(
             decorativeLayer, "Cloud_04",
-            new Vector2(-420f, -725f), new Vector2(305f, 205f), 0.11f,
-            6f, 10f, 16.1f, 0.31f);
+            new Vector2(455f, -120f), new Vector2(215f, 145f), -8f, 0.12f,
+            5f, 9f, 16.1f, 0.31f);
+        CreatePauseCloud(
+            decorativeLayer, "Cloud_05",
+            new Vector2(-350f, -600f), new Vector2(260f, 175f), 6f, 0.15f,
+            8f, 10f, 22.3f, 0.58f);
+        CreatePauseCloud(
+            decorativeLayer, "Cloud_06",
+            new Vector2(315f, -795f), new Vector2(185f, 125f), -3f, 0.10f,
+            6f, 8f, 18.7f, 0.87f);
 
         CreatePauseDogDecoration(
             decorativeLayer, "BalloonDog_01",
-            new Vector2(-420f, 680f), new Vector2(330f, 300f),
-            0.11f, 10f, 14f, 18.5f, 0.18f, 1.2f);
+            new Vector2(-430f, 635f), new Vector2(230f, 210f), -12f,
+            0.11f, 9f, 12f, 18.5f, 0.18f, 1.2f);
         CreatePauseDogDecoration(
             decorativeLayer, "BalloonDog_02",
-            new Vector2(420f, 600f), new Vector2(290f, 265f),
-            0.10f, 8f, 12f, 15.8f, 0.61f, 1.7f);
+            new Vector2(435f, 435f), new Vector2(200f, 185f), 10f,
+            0.09f, 7f, 10f, 15.8f, 0.61f, 1.7f);
         CreatePauseDogDecoration(
             decorativeLayer, "BalloonDog_03",
-            new Vector2(-430f, -255f), new Vector2(320f, 290f),
-            0.09f, 12f, 10f, 21.2f, 0.39f, 1.4f);
+            new Vector2(-435f, 25f), new Vector2(250f, 225f), 6f,
+            0.13f, 11f, 8f, 21.2f, 0.39f, 1.4f);
         CreatePauseDogDecoration(
             decorativeLayer, "BalloonDog_04",
-            new Vector2(430f, -700f), new Vector2(300f, 275f),
-            0.09f, 9f, 13f, 17.8f, 0.82f, 1.9f);
+            new Vector2(455f, -350f), new Vector2(215f, 195f), -8f,
+            0.10f, 8f, 11f, 17.8f, 0.82f, 1.9f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "BalloonDog_05",
+            new Vector2(-315f, -765f), new Vector2(185f, 170f), 14f,
+            0.08f, 7f, 9f, 23.1f, 0.52f, 0.9f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "BalloonDog_06",
+            new Vector2(335f, -650f), new Vector2(235f, 215f), -4f,
+            0.12f, 10f, 12f, 19.6f, 0.94f, 1.5f);
 
         pauseSafeRoot = CreateRect("PauseSafeArea", root);
         Stretch(pauseSafeRoot);
@@ -1605,6 +1621,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         string name,
         Vector2 position,
         Vector2 size,
+        float baseRotation,
         float opacity,
         float horizontalAmplitude,
         float verticalAmplitude,
@@ -1619,6 +1636,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             size);
         cloud.color = new Color(1f, 1f, 1f, opacity);
         cloud.preserveAspect = true;
+        cloud.rectTransform.localEulerAngles =
+            new Vector3(0f, 0f, baseRotation);
 
         BalloonDogPauseDecorativeFloat motion =
             cloud.gameObject.AddComponent<BalloonDogPauseDecorativeFloat>();
@@ -1635,6 +1654,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         string name,
         Vector2 position,
         Vector2 size,
+        float baseRotation,
         float opacity,
         float horizontalAmplitude,
         float verticalAmplitude,
@@ -1651,6 +1671,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         image.color = new Color(1f, 1f, 1f, opacity);
         image.raycastTarget = false;
         image.preserveAspect = true;
+        image.rectTransform.localEulerAngles =
+            new Vector3(0f, 0f, baseRotation);
 
         BalloonDogPauseDecorativeFloat motion =
             image.gameObject.AddComponent<BalloonDogPauseDecorativeFloat>();
