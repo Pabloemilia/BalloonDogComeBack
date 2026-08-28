@@ -109,12 +109,12 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
         foreach (TMP_Text text in screen.GetComponentsInChildren<TMP_Text>(true))
         {
-            if (text == null || text.name.Contains("IconGlyph"))
+            if (text == null)
             {
                 continue;
             }
 
-            ApplySmoothLowPolyText(text, text.characterSpacing);
+            BalloonDogTitanFont.Apply(text);
         }
     }
 

@@ -169,3 +169,11 @@ Packages/packages-lock.json linguist-generated
 
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
+
+# Pause Menu assets committed as regular Git blobs
+# These files are small runtime Resources; exclude them from the repository-wide LFS rules.
+Assets/Resources/PauseMenu/Decor/*.png                         -filter -diff -merge -text
+Assets/Resources/PauseMenu/Icons/*.png                         -filter -diff -merge -text
+Assets/Resources/Fonts/TitanOne/*.ttf                           -filter -diff -merge -text
+Assets/Resources/ModernUI/SecondaryGradientBackground.png      -filter -diff -merge -text
+Assets/Resources/PauseMenu/Buttons/*.png                       -filter -diff -merge -text
