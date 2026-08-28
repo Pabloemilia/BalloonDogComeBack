@@ -1549,7 +1549,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "ModernResumeButton",
             "RESUME",
             "PauseMenu/Icons/Play",
-            "PauseMenu/Buttons/PauseButtonResume",
+            "PauseMenu/Buttons/PauseButtonMintClean",
             new Vector2(0f, 35f),
             new Vector2(740f, 170f),
             new Color(0.43f, 1f, 0.12f, 1f),
@@ -1561,7 +1561,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "PauseRestartButtonModern",
             "RESTART",
             "PauseMenu/Icons/Restart",
-            "PauseMenu/Buttons/PauseButtonBlue",
+            "PauseMenu/Buttons/PauseButtonBlueClean",
             new Vector2(0f, -185f),
             new Vector2(700f, 132f),
             new Color(0.35f, 0.68f, 1f, 1f),
@@ -1573,7 +1573,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "PauseSettingsButton",
             "SETTINGS",
             "PauseMenu/Icons/Settings",
-            "PauseMenu/Buttons/PauseButtonBlue",
+            "PauseMenu/Buttons/PauseButtonBlueClean",
             new Vector2(0f, -355f),
             new Vector2(700f, 132f),
             new Color(0.31f, 0.69f, 1f, 1f),
@@ -1585,7 +1585,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "PauseMenuButtonModern",
             "MAIN MENU",
             "PauseMenu/Icons/Home",
-            "PauseMenu/Buttons/PauseButtonBlue",
+            "PauseMenu/Buttons/PauseButtonBlueClean",
             new Vector2(0f, -525f),
             new Vector2(700f, 132f),
             new Color(0.28f, 0.66f, 0.98f, 1f),
@@ -3147,41 +3147,15 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             return cached;
         }
 
-        Texture2D texture = Resources.Load<Texture2D>(path);
-        if (texture == null)
+        // These sprites carry their measured borders and pixel density in the
+        // importer. Recreating them from Texture2D would discard those settings
+        // and reapply crop coordinates belonging to the previous artwork.
+        Sprite sprite = Resources.Load<Sprite>(path);
+        if (sprite == null)
         {
             return null;
         }
 
-        bool resumeBackground = path.EndsWith("PauseButtonResume");
-        Rect spriteRect = resumeBackground
-            ? new Rect(31f, 108f, 1971f, 558f)
-            : new Rect(53f, 82f, 1944f, 522f);
-        Vector4 border = resumeBackground
-            ? new Vector4(325f, 215f, 325f, 215f)
-            : new Vector4(315f, 205f, 315f, 205f);
-
-        // Keep a safe fallback if the source artwork is replaced with a
-        // differently sized texture later.
-        if (spriteRect.xMax > texture.width || spriteRect.yMax > texture.height)
-        {
-            spriteRect = new Rect(0f, 0f, texture.width, texture.height);
-            border = new Vector4(
-                texture.width * 0.16f,
-                texture.height * 0.36f,
-                texture.width * 0.16f,
-                texture.height * 0.36f);
-        }
-
-        Sprite sprite = Sprite.Create(
-            texture,
-            spriteRect,
-            new Vector2(0.5f, 0.5f),
-            100f,
-            0,
-            SpriteMeshType.FullRect,
-            border);
-        sprite.name = path.Replace('/', '_') + "_9Slice";
         ResourceSprites[cacheKey] = sprite;
         return sprite;
     }
