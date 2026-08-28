@@ -176,3 +176,4 @@ Assets/Resources/PauseMenu/Decor/*.png                         -filter -diff -me
 Assets/Resources/PauseMenu/Icons/*.png                         -filter -diff -merge -text
 Assets/Resources/Fonts/TitanOne/*.ttf                           -filter -diff -merge -text
 Assets/Resources/ModernUI/SecondaryGradientBackground.png      -filter -diff -merge -text
+Assets/Resources/PauseMenu/Buttons/*.png                       -filter -diff -merge -text

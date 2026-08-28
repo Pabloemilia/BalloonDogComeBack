@@ -1549,6 +1549,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "ModernResumeButton",
             "RESUME",
             "PauseMenu/Icons/Play",
+            "PauseMenu/Buttons/PauseButtonResume",
             new Vector2(0f, 35f),
             new Vector2(740f, 170f),
             new Color(0.43f, 1f, 0.12f, 1f),
@@ -1560,6 +1561,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "PauseRestartButtonModern",
             "RESTART",
             "PauseMenu/Icons/Restart",
+            "PauseMenu/Buttons/PauseButtonBlue",
             new Vector2(0f, -185f),
             new Vector2(700f, 132f),
             new Color(0.35f, 0.68f, 1f, 1f),
@@ -1571,6 +1573,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "PauseSettingsButton",
             "SETTINGS",
             "PauseMenu/Icons/Settings",
+            "PauseMenu/Buttons/PauseButtonBlue",
             new Vector2(0f, -355f),
             new Vector2(700f, 132f),
             new Color(0.31f, 0.69f, 1f, 1f),
@@ -1582,6 +1585,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "PauseMenuButtonModern",
             "MAIN MENU",
             "PauseMenu/Icons/Home",
+            "PauseMenu/Buttons/PauseButtonBlue",
             new Vector2(0f, -525f),
             new Vector2(700f, 132f),
             new Color(0.28f, 0.66f, 0.98f, 1f),
@@ -1689,6 +1693,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         string name,
         string label,
         string iconResourcePath,
+        string backgroundResourcePath,
         Vector2 position,
         Vector2 size,
         Color topColor,
@@ -1698,19 +1703,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         RectTransform stage = CreateRect(name + "Stage", parent);
         SetRect(stage, position, size);
-
-        Image depth = CreateImage(
-            stage,
-            "ButtonDepth",
-            new Vector2(0f, -14f),
-            new Vector2(size.x, size.y - 2f),
-            new Color(
-                bottomColor.r * 0.48f,
-                bottomColor.g * 0.58f,
-                bottomColor.b * 0.72f,
-                0.92f),
-            false);
-        depth.transform.SetAsFirstSibling();
 
         Button button = CreateButton(
             stage,
@@ -1730,18 +1722,26 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
 
         Image baseImage = button.GetComponent<Image>();
-        UiVerticalGradient gradient =
-            baseImage.gameObject.AddComponent<UiVerticalGradient>();
-        gradient.Configure(topColor, bottomColor);
+        Sprite backgroundSprite =
+            GetResourceSlicedSprite(backgroundResourcePath);
+        if (backgroundSprite != null)
+        {
+            baseImage.sprite = backgroundSprite;
+            baseImage.type = Image.Type.Sliced;
+            baseImage.color = Color.white;
+        }
+        else
+        {
+            UiVerticalGradient fallbackGradient =
+                baseImage.gameObject.AddComponent<UiVerticalGradient>();
+            fallbackGradient.Configure(topColor, bottomColor);
+        }
 
-        Image gloss = CreateImage(
-            button.transform,
-            "PauseButtonGloss",
-            new Vector2(0f, size.y * 0.24f),
-            new Vector2(size.x * 0.88f, size.y * 0.27f),
-            new Color(1f, 1f, 1f, 0.22f),
-            false);
-        gloss.transform.SetAsFirstSibling();
+        foreach (Shadow shadow in button.GetComponents<Shadow>())
+        {
+            shadow.effectColor = new Color(0.01f, 0.18f, 0.30f, 0.26f);
+            shadow.effectDistance = new Vector2(0f, -6f);
+        }
 
         TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
         if (text != null)
@@ -3133,6 +3133,33 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             100f);
         sprite.name = path.Replace('/', '_');
         ResourceSprites[path] = sprite;
+        return sprite;
+    }
+
+    private static Sprite GetResourceSlicedSprite(string path)
+    {
+        string cacheKey = path + "#PauseButton9Slice";
+        if (ResourceSprites.TryGetValue(cacheKey, out Sprite cached) && cached != null)
+        {
+            return cached;
+        }
+
+        Texture2D texture = Resources.Load<Texture2D>(path);
+        if (texture == null)
+        {
+            return null;
+        }
+
+        Sprite sprite = Sprite.Create(
+            texture,
+            new Rect(0f, 0f, texture.width, texture.height),
+            new Vector2(0.5f, 0.5f),
+            100f,
+            0,
+            SpriteMeshType.FullRect,
+            new Vector4(86f, 72f, 86f, 72f));
+        sprite.name = path.Replace('/', '_') + "_9Slice";
+        ResourceSprites[cacheKey] = sprite;
         return sprite;
     }
 
