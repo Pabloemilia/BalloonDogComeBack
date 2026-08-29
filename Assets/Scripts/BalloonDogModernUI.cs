@@ -100,7 +100,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private CanvasGroup toastGroup;
     private float toastTimer;
 
-    private Slider volumeSlider;
+    private ToggleRowView musicToggle;
     private ToggleRowView soundToggle;
     private ToggleRowView vibrationToggle;
     private SettingsReturnTarget settingsReturnTarget;
@@ -254,7 +254,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         wheelButtonLabel = null;
         wheelTransform = null;
         wheelButton = null;
-        volumeSlider = null;
+        musicToggle = null;
         soundToggle = null;
         vibrationToggle = null;
         toastText = null;
@@ -1103,8 +1103,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         RectTransform card = CreateCard(
             settingsScreen.transform,
             "SettingsCard",
-            new Vector2(0f, -55f),
-            new Vector2(910f, 1390f),
+            new Vector2(0f, -35f),
+            new Vector2(910f, 1050f),
             new Color(0.12f, 0.60f, 0.82f, 0.33f),
             new Color(0.76f, 0.95f, 1f, 0.48f));
         UiVerticalGradient cardGradient =
@@ -1113,62 +1113,27 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.57f, 0.86f, 1f, 0.30f),
             new Color(0.05f, 0.68f, 0.82f, 0.38f));
 
-        CreatePauseText(
-            card,
-            "AudioSection",
-            "SOUND EFFECTS",
-            new Vector2(0f, 585f),
-            new Vector2(700f, 58f),
-            29f,
-            new Color(0.02f, 0.32f, 0.80f, 1f),
-            TextAlignmentOptions.Center);
-
-        CreatePauseText(
-            card,
-            "VolumeLabel",
-            "MUSIC",
-            new Vector2(-275f, 450f),
-            new Vector2(260f, 54f),
-            28f,
-            Color.white,
-            TextAlignmentOptions.Left);
-
-        volumeSlider = CreateSlider(card, new Vector2(150f, 450f), new Vector2(420f, 48f));
-        volumeSlider.value = PlayerPrefs.GetFloat(MasterVolumeKey, 0.85f);
-        volumeSlider.onValueChanged.AddListener(SetMasterVolume);
-
-        soundToggle = CreateToggleRow(card, "SFX", new Vector2(0f, 300f), ToggleSound);
-
-        CreatePauseText(
-            card,
-            "AboutSection",
-            "PRIVACY & SECURITY",
-            new Vector2(0f, 140f),
-            new Vector2(700f, 58f),
-            29f,
-            new Color(0.02f, 0.32f, 0.80f, 1f),
-            TextAlignmentOptions.Center);
-
+        musicToggle = CreateToggleRow(card, "MUSIC", new Vector2(0f, 330f), ToggleMusic);
+        soundToggle = CreateToggleRow(card, "SFX", new Vector2(0f, 165f), ToggleSound);
         vibrationToggle = CreateToggleRow(card, "VIBRATION", new Vector2(0f, 0f), ToggleVibration);
-        CreateInfoRow(card, "SAVE DATA", "LOCAL DEVICE", new Vector2(0f, -150f));
+        CreateInfoRow(card, "SAVE DATA", "LOCAL DEVICE", new Vector2(0f, -165f));
 
         CreateSettingsActionButton(
             card,
             "SettingsPrivacyButton",
             "PRIVACY NOTICE",
             "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(0f, -320f),
+            new Vector2(0f, -345f),
             new Vector2(700f, 112f),
             ShowPrivacyScreen,
             34f);
 
-        CreateInfoRow(card, "CONTROL", "DRAG LEFT / RIGHT", new Vector2(0f, -480f));
         CreateSettingsActionButton(
             settingsScreen.transform,
             "SettingsClose",
             "DONE",
             "PauseMenu/Buttons/PauseButtonMintClean",
-            new Vector2(0f, -1035f),
+            new Vector2(0f, -760f),
             new Vector2(700f, 132f),
             CloseSettings,
             43f);
@@ -1262,28 +1227,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void CreateSettingsTopBar(Transform parent)
     {
-        RectTransform tokens = CreateCard(
-            parent,
-            "SettingsTokens",
-            new Vector2(-360f, 1030f),
-            new Vector2(300f, 92f),
-            new Color(0.22f, 0.72f, 0.95f, 0.34f),
-            new Color(0.75f, 0.94f, 1f, 0.42f));
-        CreatePauseTokenIcon(tokens, new Vector2(-92f, 0f));
-        TMP_Text tokenValue = CreatePauseText(
-            tokens,
-            "Label",
-            BalloonDogEconomy.Coins.ToString("N0"),
-            new Vector2(42f, 0f),
-            new Vector2(165f, 68f),
-            30f,
-            Color.white,
-            TextAlignmentOptions.Center);
-        tokenValue.enableAutoSizing = true;
-        tokenValue.fontSizeMin = 20f;
-        tokenValue.fontSizeMax = 30f;
-        tokenValue.gameObject.AddComponent<BalloonDogCoinLabel>();
-
         CreateSettingsActionButton(
             parent,
             "SettingsTopButton",
@@ -2293,67 +2236,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         return button;
     }
 
-    private Slider CreateSlider(Transform parent, Vector2 position, Vector2 size)
-    {
-        RectTransform root = CreateRect("VolumeSlider", parent);
-        SetRect(root, position, size);
-
-        Image background = CreateImage(
-            root,
-            "Background",
-            Vector2.zero,
-            size,
-            new Color(0.03f, 0.42f, 0.73f, 0.72f),
-            false);
-        background.raycastTarget = true;
-        Outline trackOutline = background.gameObject.AddComponent<Outline>();
-        trackOutline.effectColor = new Color(0.74f, 0.94f, 1f, 0.55f);
-        trackOutline.effectDistance = new Vector2(2f, -2f);
-
-        RectTransform fillArea = CreateRect("Fill Area", root);
-        fillArea.anchorMin = new Vector2(0f, 0f);
-        fillArea.anchorMax = new Vector2(1f, 1f);
-        fillArea.offsetMin = new Vector2(10f, 10f);
-        fillArea.offsetMax = new Vector2(-10f, -10f);
-
-        Image fill = CreateImage(
-            fillArea,
-            "Fill",
-            Vector2.zero,
-            Vector2.zero,
-            new Color(0.36f, 0.93f, 0.72f, 1f),
-            false);
-        fill.rectTransform.anchorMin = Vector2.zero;
-        fill.rectTransform.anchorMax = Vector2.one;
-        fill.rectTransform.offsetMin = Vector2.zero;
-        fill.rectTransform.offsetMax = Vector2.zero;
-
-        Image handle = CreateImage(
-            root,
-            "Handle",
-            Vector2.zero,
-            new Vector2(72f, 72f),
-            Color.white,
-            true);
-        Outline handleOutline = handle.gameObject.AddComponent<Outline>();
-        handleOutline.effectColor = new Color(0.04f, 0.52f, 0.88f, 0.85f);
-        handleOutline.effectDistance = new Vector2(4f, -4f);
-        AddGraphicShadow(
-            handle,
-            new Color(0.01f, 0.20f, 0.48f, 0.32f),
-            new Vector2(2f, -4f));
-
-        Slider slider = root.gameObject.AddComponent<Slider>();
-        slider.fillRect = fill.rectTransform;
-        slider.handleRect = handle.rectTransform;
-        slider.targetGraphic = handle;
-        slider.direction = Slider.Direction.LeftToRight;
-        slider.minValue = 0f;
-        slider.maxValue = 1f;
-        slider.wholeNumbers = false;
-        return slider;
-    }
-
     private ToggleRowView CreateToggleRow(
         Transform parent,
         string label,
@@ -2837,6 +2719,15 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         RefreshSettingsViews();
     }
 
+    private void ToggleMusic()
+    {
+        float volume = IsMusicEnabled() ? 0f : 0.85f;
+        PlayerPrefs.SetFloat(MasterVolumeKey, volume);
+        PlayerPrefs.Save();
+        ApplySavedAudioSettings();
+        RefreshSettingsViews();
+    }
+
     private void ToggleVibration()
     {
         menuController ??= FindAnyObjectByType<MainMenuController>();
@@ -2844,25 +2735,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         RefreshSettingsViews();
     }
 
-    private void SetMasterVolume(float value)
-    {
-        value = Mathf.Clamp01(value);
-        PlayerPrefs.SetFloat(MasterVolumeKey, value);
-        PlayerPrefs.Save();
-
-        bool soundEnabled = IsSoundEnabled();
-        AudioListener.volume = soundEnabled ? value : 0f;
-    }
-
     private void ApplySavedAudioSettings()
     {
         float volume = PlayerPrefs.GetFloat(MasterVolumeKey, 0.85f);
         bool soundEnabled = IsSoundEnabled();
         AudioListener.volume = soundEnabled ? volume : 0f;
-        if (volumeSlider != null)
-        {
-            volumeSlider.SetValueWithoutNotify(volume);
-        }
     }
 
     private void RefreshPauseStats()
@@ -3026,6 +2903,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void RefreshSettingsViews()
     {
+        if (musicToggle != null)
+        {
+            SetToggleVisual(musicToggle, IsMusicEnabled());
+        }
+
         if (soundToggle != null)
         {
             bool enabled = IsSoundEnabled();
@@ -3059,6 +2941,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private static bool IsSoundEnabled()
     {
         return PlayerPrefs.GetInt(SoundPreferenceKey, 1) == 1;
+    }
+
+    private static bool IsMusicEnabled()
+    {
+        return PlayerPrefs.GetFloat(MasterVolumeKey, 0.85f) > 0.001f;
     }
 
     private static bool DetectGameplayState()
