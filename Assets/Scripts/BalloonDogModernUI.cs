@@ -100,7 +100,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private CanvasGroup toastGroup;
     private float toastTimer;
 
-    private Slider volumeSlider;
+    private ToggleRowView musicToggle;
     private ToggleRowView soundToggle;
     private ToggleRowView vibrationToggle;
     private SettingsReturnTarget settingsReturnTarget;
@@ -254,7 +254,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         wheelButtonLabel = null;
         wheelTransform = null;
         wheelButton = null;
-        volumeSlider = null;
+        musicToggle = null;
         soundToggle = null;
         vibrationToggle = null;
         toastText = null;
@@ -1078,92 +1078,164 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildSettingsScreen()
     {
-        settingsScreen = CreateScreen(
-            "ModernSettingsScreen",
-            MenuSkyTop,
-            MenuSkyBottom);
+        settingsScreen = CreatePauseThemedSettingsScreen();
+        CreateSettingsTopBar(settingsScreen.transform);
 
-        CreateImage(
+        TMP_Text title = CreatePauseText(
             settingsScreen.transform,
-            "SettingsTreeBubbleLeft",
-            new Vector2(-500f, 450f),
-            new Vector2(230f, 230f),
-            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.27f),
-            true);
-        CreateImage(
-            settingsScreen.transform,
-            "SettingsTreeBubbleRight",
-            new Vector2(505f, -50f),
-            new Vector2(280f, 280f),
-            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.22f),
-            true);
-
-        CreateTopBar(settingsScreen.transform, "Settings", CloseSettings);
-        CreateRibbon(settingsScreen.transform, "SETTINGS", new Vector2(0f, 800f));
+            "SettingsTitle",
+            "SETTINGS",
+            new Vector2(0f, 815f),
+            new Vector2(820f, 150f),
+            94f,
+            Color.white,
+            TextAlignmentOptions.Center);
+        title.enableAutoSizing = true;
+        title.fontSizeMin = 70f;
+        title.fontSizeMax = 94f;
+        title.overflowMode = TextOverflowModes.Overflow;
+        AddTextShadow(
+            title,
+            new Color(0.01f, 0.16f, 0.46f, 0.52f),
+            new Vector2(0f, -7f));
+        CreatePauseTitleAccents(settingsScreen.transform, 815f);
 
         RectTransform card = CreateCard(
             settingsScreen.transform,
             "SettingsCard",
-            new Vector2(0f, -55f),
-            new Vector2(910f, 1390f),
-            MenuBlueDark,
-            new Color(0.43f, 0.76f, 1f, 0.58f));
+            new Vector2(0f, -35f),
+            new Vector2(910f, 1050f),
+            new Color(0.12f, 0.60f, 0.82f, 0.33f),
+            new Color(0.76f, 0.95f, 1f, 0.48f));
+        UiVerticalGradient cardGradient =
+            card.gameObject.AddComponent<UiVerticalGradient>();
+        cardGradient.Configure(
+            new Color(0.57f, 0.86f, 1f, 0.30f),
+            new Color(0.05f, 0.68f, 0.82f, 0.38f));
 
-        CreateText(
-            card,
-            "AudioSection",
-            "SOUND EFFECTS",
-            new Vector2(0f, 585f),
-            new Vector2(700f, 58f),
-            24f,
-            new Color(0.76f, 0.90f, 1f, 1f),
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-
-        CreateText(
-            card,
-            "VolumeLabel",
-            "MUSIC",
-            new Vector2(-275f, 450f),
-            new Vector2(260f, 54f),
-            25f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Left);
-
-        volumeSlider = CreateSlider(card, new Vector2(150f, 450f), new Vector2(420f, 48f));
-        volumeSlider.value = PlayerPrefs.GetFloat(MasterVolumeKey, 0.85f);
-        volumeSlider.onValueChanged.AddListener(SetMasterVolume);
-
-        soundToggle = CreateToggleRow(card, "SFX", new Vector2(0f, 300f), ToggleSound);
-
-        CreateText(
-            card,
-            "AboutSection",
-            "PRIVACY & SECURITY",
-            new Vector2(0f, 140f),
-            new Vector2(700f, 58f),
-            24f,
-            new Color(0.76f, 0.90f, 1f, 1f),
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-
+        musicToggle = CreateToggleRow(card, "MUSIC", new Vector2(0f, 330f), ToggleMusic);
+        soundToggle = CreateToggleRow(card, "SFX", new Vector2(0f, 165f), ToggleSound);
         vibrationToggle = CreateToggleRow(card, "VIBRATION", new Vector2(0f, 0f), ToggleVibration);
-        CreateInfoRow(card, "SAVE DATA", "LOCAL DEVICE", new Vector2(0f, -150f));
+        CreateInfoRow(card, "SAVE DATA", "LOCAL DEVICE", new Vector2(0f, -165f));
 
-        CreateButton(
+        CreateSettingsActionButton(
             card,
             "SettingsPrivacyButton",
             "PRIVACY NOTICE",
-            new Vector2(0f, -320f),
-            new Vector2(700f, 100f),
-            MenuGreen,
-            Color.white,
+            "PauseMenu/Buttons/PauseButtonBlueClean",
+            new Vector2(0f, -345f),
+            new Vector2(700f, 112f),
             ShowPrivacyScreen,
-            28f);
+            34f);
 
-        CreateInfoRow(card, "CONTROL", "DRAG LEFT / RIGHT", new Vector2(0f, -480f));
-        CreateRoundNavButton(settingsScreen.transform, "SettingsClose", "DONE", new Vector2(0f, -1035f), CloseSettings);
+        CreateSettingsActionButton(
+            settingsScreen.transform,
+            "SettingsClose",
+            "DONE",
+            "PauseMenu/Buttons/PauseButtonMintClean",
+            new Vector2(0f, -760f),
+            new Vector2(700f, 132f),
+            CloseSettings,
+            43f);
+    }
+
+    private GameObject CreatePauseThemedSettingsScreen()
+    {
+        RectTransform root = CreateRect("ModernSettingsScreen", safeRoot);
+        Stretch(root);
+
+        Image background = root.gameObject.AddComponent<Image>();
+        background.sprite =
+            GetResourceSprite("ModernUI/SecondaryGradientBackground");
+        background.type = Image.Type.Simple;
+        background.preserveAspect = false;
+        background.color = Color.white;
+        background.raycastTarget = true;
+        if (background.sprite == null)
+        {
+            UiVerticalGradient fallbackGradient =
+                root.gameObject.AddComponent<UiVerticalGradient>();
+            fallbackGradient.Configure(
+                new Color(0.08f, 0.62f, 0.96f, 1f),
+                new Color(0.15f, 0.88f, 0.78f, 1f));
+        }
+
+        Image softTint = CreateImage(
+            root,
+            "SettingsBackgroundOverlay",
+            Vector2.zero,
+            new Vector2(1080f, 2348f),
+            new Color(0.02f, 0.38f, 0.68f, 0.07f),
+            false);
+        Stretch(softTint.rectTransform);
+
+        RectTransform decorativeLayer =
+            CreateRect("SettingsDecorativeLayer", root);
+        Stretch(decorativeLayer);
+        CreatePauseCloud(
+            decorativeLayer, "SettingsCloud_01",
+            new Vector2(-335f, 950f), new Vector2(285f, 185f), -5f, 0.14f,
+            7f, 9f, 16.5f, 0.12f);
+        CreatePauseCloud(
+            decorativeLayer, "SettingsCloud_02",
+            new Vector2(415f, 775f), new Vector2(225f, 150f), 7f, 0.11f,
+            6f, 11f, 19.2f, 0.46f);
+        CreatePauseCloud(
+            decorativeLayer, "SettingsCloud_03",
+            new Vector2(-455f, 375f), new Vector2(250f, 168f), 3f, 0.16f,
+            9f, 7f, 21.4f, 0.73f);
+        CreatePauseCloud(
+            decorativeLayer, "SettingsCloud_04",
+            new Vector2(470f, -115f), new Vector2(205f, 138f), -8f, 0.12f,
+            5f, 9f, 18.1f, 0.31f);
+        CreatePauseCloud(
+            decorativeLayer, "SettingsCloud_05",
+            new Vector2(-365f, -650f), new Vector2(245f, 165f), 6f, 0.15f,
+            8f, 10f, 24.3f, 0.58f);
+        CreatePauseCloud(
+            decorativeLayer, "SettingsCloud_06",
+            new Vector2(330f, -985f), new Vector2(180f, 122f), -3f, 0.10f,
+            6f, 8f, 20.7f, 0.87f);
+
+        CreatePauseDogDecoration(
+            decorativeLayer, "SettingsBalloonDog_01",
+            new Vector2(-445f, 735f), new Vector2(220f, 200f), -12f,
+            0.11f, 9f, 12f, 20.5f, 0.18f, 1.2f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "SettingsBalloonDog_02",
+            new Vector2(450f, 520f), new Vector2(190f, 175f), 10f,
+            0.09f, 7f, 10f, 17.8f, 0.61f, 1.7f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "SettingsBalloonDog_03",
+            new Vector2(-465f, 80f), new Vector2(235f, 215f), 6f,
+            0.13f, 11f, 8f, 23.2f, 0.39f, 1.4f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "SettingsBalloonDog_04",
+            new Vector2(470f, -390f), new Vector2(205f, 188f), -8f,
+            0.10f, 8f, 11f, 19.8f, 0.82f, 1.9f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "SettingsBalloonDog_05",
+            new Vector2(-330f, -880f), new Vector2(175f, 160f), 14f,
+            0.08f, 7f, 9f, 25.1f, 0.52f, 0.9f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "SettingsBalloonDog_06",
+            new Vector2(355f, -815f), new Vector2(225f, 205f), -4f,
+            0.12f, 10f, 12f, 21.6f, 0.94f, 1.5f);
+
+        return root.gameObject;
+    }
+
+    private void CreateSettingsTopBar(Transform parent)
+    {
+        CreateSettingsActionButton(
+            parent,
+            "SettingsTopButton",
+            "X",
+            "PauseMenu/Buttons/PauseButtonBlueClean",
+            new Vector2(430f, 1030f),
+            new Vector2(118f, 96f),
+            CloseSettings,
+            39f);
     }
 
     private void BuildPrivacyScreen()
@@ -1801,6 +1873,76 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         return button;
     }
 
+    private static Button CreateSettingsActionButton(
+        Transform parent,
+        string name,
+        string label,
+        string backgroundResourcePath,
+        Vector2 position,
+        Vector2 size,
+        UnityAction action,
+        float fontSize)
+    {
+        Button button = CreateButton(
+            parent,
+            name,
+            label,
+            position,
+            size,
+            Color.white,
+            Color.white,
+            action,
+            fontSize);
+
+        Image background = button.GetComponent<Image>();
+        ApplySettingsButtonBackground(background, backgroundResourcePath);
+
+        RemoveButtonShadow(button);
+        TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+        {
+            BalloonDogTitanFont.Apply(text);
+            text.enableAutoSizing = true;
+            text.fontSizeMin = Mathf.Max(20f, fontSize * 0.68f);
+            text.fontSizeMax = fontSize;
+            text.overflowMode = TextOverflowModes.Overflow;
+            text.margin = new Vector4(18f, 5f, 18f, 8f);
+            AddTextShadow(
+                text,
+                new Color(0.01f, 0.16f, 0.42f, 0.34f),
+                new Vector2(0f, -3f));
+        }
+
+        return button;
+    }
+
+    private static void ApplySettingsButtonBackground(
+        Image background,
+        string backgroundResourcePath)
+    {
+        if (background == null)
+        {
+            return;
+        }
+
+        Sprite backgroundSprite =
+            GetResourceSlicedSprite(backgroundResourcePath);
+        if (backgroundSprite != null)
+        {
+            background.sprite = backgroundSprite;
+            background.type = Image.Type.Sliced;
+            background.color = Color.white;
+        }
+
+        Material satinMaterial =
+            Resources.Load<Material>(backgroundResourcePath + "Satin");
+        background.material =
+            satinMaterial != null && satinMaterial.shader != null &&
+            satinMaterial.shader.isSupported
+                ? satinMaterial
+                : null;
+    }
+
     private static TMP_Text CreatePauseText(
         Transform parent,
         string name,
@@ -2094,40 +2236,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         return button;
     }
 
-    private Slider CreateSlider(Transform parent, Vector2 position, Vector2 size)
-    {
-        RectTransform root = CreateRect("VolumeSlider", parent);
-        SetRect(root, position, size);
-
-        Image background = CreateImage(root, "Background", Vector2.zero, size, new Color(0.83f, 0.91f, 0.95f, 1f), false);
-        background.raycastTarget = true;
-
-        RectTransform fillArea = CreateRect("Fill Area", root);
-        fillArea.anchorMin = new Vector2(0f, 0f);
-        fillArea.anchorMax = new Vector2(1f, 1f);
-        fillArea.offsetMin = new Vector2(10f, 10f);
-        fillArea.offsetMax = new Vector2(-10f, -10f);
-
-        Image fill = CreateImage(fillArea, "Fill", Vector2.zero, Vector2.zero, MenuGreen, false);
-        fill.rectTransform.anchorMin = Vector2.zero;
-        fill.rectTransform.anchorMax = Vector2.one;
-        fill.rectTransform.offsetMin = Vector2.zero;
-        fill.rectTransform.offsetMax = Vector2.zero;
-
-        Image handle = CreateImage(root, "Handle", Vector2.zero, new Vector2(72f, 72f), MenuBlue, true);
-        AddGraphicShadow(handle, new Color(0f, 0f, 0f, 0.30f), new Vector2(3f, -4f));
-
-        Slider slider = root.gameObject.AddComponent<Slider>();
-        slider.fillRect = fill.rectTransform;
-        slider.handleRect = handle.rectTransform;
-        slider.targetGraphic = handle;
-        slider.direction = Slider.Direction.LeftToRight;
-        slider.minValue = 0f;
-        slider.maxValue = 1f;
-        slider.wholeNumbers = false;
-        return slider;
-    }
-
     private ToggleRowView CreateToggleRow(
         Transform parent,
         string label,
@@ -2139,10 +2247,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             label + "Row",
             position,
             new Vector2(760f, 120f),
-            MenuBlueCard,
-            new Color(0.62f, 0.84f, 1f, 0.42f));
+            new Color(0.15f, 0.63f, 0.84f, 0.34f),
+            new Color(0.76f, 0.95f, 1f, 0.42f));
 
-        CreateText(
+        CreatePauseText(
             row,
             label + "Label",
             label,
@@ -2150,17 +2258,15 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(280f, 75f),
             29f,
             Color.white,
-            FontStyles.Bold,
             TextAlignmentOptions.Left);
 
-        Button button = CreateButton(
+        Button button = CreateSettingsActionButton(
             row,
             label + "Toggle",
             string.Empty,
+            "PauseMenu/Buttons/PauseButtonBlueClean",
             new Vector2(260f, 0f),
             new Vector2(190f, 76f),
-            MenuBlueDark,
-            Color.white,
             action,
             23f);
 
@@ -2180,11 +2286,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             label + "InfoRow",
             position,
             new Vector2(760f, 105f),
-            new Color(0.055f, 0.29f, 0.44f, 1f),
-            new Color(0.62f, 0.84f, 1f, 0.34f));
+            new Color(0.08f, 0.48f, 0.72f, 0.32f),
+            new Color(0.76f, 0.95f, 1f, 0.36f));
 
-        CreateText(row, "Label", label, new Vector2(-230f, 0f), new Vector2(290f, 60f), 25f, Color.white, FontStyles.Bold, TextAlignmentOptions.Left);
-        CreateText(row, "Value", value, new Vector2(190f, 0f), new Vector2(380f, 60f), 23f, MenuCream, FontStyles.Bold, TextAlignmentOptions.Right);
+        CreatePauseText(row, "Label", label, new Vector2(-230f, 0f), new Vector2(290f, 60f), 25f, Color.white, TextAlignmentOptions.Left);
+        CreatePauseText(row, "Value", value, new Vector2(190f, 0f), new Vector2(380f, 60f), 23f, new Color(0.91f, 0.98f, 1f, 1f), TextAlignmentOptions.Right);
     }
 
     private void StartGame()
@@ -2613,6 +2719,15 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         RefreshSettingsViews();
     }
 
+    private void ToggleMusic()
+    {
+        float volume = IsMusicEnabled() ? 0f : 0.85f;
+        PlayerPrefs.SetFloat(MasterVolumeKey, volume);
+        PlayerPrefs.Save();
+        ApplySavedAudioSettings();
+        RefreshSettingsViews();
+    }
+
     private void ToggleVibration()
     {
         menuController ??= FindAnyObjectByType<MainMenuController>();
@@ -2620,25 +2735,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         RefreshSettingsViews();
     }
 
-    private void SetMasterVolume(float value)
-    {
-        value = Mathf.Clamp01(value);
-        PlayerPrefs.SetFloat(MasterVolumeKey, value);
-        PlayerPrefs.Save();
-
-        bool soundEnabled = IsSoundEnabled();
-        AudioListener.volume = soundEnabled ? value : 0f;
-    }
-
     private void ApplySavedAudioSettings()
     {
         float volume = PlayerPrefs.GetFloat(MasterVolumeKey, 0.85f);
         bool soundEnabled = IsSoundEnabled();
         AudioListener.volume = soundEnabled ? volume : 0f;
-        if (volumeSlider != null)
-        {
-            volumeSlider.SetValueWithoutNotify(volume);
-        }
     }
 
     private void RefreshPauseStats()
@@ -2802,6 +2903,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void RefreshSettingsViews()
     {
+        if (musicToggle != null)
+        {
+            SetToggleVisual(musicToggle, IsMusicEnabled());
+        }
+
         if (soundToggle != null)
         {
             bool enabled = IsSoundEnabled();
@@ -2820,16 +2926,26 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         {
             view.StateLabel.text = enabled ? "ON" : "OFF";
             view.StateLabel.color = Color.white;
+            BalloonDogTitanFont.Apply(view.StateLabel);
         }
         if (view.StateBackground != null)
         {
-            view.StateBackground.color = enabled ? MenuGreen : MenuBlueDark;
+            ApplySettingsButtonBackground(
+                view.StateBackground,
+                enabled
+                    ? "PauseMenu/Buttons/PauseButtonMintClean"
+                    : "PauseMenu/Buttons/PauseButtonBlueClean");
         }
     }
 
     private static bool IsSoundEnabled()
     {
         return PlayerPrefs.GetInt(SoundPreferenceKey, 1) == 1;
+    }
+
+    private static bool IsMusicEnabled()
+    {
+        return PlayerPrefs.GetFloat(MasterVolumeKey, 0.85f) > 0.001f;
     }
 
     private static bool DetectGameplayState()
