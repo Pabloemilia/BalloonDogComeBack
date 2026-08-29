@@ -1549,49 +1549,54 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "ModernResumeButton",
             "RESUME",
             "PauseMenu/Icons/Play",
-            "PauseMenu/Buttons/PauseButtonResume",
-            new Vector2(0f, 35f),
+            "PauseMenu/Buttons/PauseButtonMintClean",
+            new Vector2(0f, 10f),
             new Vector2(740f, 170f),
             new Color(0.43f, 1f, 0.12f, 1f),
             new Color(0.02f, 0.77f, 0.32f, 1f),
             ResumeGame,
-            56f);
+            56f,
+            96f,
+            36f);
         Button restart = CreatePauseActionButton(
             content,
             "PauseRestartButtonModern",
             "RESTART",
             "PauseMenu/Icons/Restart",
-            "PauseMenu/Buttons/PauseButtonBlue",
+            "PauseMenu/Buttons/PauseButtonBlueClean",
             new Vector2(0f, -185f),
             new Vector2(700f, 132f),
             new Color(0.35f, 0.68f, 1f, 1f),
             new Color(0.04f, 0.36f, 0.91f, 1f),
             RestartGame,
-            43f);
+            43f,
+            88f);
         Button settings = CreatePauseActionButton(
             content,
             "PauseSettingsButton",
             "SETTINGS",
             "PauseMenu/Icons/Settings",
-            "PauseMenu/Buttons/PauseButtonBlue",
+            "PauseMenu/Buttons/PauseButtonBlueClean",
             new Vector2(0f, -355f),
             new Vector2(700f, 132f),
             new Color(0.31f, 0.69f, 1f, 1f),
             new Color(0.03f, 0.37f, 0.88f, 1f),
             OpenPauseSettings,
-            43f);
+            43f,
+            88f);
         Button mainMenu = CreatePauseActionButton(
             content,
             "PauseMenuButtonModern",
             "MAIN MENU",
             "PauseMenu/Icons/Home",
-            "PauseMenu/Buttons/PauseButtonBlue",
+            "PauseMenu/Buttons/PauseButtonBlueClean",
             new Vector2(0f, -525f),
             new Vector2(700f, 132f),
             new Color(0.28f, 0.66f, 0.98f, 1f),
             new Color(0.03f, 0.34f, 0.83f, 1f),
             ReturnToMainMenu,
-            42f);
+            42f,
+            78f);
 
         TMP_Text hint = CreatePauseText(
             content,
@@ -1699,7 +1704,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Color topColor,
         Color bottomColor,
         UnityAction action,
-        float fontSize)
+        float fontSize,
+        float iconSize,
+        float iconOffsetX = 0f)
     {
         RectTransform stage = CreateRect(name + "Stage", parent);
         SetRect(stage, position, size);
@@ -1729,6 +1736,21 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             baseImage.sprite = backgroundSprite;
             baseImage.type = Image.Type.Sliced;
             baseImage.color = Color.white;
+
+            // Soften only the background artwork. The original sprite alpha,
+            // nine-slice borders, labels, icons and Button tint states stay intact.
+            Material satinMaterial =
+                Resources.Load<Material>(backgroundResourcePath + "Satin");
+            if (satinMaterial != null && satinMaterial.shader != null &&
+                satinMaterial.shader.isSupported)
+            {
+                baseImage.material = satinMaterial;
+            }
+            else
+            {
+                Debug.LogWarning("Pause button satin material unavailable: " +
+                    backgroundResourcePath + "Satin");
+            }
         }
         else
         {
@@ -1769,8 +1791,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             button.transform,
             "PauseButtonIcon",
             iconResourcePath,
-            new Vector2(-size.x * 0.31f, 2f),
-            new Vector2(104f, Mathf.Min(104f, size.y - 34f)));
+            new Vector2(-size.x * 0.31f + iconOffsetX, 2f),
+            new Vector2(iconSize, iconSize));
         icon.color = Color.white;
         AddGraphicShadow(
             icon,
@@ -3147,41 +3169,15 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             return cached;
         }
 
-        Texture2D texture = Resources.Load<Texture2D>(path);
-        if (texture == null)
+        // These sprites carry their measured borders and pixel density in the
+        // importer. Recreating them from Texture2D would discard those settings
+        // and reapply crop coordinates belonging to the previous artwork.
+        Sprite sprite = Resources.Load<Sprite>(path);
+        if (sprite == null)
         {
             return null;
         }
 
-        bool resumeBackground = path.EndsWith("PauseButtonResume");
-        Rect spriteRect = resumeBackground
-            ? new Rect(31f, 108f, 1971f, 558f)
-            : new Rect(53f, 82f, 1944f, 522f);
-        Vector4 border = resumeBackground
-            ? new Vector4(325f, 215f, 325f, 215f)
-            : new Vector4(315f, 205f, 315f, 205f);
-
-        // Keep a safe fallback if the source artwork is replaced with a
-        // differently sized texture later.
-        if (spriteRect.xMax > texture.width || spriteRect.yMax > texture.height)
-        {
-            spriteRect = new Rect(0f, 0f, texture.width, texture.height);
-            border = new Vector4(
-                texture.width * 0.16f,
-                texture.height * 0.36f,
-                texture.width * 0.16f,
-                texture.height * 0.36f);
-        }
-
-        Sprite sprite = Sprite.Create(
-            texture,
-            spriteRect,
-            new Vector2(0.5f, 0.5f),
-            100f,
-            0,
-            SpriteMeshType.FullRect,
-            border);
-        sprite.name = path.Replace('/', '_') + "_9Slice";
         ResourceSprites[cacheKey] = sprite;
         return sprite;
     }
