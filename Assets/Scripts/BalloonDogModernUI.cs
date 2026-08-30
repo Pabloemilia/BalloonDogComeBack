@@ -1089,13 +1089,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Button closeButton = CreateSettingsActionButton(
             settingsScreen.transform,
             "SettingsTopButton",
-            "X",
+            string.Empty,
             SettingsBlueButtonResource,
-            "PauseMenu/Buttons/PauseButtonBlueCleanSatin",
+            string.Empty,
             Vector2.zero,
-            new Vector2(118f, 96f),
+            new Vector2(128f, 108f),
             CloseSettings,
             39f);
+        CreateSettingsBackArrowGraphic(closeButton.transform);
         RectTransform closeRect = closeButton.transform as RectTransform;
         closeRect.anchorMin = Vector2.one;
         closeRect.anchorMax = Vector2.one;
@@ -1133,25 +1134,25 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         RectTransform controls = CreateRect(
             "SettingsControls",
             settingsScreen.transform);
-        SetRect(controls, new Vector2(0f, -20f), new Vector2(760f, 650f));
+        SetRect(controls, new Vector2(0f, -35f), new Vector2(860f, 800f));
 
         musicToggle = CreateSettingsToggleButton(
-            controls, "MUSIC", new Vector2(0f, 210f), ToggleMusic);
+            controls, "MUSIC", new Vector2(0f, 245f), ToggleMusic);
         soundToggle = CreateSettingsToggleButton(
             controls, "SFX", new Vector2(0f, 0f), ToggleSound);
         vibrationToggle = CreateSettingsToggleButton(
-            controls, "VIBRATION", new Vector2(0f, -210f), ToggleVibration);
+            controls, "VIBRATION", new Vector2(0f, -245f), ToggleVibration);
 
         Button doneButton = CreateSettingsActionButton(
             settingsScreen.transform,
             "SettingsClose",
             "DONE",
             SettingsMintButtonResource,
-            "PauseMenu/Buttons/PauseButtonMintCleanSatin",
+            string.Empty,
             Vector2.zero,
-            new Vector2(700f, 132f),
+            new Vector2(720f, 150f),
             CloseSettings,
-            43f);
+            46f);
         RectTransform doneRect = doneButton.transform as RectTransform;
         doneRect.anchorMin = new Vector2(0.5f, 0f);
         doneRect.anchorMax = new Vector2(0.5f, 0f);
@@ -1880,11 +1881,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             label + "Toggle",
             string.Empty,
             SettingsBlueButtonResource,
-            "PauseMenu/Buttons/PauseButtonBlueCleanSatin",
+            string.Empty,
             position,
-            new Vector2(700f, 132f),
+            new Vector2(780f, 180f),
             action,
-            43f);
+            50f);
 
         TMP_Text stateLabel = button.GetComponentInChildren<TMP_Text>(true);
         if (stateLabel != null)
@@ -1892,28 +1893,29 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             stateLabel.name = label + "State";
             SetRect(
                 stateLabel.rectTransform,
-                new Vector2(205f, 0f),
-                new Vector2(210f, 96f));
-            stateLabel.fontSize = 40f;
-            stateLabel.fontSizeMin = 30f;
-            stateLabel.fontSizeMax = 40f;
+                new Vector2(265f, 0f),
+                new Vector2(180f, 130f));
+            stateLabel.fontSize = 46f;
+            stateLabel.fontSizeMin = 34f;
+            stateLabel.fontSizeMax = 46f;
             stateLabel.alignment = TextAlignmentOptions.Center;
+            BalloonDogTitanFont.Apply(stateLabel);
         }
 
         TMP_Text optionLabel = CreatePauseText(
             button.transform,
             label + "Label",
             label,
-            new Vector2(-135f, 0f),
-            new Vector2(360f, 96f),
-            43f,
+            new Vector2(-165f, 0f),
+            new Vector2(430f, 130f),
+            50f,
             Color.white,
             TextAlignmentOptions.Center);
         optionLabel.enableAutoSizing = true;
-        optionLabel.fontSizeMin = 30f;
-        optionLabel.fontSizeMax = 43f;
+        optionLabel.fontSizeMin = 36f;
+        optionLabel.fontSizeMax = 50f;
         optionLabel.overflowMode = TextOverflowModes.Overflow;
-        optionLabel.margin = new Vector4(12f, 5f, 12f, 8f);
+        optionLabel.margin = new Vector4(18f, 5f, 18f, 8f);
         AddTextShadow(
             optionLabel,
             new Color(0.01f, 0.16f, 0.42f, 0.34f),
@@ -1924,6 +1926,50 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             StateLabel = stateLabel,
             StateBackground = button.GetComponent<Image>()
         };
+    }
+
+    private static void CreateSettingsBackArrowGraphic(Transform parent)
+    {
+        RectTransform arrowRoot = CreateRect("SettingsBackArrow", parent);
+        SetRect(arrowRoot, Vector2.zero, new Vector2(72f, 58f));
+
+        Image shaft = CreateImage(
+            arrowRoot,
+            "ArrowShaft",
+            new Vector2(8f, 0f),
+            new Vector2(48f, 10f),
+            Color.white,
+            false);
+        Image upperArm = CreateImage(
+            arrowRoot,
+            "ArrowUpperArm",
+            new Vector2(-13f, 10f),
+            new Vector2(31f, 10f),
+            Color.white,
+            false);
+        Image lowerArm = CreateImage(
+            arrowRoot,
+            "ArrowLowerArm",
+            new Vector2(-13f, -10f),
+            new Vector2(31f, 10f),
+            Color.white,
+            false);
+
+        foreach (Image segment in new[] { shaft, upperArm, lowerArm })
+        {
+            segment.sprite = GetRoundedSprite();
+            segment.type = Image.Type.Sliced;
+            segment.raycastTarget = false;
+            AddGraphicShadow(
+                segment,
+                new Color(0.01f, 0.16f, 0.42f, 0.38f),
+                new Vector2(0f, -3f));
+        }
+
+        upperArm.rectTransform.localEulerAngles =
+            new Vector3(0f, 0f, 42f);
+        lowerArm.rectTransform.localEulerAngles =
+            new Vector3(0f, 0f, -42f);
     }
 
     private static Button CreateSettingsActionButton(
@@ -1992,7 +2038,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
 
         Material satinMaterial =
-            Resources.Load<Material>(materialResourcePath);
+            string.IsNullOrEmpty(materialResourcePath)
+                ? null
+                : Resources.Load<Material>(materialResourcePath);
         background.material =
             satinMaterial != null && satinMaterial.shader != null &&
             satinMaterial.shader.isSupported
@@ -3042,9 +3090,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 enabled
                     ? SettingsMintButtonResource
                     : SettingsBlueButtonResource,
-                enabled
-                    ? "PauseMenu/Buttons/PauseButtonMintCleanSatin"
-                    : "PauseMenu/Buttons/PauseButtonBlueCleanSatin");
+                string.Empty);
         }
     }
 
