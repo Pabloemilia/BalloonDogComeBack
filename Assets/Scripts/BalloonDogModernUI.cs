@@ -1623,9 +1623,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.43f, 1f, 0.12f, 1f),
             new Color(0.02f, 0.77f, 0.32f, 1f),
             ResumeGame,
-            56f,
+            62f,
             96f,
-            36f);
+            12f);
         Button restart = CreatePauseActionButton(
             content,
             "PauseRestartButtonModern",
