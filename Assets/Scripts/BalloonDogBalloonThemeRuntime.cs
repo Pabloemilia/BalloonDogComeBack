@@ -375,7 +375,6 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
         StyleSecondaryTypography("ModernSkinsScreen");
         StyleSecondaryTypography("ModernMarketScreen");
-        StyleSecondaryTypography("ModernPrivacyScreen");
 
         StyleSecondaryCoin("SettingsTokens");
         StyleSecondaryCoin("SkinsTokens");

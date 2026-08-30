@@ -1086,23 +1086,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         settingsScreen = CreatePauseThemedSettingsScreen();
 
-        Button closeButton = CreateSettingsActionButton(
-            settingsScreen.transform,
-            "SettingsTopButton",
-            string.Empty,
-            SettingsBlueButtonResource,
-            string.Empty,
-            Vector2.zero,
-            new Vector2(128f, 108f),
-            CloseSettings,
-            39f);
-        CreateSettingsBackArrowGraphic(closeButton.transform);
-        RectTransform closeRect = closeButton.transform as RectTransform;
-        closeRect.anchorMin = Vector2.one;
-        closeRect.anchorMax = Vector2.one;
-        closeRect.pivot = Vector2.one;
-        closeRect.anchoredPosition = new Vector2(-30f, -30f);
-
         RectTransform titleStage = CreateRect(
             "SettingsTitleStage",
             settingsScreen.transform);
@@ -1142,6 +1125,17 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             controls, "SFX", new Vector2(0f, 0f), ToggleSound);
         vibrationToggle = CreateSettingsToggleButton(
             controls, "VIBRATION", new Vector2(0f, -245f), ToggleVibration);
+
+        CreateSettingsActionButton(
+            controls,
+            "SettingsPrivacyButton",
+            "PRIVACY",
+            SettingsBlueButtonResource,
+            string.Empty,
+            new Vector2(0f, -490f),
+            new Vector2(780f, 180f),
+            ShowPrivacyScreen,
+            50f);
 
         Button doneButton = CreateSettingsActionButton(
             settingsScreen.transform,
@@ -1220,10 +1214,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(-455f, 590f), new Vector2(195f, 178f), -12f,
             0.11f, 9f, 12f, 20.5f, 0.18f, 1.2f);
         CreatePauseDogDecoration(
-            decorativeLayer, "SettingsBalloonDog_02",
-            new Vector2(455f, 325f), new Vector2(175f, 160f), 10f,
-            0.09f, 7f, 10f, 17.8f, 0.61f, 1.7f);
-        CreatePauseDogDecoration(
             decorativeLayer, "SettingsBalloonDog_03",
             new Vector2(-465f, -175f), new Vector2(205f, 188f), 6f,
             0.12f, 11f, 8f, 23.2f, 0.39f, 1.4f);
@@ -1232,6 +1222,27 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(470f, -650f), new Vector2(185f, 170f), -8f,
             0.10f, 8f, 11f, 19.8f, 0.82f, 1.9f);
 
+        CreatePauseCloud(
+            decorativeLayer, "SettingsCloud_06",
+            new Vector2(285f, 410f), new Vector2(150f, 100f), -6f, 0.08f,
+            5f, 7f, 20.5f, 0.24f);
+        CreatePauseCloud(
+            decorativeLayer, "SettingsCloud_07",
+            new Vector2(-235f, -520f), new Vector2(165f, 110f), 8f, 0.09f,
+            7f, 6f, 22.8f, 0.68f);
+        CreatePauseCloud(
+            decorativeLayer, "SettingsCloud_08",
+            new Vector2(285f, -860f), new Vector2(175f, 118f), -4f, 0.08f,
+            6f, 8f, 24.1f, 0.91f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "SettingsBalloonDog_05",
+            new Vector2(365f, 95f), new Vector2(150f, 138f), 12f,
+            0.08f, 7f, 9f, 21.6f, 0.35f, 1.3f);
+        CreatePauseDogDecoration(
+            decorativeLayer, "SettingsBalloonDog_06",
+            new Vector2(-325f, -500f), new Vector2(160f, 148f), -10f,
+            0.09f, 8f, 10f, 23.7f, 0.76f, 1.5f);
+
         return root.gameObject;
     }
 
@@ -1239,64 +1250,84 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         privacyScreen = CreateScreen(
             "ModernPrivacyScreen",
-            new Color(0.39f, 0.07f, 0.98f, 1f),
-            new Color(0.32f, 0.05f, 0.91f, 1f));
-        CreateTopBar(privacyScreen.transform, "Privacy", ShowSettingsFromPrivacy);
-        CreateRibbon(privacyScreen.transform, "PRIVACY", new Vector2(0f, 800f));
+            new Color(0.08f, 0.62f, 0.96f, 1f),
+            new Color(0.15f, 0.88f, 0.78f, 1f));
+
+        TMP_Text title = CreatePauseText(
+            privacyScreen.transform,
+            "PrivacyTitle",
+            "PRIVACY",
+            new Vector2(0f, 800f),
+            new Vector2(820f, 150f),
+            94f,
+            Color.white,
+            TextAlignmentOptions.Center);
+        title.enableAutoSizing = true;
+        title.fontSizeMin = 70f;
+        title.fontSizeMax = 94f;
+        AddTextShadow(
+            title,
+            new Color(0.01f, 0.16f, 0.46f, 0.52f),
+            new Vector2(0f, -7f));
+        CreatePauseTitleAccents(privacyScreen.transform, 800f);
 
         RectTransform card = CreateCard(
             privacyScreen.transform,
             "PrivacyCard",
             new Vector2(0f, -70f),
-            new Vector2(910f, 1420f),
-            new Color(0.13f, 0.015f, 0.43f, 0.98f),
-            new Color(0.34f, 0.05f, 0.75f, 0.92f));
+            new Vector2(860f, 1320f),
+            new Color(0.06f, 0.46f, 0.76f, 0.80f),
+            new Color(0.73f, 0.95f, 1f, 0.48f));
 
-        CreateText(
+        TMP_Text heading = CreatePauseText(
             card,
             "PrivacyHeading",
             "YOUR DATA STAYS ON THIS DEVICE",
-            new Vector2(0f, 575f),
-            new Vector2(760f, 100f),
-            34f,
-            Gold,
-            FontStyles.Bold,
+            new Vector2(0f, 520f),
+            new Vector2(730f, 120f),
+            38f,
+            Color.white,
             TextAlignmentOptions.Center);
+        heading.enableAutoSizing = true;
+        heading.fontSizeMin = 28f;
+        heading.fontSizeMax = 38f;
 
         string privacyCopy =
-            "Balloon Dog stores your high score, token balance, owned skins, " +
-            "selected skin and settings locally on your device.\n\n" +
-            "This prototype does not create an account and does not send " +
-            "personal information to a server. Deleting the app or clearing " +
-            "its local data may remove your progress.\n\n" +
-            "If analytics, advertising, cloud saves or online services are " +
-            "added before release, this notice must be updated and a public " +
-            "privacy-policy link must be provided in the store listing.\n\n" +
-            "Prototype notice • Updated August 7, 2026";
+            "Balloon Dog stores your high score, coins, unlocked skins and " +
+            "settings only on this device.\n\n" +
+            "This version does not create an account or send personal data " +
+            "to a server.\n\n" +
+            "Deleting the game or clearing its app data may remove your saved " +
+            "progress.\n\n" +
+            "If advertising, analytics, cloud saves or online services are " +
+            "added, this notice will be updated before release.";
 
-        TMP_Text copy = CreateText(
+        TMP_Text copy = CreatePauseText(
             card,
             "PrivacyCopy",
             privacyCopy,
-            new Vector2(0f, 70f),
-            new Vector2(750f, 890f),
-            27f,
-            new Color(0.91f, 0.89f, 0.96f, 1f),
-            FontStyles.Normal,
+            new Vector2(0f, 65f),
+            new Vector2(700f, 800f),
+            28f,
+            Color.white,
             TextAlignmentOptions.TopLeft);
+        copy.enableAutoSizing = true;
+        copy.fontSizeMin = 22f;
+        copy.fontSizeMax = 28f;
         copy.enableWordWrapping = true;
-        copy.lineSpacing = 8f;
+        copy.lineSpacing = 6f;
+        copy.margin = new Vector4(12f, 14f, 12f, 14f);
 
-        CreateButton(
+        CreateSettingsActionButton(
             card,
             "PrivacyBackButton",
-            "GOT IT",
-            new Vector2(0f, -560f),
-            new Vector2(560f, 105f),
-            Lime,
-            new Color(0.10f, 0.28f, 0.02f, 1f),
+            "BACK",
+            SettingsBlueButtonResource,
+            string.Empty,
+            new Vector2(0f, -545f),
+            new Vector2(600f, 140f),
             ShowSettingsFromPrivacy,
-            31f);
+            42f);
     }
 
     private void BuildResultScreen()
@@ -1928,50 +1959,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         };
     }
 
-    private static void CreateSettingsBackArrowGraphic(Transform parent)
-    {
-        RectTransform arrowRoot = CreateRect("SettingsBackArrow", parent);
-        SetRect(arrowRoot, Vector2.zero, new Vector2(72f, 58f));
-
-        Image shaft = CreateImage(
-            arrowRoot,
-            "ArrowShaft",
-            new Vector2(8f, 0f),
-            new Vector2(48f, 10f),
-            Color.white,
-            false);
-        Image upperArm = CreateImage(
-            arrowRoot,
-            "ArrowUpperArm",
-            new Vector2(-13f, 10f),
-            new Vector2(31f, 10f),
-            Color.white,
-            false);
-        Image lowerArm = CreateImage(
-            arrowRoot,
-            "ArrowLowerArm",
-            new Vector2(-13f, -10f),
-            new Vector2(31f, 10f),
-            Color.white,
-            false);
-
-        foreach (Image segment in new[] { shaft, upperArm, lowerArm })
-        {
-            segment.sprite = GetRoundedSprite();
-            segment.type = Image.Type.Sliced;
-            segment.raycastTarget = false;
-            AddGraphicShadow(
-                segment,
-                new Color(0.01f, 0.16f, 0.42f, 0.38f),
-                new Vector2(0f, -3f));
-        }
-
-        upperArm.rectTransform.localEulerAngles =
-            new Vector3(0f, 0f, 42f);
-        lowerArm.rectTransform.localEulerAngles =
-            new Vector3(0f, 0f, -42f);
-    }
-
     private static Button CreateSettingsActionButton(
         Transform parent,
         string name,
@@ -2033,7 +2020,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         if (backgroundSprite != null)
         {
             background.sprite = backgroundSprite;
-            background.type = Image.Type.Sliced;
+            background.type =
+                backgroundResourcePath == SettingsMintButtonResource
+                    ? Image.Type.Simple
+                    : Image.Type.Sliced;
+            background.preserveAspect = false;
             background.color = Color.white;
         }
 
