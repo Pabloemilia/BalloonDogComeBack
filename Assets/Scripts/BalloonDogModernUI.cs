@@ -1347,7 +1347,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             resultScreen.transform,
             "ResultScoreCard",
             "•  SCORE  •",
-            new Vector2(0f, 245f),
+            new Vector2(0f, 270f),
             "PauseMenu/Icons/Crown",
             false,
             new Color(0.78f, 0.68f, 1f, 1f),
@@ -1356,7 +1356,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             resultScreen.transform,
             "ResultTokenCard",
             "•  TOKENS  •",
-            new Vector2(0f, -180f),
+            new Vector2(0f, -50f),
             "CustomCoin",
             true,
             new Color(0.32f, 0.84f, 1f, 1f),
@@ -1365,7 +1365,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             resultScreen.transform,
             "ResultBestCard",
             "•  BEST  •",
-            new Vector2(0f, -605f),
+            new Vector2(0f, -370f),
             "PauseMenu/Icons/Crown",
             false,
             new Color(0.82f, 0.66f, 1f, 1f),
@@ -1373,13 +1373,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         CreateResultBonusButton(
             resultScreen.transform,
-            new Vector2(0f, -930f));
+            new Vector2(0f, -680f));
 
         Button noThanks = CreateButton(
             resultScreen.transform,
             "ModernResultMenuButton",
             "NO THANKS",
-            new Vector2(0f, -1110f),
+            new Vector2(0f, -875f),
             new Vector2(500f, 78f),
             new Color(1f, 1f, 1f, 0.001f),
             new Color(0.76f, 0.70f, 1f, 1f),
@@ -1447,7 +1447,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             parent,
             name,
             position,
-            new Vector2(650f, 300f),
+            new Vector2(600f, 235f),
             new Color(0.07f, 0.10f, 0.35f, 0.96f),
             new Color(0.68f, 0.78f, 1f, 0.68f));
         UiVerticalGradient cardGradient =
@@ -1459,8 +1459,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Image halo = CreateImage(
             card,
             "IconHalo",
-            new Vector2(0f, 150f),
-            new Vector2(145f, 145f),
+            new Vector2(0f, 118f),
+            new Vector2(122f, 122f),
             new Color(ringColor.r, ringColor.g, ringColor.b, 0.24f),
             true);
         AddGraphicShadow(
@@ -1471,8 +1471,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Image medallion = CreateImage(
             card,
             "IconMedallion",
-            new Vector2(0f, 150f),
-            new Vector2(116f, 116f),
+            new Vector2(0f, 118f),
+            new Vector2(96f, 96f),
             new Color(0.19f, 0.10f, 0.48f, 1f),
             true);
         Outline medallionOutline = medallion.gameObject.AddComponent<Outline>();
@@ -1488,7 +1488,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "Icon",
             iconResourcePath,
             Vector2.zero,
-            useCoinArtwork ? new Vector2(88f, 88f) : new Vector2(78f, 70f));
+            useCoinArtwork ? new Vector2(72f, 72f) : new Vector2(66f, 60f));
         icon.color = useCoinArtwork
             ? Color.white
             : new Color(1f, 0.73f, 0.08f, 1f);
@@ -1497,9 +1497,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "Caption",
             label,
-            new Vector2(0f, 62f),
-            new Vector2(560f, 58f),
-            34f,
+            new Vector2(0f, 37f),
+            new Vector2(520f, 56f),
+            39f,
             labelColor,
             TextAlignmentOptions.Center);
         caption.characterSpacing = 1f;
@@ -1508,14 +1508,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "Value",
             "0",
-            new Vector2(0f, -38f),
-            new Vector2(570f, 132f),
-            82f,
+            new Vector2(0f, -47f),
+            new Vector2(540f, 128f),
+            98f,
             Color.white,
             TextAlignmentOptions.Center);
         value.enableAutoSizing = true;
-        value.fontSizeMin = 50f;
-        value.fontSizeMax = 82f;
+        value.fontSizeMin = 58f;
+        value.fontSizeMax = 98f;
         value.overflowMode = TextOverflowModes.Overflow;
         AddTextShadow(
             value,
@@ -1533,7 +1533,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "ResultDoubleRewardButton",
             string.Empty,
             position,
-            new Vector2(820f, 275f),
+            new Vector2(800f, 235f),
             Color.white,
             Color.white,
             null,
@@ -1560,9 +1560,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             button.transform,
             "Multiplier",
             "2X",
-            new Vector2(0f, 52f),
-            new Vector2(360f, 105f),
-            92f,
+            new Vector2(0f, 45f),
+            new Vector2(360f, 96f),
+            88f,
             Color.white,
             TextAlignmentOptions.Center);
         multiplier.outlineColor = new Color(0.15f, 0.46f, 0.02f, 1f);
@@ -1576,9 +1576,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             button.transform,
             "BonusLabel",
             "BONUS",
-            new Vector2(0f, -28f),
+            new Vector2(0f, -24f),
             new Vector2(420f, 62f),
-            46f,
+            44f,
             new Color(1f, 0.96f, 0.36f, 1f),
             TextAlignmentOptions.Center);
         AddTextShadow(
@@ -1590,9 +1590,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             button.transform,
             "BonusHint",
             "Watch an ad to claim 2x reward",
-            new Vector2(0f, -91f),
+            new Vector2(0f, -82f),
             new Vector2(700f, 42f),
-            25f,
+            23f,
             Color.white,
             TextAlignmentOptions.Center);
 
