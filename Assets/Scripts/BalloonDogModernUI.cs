@@ -390,7 +390,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildMainScreen()
     {
-        mainScreen = CreatePauseThemedScreen("ModernMainScreen", "Main");
+        mainScreen = CreateScreen(
+            "ModernMainScreen",
+            new Color(0.39f, 0.07f, 0.98f, 1f),
+            new Color(0.32f, 0.05f, 0.91f, 1f));
 
         coinText = CreatePillText(
             mainScreen.transform,
@@ -401,15 +404,16 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.25f, 0.03f, 0.67f, 0.95f),
             Gold);
 
-        CreateSettingsActionButton(
+        CreateButton(
             mainScreen.transform,
             "MainSettingsButton",
-            "SETTINGS",
-            "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(365f, 1030f),
-            new Vector2(285f, 96f),
+            string.Empty,
+            new Vector2(430f, 1030f),
+            new Vector2(105f, 105f),
+            new Color(0.25f, 0.03f, 0.67f, 0.95f),
+            Color.white,
             () => ShowSettingsScreen(SettingsReturnTarget.Main),
-            28f);
+            48f);
 
         TMP_Text title = CreateText(
             mainScreen.transform,
@@ -432,44 +436,55 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.22f, 0.02f, 0.60f, 0.72f),
             new Color(0.89f, 0.83f, 1f, 1f));
 
-        CreateSettingsActionButton(
+        CreateResourceImage(
+            mainScreen.transform,
+            "FigmaMainButtons",
+            "ModernUI/MainButtons",
+            new Vector2(0f, -760f),
+            new Vector2(760f, 207f));
+        CreateTransparentButton(
             mainScreen.transform,
             "ModernPlayButton",
-            "PLAY",
-            "PauseMenu/Buttons/PauseButtonMintClean",
-            new Vector2(0f, -700f),
-            new Vector2(720f, 140f),
-            StartGame,
-            46f);
-        CreateSettingsActionButton(
+            new Vector2(-100f, -760f),
+            new Vector2(545f, 190f),
+            StartGame);
+        CreateTransparentButton(
             mainScreen.transform,
             "QuickMarketButton",
-            "MARKET",
-            "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(0f, -855f),
-            new Vector2(700f, 112f),
-            ShowMarketScreen,
-            36f);
-        CreateSettingsActionButton(
+            new Vector2(290f, -760f),
+            new Vector2(180f, 190f),
+            ShowMarketScreen);
+
+        CreateResourceImage(
+            mainScreen.transform,
+            "FigmaMiscButtons",
+            "ModernUI/MiscButtons",
+            new Vector2(0f, -1010f),
+            new Vector2(440f, 133f));
+        CreateTransparentButton(
+            mainScreen.transform,
+            "MarketNavButton",
+            new Vector2(-80f, -1010f),
+            new Vector2(170f, 125f),
+            ShowMarketScreen);
+        CreateTransparentButton(
             mainScreen.transform,
             "SkinsNavButton",
-            "SKINS",
-            "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(0f, -990f),
-            new Vector2(700f, 112f),
-            ShowSkinsScreen,
-            36f);
-        CreateSettingsActionButton(
+            new Vector2(85f, -1010f),
+            new Vector2(170f, 125f),
+            ShowSkinsScreen);
+
+        Button privacyButton = CreateButton(
             mainScreen.transform,
             "PrivacyLinkButton",
             "PRIVACY",
-            "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(0f, -1120f),
-            new Vector2(700f, 96f),
+            new Vector2(0f, -1125f),
+            new Vector2(280f, 58f),
+            new Color(1f, 1f, 1f, 0.04f),
+            new Color(0.84f, 0.78f, 1f, 1f),
             ShowPrivacyFromMain,
-            30f);
-
-        ApplyTitanOneToHierarchy(mainScreen.transform);
+            22f);
+        RemoveButtonShadow(privacyButton);
     }
 
     private void CreateBalloonDogPreview(Transform parent)
@@ -554,13 +569,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             () => ShowMarketTab(true),
             29f);
 
-        marketExtrasTabButton = CreateSettingsActionButton(
+        marketExtrasTabButton = CreateButton(
             marketScreen.transform,
             "MarketExtrasTabButton",
             "EXTRAS",
-            "PauseMenu/Buttons/PauseButtonBlueClean",
             new Vector2(205f, 625f),
             new Vector2(380f, 92f),
+            MenuBlue,
+            Color.white,
             () => ShowMarketTab(false),
             29f);
 
@@ -819,8 +835,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.72f, 0.86f, 0.94f, 1f),
             FontStyles.Bold,
             TextAlignmentOptions.Center);
-
-        ApplyTitanOneToHierarchy(parent);
     }
 
     private void CreateStoreOfferCard(
@@ -863,13 +877,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             FontStyles.Bold,
             TextAlignmentOptions.Center);
 
-        CreateSettingsActionButton(
+        CreateButton(
             card,
             "StoreOfferButton",
             "COMING SOON",
-            "PauseMenu/Buttons/PauseButtonBlueClean",
             new Vector2(0f, -125f),
             new Vector2(300f, 82f),
+            MenuBlue,
+            Color.white,
             () => ShowToast(title + " COMING SOON"),
             22f);
     }
@@ -929,12 +944,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             Image image = marketExtrasTabButton.GetComponent<Image>();
             if (image != null)
             {
-                ApplySettingsButtonBackground(
-                    image,
-                    showSkins
-                        ? "PauseMenu/Buttons/PauseButtonBlueClean"
-                        : "PauseMenu/Buttons/PauseButtonMintClean");
-                image.color = Color.white;
+                image.color = showSkins ? MenuBlue : MenuGreen;
             }
         }
     }
@@ -1068,7 +1078,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildSettingsScreen()
     {
-        settingsScreen = CreatePauseThemedScreen("ModernSettingsScreen", "Settings");
+        settingsScreen = CreatePauseThemedSettingsScreen();
         CreateSettingsTopBar(settingsScreen.transform);
 
         TMP_Text title = CreatePauseText(
@@ -1129,9 +1139,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             43f);
     }
 
-    private GameObject CreatePauseThemedScreen(string screenName, string decorationPrefix)
+    private GameObject CreatePauseThemedSettingsScreen()
     {
-        RectTransform root = CreateRect(screenName, safeRoot);
+        RectTransform root = CreateRect("ModernSettingsScreen", safeRoot);
         Stretch(root);
 
         Image background = root.gameObject.AddComponent<Image>();
@@ -1152,7 +1162,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         Image softTint = CreateImage(
             root,
-            decorationPrefix + "BackgroundOverlay",
+            "SettingsBackgroundOverlay",
             Vector2.zero,
             new Vector2(1080f, 2348f),
             new Color(0.02f, 0.38f, 0.68f, 0.07f),
@@ -1160,55 +1170,55 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Stretch(softTint.rectTransform);
 
         RectTransform decorativeLayer =
-            CreateRect(decorationPrefix + "DecorativeLayer", root);
+            CreateRect("SettingsDecorativeLayer", root);
         Stretch(decorativeLayer);
         CreatePauseCloud(
-            decorativeLayer, decorationPrefix + "Cloud_01",
+            decorativeLayer, "SettingsCloud_01",
             new Vector2(-335f, 950f), new Vector2(285f, 185f), -5f, 0.14f,
             7f, 9f, 16.5f, 0.12f);
         CreatePauseCloud(
-            decorativeLayer, decorationPrefix + "Cloud_02",
+            decorativeLayer, "SettingsCloud_02",
             new Vector2(415f, 775f), new Vector2(225f, 150f), 7f, 0.11f,
             6f, 11f, 19.2f, 0.46f);
         CreatePauseCloud(
-            decorativeLayer, decorationPrefix + "Cloud_03",
+            decorativeLayer, "SettingsCloud_03",
             new Vector2(-455f, 375f), new Vector2(250f, 168f), 3f, 0.16f,
             9f, 7f, 21.4f, 0.73f);
         CreatePauseCloud(
-            decorativeLayer, decorationPrefix + "Cloud_04",
+            decorativeLayer, "SettingsCloud_04",
             new Vector2(470f, -115f), new Vector2(205f, 138f), -8f, 0.12f,
             5f, 9f, 18.1f, 0.31f);
         CreatePauseCloud(
-            decorativeLayer, decorationPrefix + "Cloud_05",
+            decorativeLayer, "SettingsCloud_05",
             new Vector2(-365f, -650f), new Vector2(245f, 165f), 6f, 0.15f,
             8f, 10f, 24.3f, 0.58f);
         CreatePauseCloud(
-            decorativeLayer, decorationPrefix + "Cloud_06",
+            decorativeLayer, "SettingsCloud_06",
             new Vector2(330f, -985f), new Vector2(180f, 122f), -3f, 0.10f,
             6f, 8f, 20.7f, 0.87f);
 
         CreatePauseDogDecoration(
-            decorativeLayer, decorationPrefix + "BalloonDog_01",
+            decorativeLayer, "SettingsBalloonDog_01",
             new Vector2(-445f, 735f), new Vector2(220f, 200f), -12f,
             0.11f, 9f, 12f, 20.5f, 0.18f, 1.2f);
         CreatePauseDogDecoration(
-            decorativeLayer, decorationPrefix + "BalloonDog_02",
+            decorativeLayer, "SettingsBalloonDog_02",
             new Vector2(450f, 520f), new Vector2(190f, 175f), 10f,
             0.09f, 7f, 10f, 17.8f, 0.61f, 1.7f);
         CreatePauseDogDecoration(
-            decorativeLayer, decorationPrefix + "BalloonDog_03",
+            decorativeLayer, "SettingsBalloonDog_03",
             new Vector2(-465f, 80f), new Vector2(235f, 215f), 6f,
             0.13f, 11f, 8f, 23.2f, 0.39f, 1.4f);
         CreatePauseDogDecoration(
-            decorativeLayer, decorationPrefix + "BalloonDog_04",
+            decorativeLayer, "SettingsBalloonDog_04",
             new Vector2(470f, -390f), new Vector2(205f, 188f), -8f,
             0.10f, 8f, 11f, 19.8f, 0.82f, 1.9f);
         CreatePauseDogDecoration(
-            decorativeLayer, decorationPrefix + "BalloonDog_05",
+            decorativeLayer, "SettingsBalloonDog_05",
             new Vector2(-330f, -880f), new Vector2(175f, 160f), 14f,
             0.08f, 7f, 9f, 25.1f, 0.52f, 0.9f);
         CreatePauseDogDecoration(
-            decorativeLayer, decorationPrefix + "BalloonDog_06",
+            decorativeLayer, "SettingsBalloonDog_06",
             new Vector2(355f, -815f), new Vector2(225f, 205f), -4f,
             0.12f, 10f, 12f, 21.6f, 0.94f, 1.5f);
 
@@ -1230,12 +1240,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildPrivacyScreen()
     {
-        privacyScreen = CreatePauseThemedScreen("ModernPrivacyScreen", "Privacy");
-        CreateTopBar(
-            privacyScreen.transform,
-            "Privacy",
-            ShowSettingsFromPrivacy,
-            true);
+        privacyScreen = CreateScreen(
+            "ModernPrivacyScreen",
+            new Color(0.39f, 0.07f, 0.98f, 1f),
+            new Color(0.32f, 0.05f, 0.91f, 1f));
+        CreateTopBar(privacyScreen.transform, "Privacy", ShowSettingsFromPrivacy);
         CreateRibbon(privacyScreen.transform, "PRIVACY", new Vector2(0f, 800f));
 
         RectTransform card = CreateCard(
@@ -1243,13 +1252,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "PrivacyCard",
             new Vector2(0f, -70f),
             new Vector2(910f, 1420f),
-            new Color(0.12f, 0.60f, 0.82f, 0.33f),
-            new Color(0.76f, 0.95f, 1f, 0.48f));
-        UiVerticalGradient privacyCardGradient =
-            card.gameObject.AddComponent<UiVerticalGradient>();
-        privacyCardGradient.Configure(
-            new Color(0.57f, 0.86f, 1f, 0.30f),
-            new Color(0.05f, 0.68f, 0.82f, 0.38f));
+            new Color(0.13f, 0.015f, 0.43f, 0.98f),
+            new Color(0.34f, 0.05f, 0.75f, 0.92f));
 
         CreateText(
             card,
@@ -1286,22 +1290,24 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         copy.enableWordWrapping = true;
         copy.lineSpacing = 8f;
 
-        CreateSettingsActionButton(
+        CreateButton(
             card,
             "PrivacyBackButton",
             "GOT IT",
-            "PauseMenu/Buttons/PauseButtonMintClean",
             new Vector2(0f, -560f),
             new Vector2(560f, 105f),
+            Lime,
+            new Color(0.10f, 0.28f, 0.02f, 1f),
             ShowSettingsFromPrivacy,
             31f);
-
-        ApplyTitanOneToHierarchy(privacyScreen.transform);
     }
 
     private void BuildResultScreen()
     {
-        resultScreen = CreatePauseThemedScreen("ModernResultScreen", "Result");
+        resultScreen = CreateScreen(
+            "ModernResultScreen",
+            new Color(0.39f, 0.07f, 0.98f, 1f),
+            new Color(0.45f, 0.05f, 0.83f, 1f));
 
         resultTitleText = CreateText(
             resultScreen.transform,
@@ -1392,25 +1398,27 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             FontStyles.Bold,
             TextAlignmentOptions.Center);
 
-        CreateSettingsActionButton(
+        CreateButton(
             resultScreen.transform,
             "ModernRestartButton",
             "REVIVE",
-            "PauseMenu/Buttons/PauseButtonMintClean",
             new Vector2(0f, -665f),
             new Vector2(790f, 150f),
+            Lime,
+            new Color(0.10f, 0.28f, 0.02f, 1f),
             RestartGame,
             40f);
 
-        CreateSettingsActionButton(
+        CreateButton(
             resultScreen.transform,
             "ModernResultMenuButton",
             "NO THANKS",
-            "PauseMenu/Buttons/PauseButtonBlueClean",
             new Vector2(0f, -855f),
-            new Vector2(560f, 96f),
+            new Vector2(420f, 70f),
+            new Color(1f, 1f, 1f, 0.05f),
+            Color.white,
             ReturnToMainMenu,
-            28f);
+            24f);
 
         CreateText(
             resultScreen.transform,
@@ -1422,8 +1430,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             Muted,
             FontStyles.Bold,
             TextAlignmentOptions.Center);
-
-        ApplyTitanOneToHierarchy(resultScreen.transform);
     }
 
     private void BuildPauseScreen()
@@ -1961,20 +1967,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         return label;
     }
 
-    private static void ApplyTitanOneToHierarchy(Transform root)
-    {
-        if (root == null)
-        {
-            return;
-        }
-
-        TMP_Text[] labels = root.GetComponentsInChildren<TMP_Text>(true);
-        foreach (TMP_Text label in labels)
-        {
-            BalloonDogTitanFont.Apply(label);
-        }
-    }
-
     private static void CreatePauseCrownIcon(
         Transform parent,
         Vector2 position)
@@ -2049,15 +2041,16 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         gameplayOverlay.transform.SetParent(safeRoot, false);
         Stretch(gameplayOverlay.GetComponent<RectTransform>());
 
-        CreateSettingsActionButton(
+        CreateButton(
             gameplayOverlay.transform,
             "ModernPauseButton",
-            "PAUSE",
-            "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(385f, 1030f),
-            new Vector2(260f, 92f),
+            "II",
+            new Vector2(430f, 1030f),
+            new Vector2(105f, 105f),
+            InkSoft,
+            Color.white,
             PauseGame,
-            28f);
+            38f);
 
         gameplaySkinText = CreatePillText(
             gameplayOverlay.transform,
@@ -2068,7 +2061,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.04f, 0.03f, 0.10f, 0.80f),
             Color.white);
         gameplaySkinText.fontSizeMax = 24f;
-        ApplyTitanOneToHierarchy(gameplayOverlay.transform);
     }
 
     private void BuildToast()
@@ -2095,7 +2087,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             Color.white,
             FontStyles.Bold,
             TextAlignmentOptions.Center);
-        BalloonDogTitanFont.Apply(toastText);
     }
 
     private void CreateHeader(Transform parent, string title, UnityAction backAction)
@@ -2133,11 +2124,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             Ink).gameObject.AddComponent<BalloonDogCoinLabel>();
     }
 
-    private void CreateTopBar(
-        Transform parent,
-        string screenName,
-        UnityAction rightAction,
-        bool usePauseButtonStyle = false)
+    private void CreateTopBar(Transform parent, string screenName, UnityAction rightAction)
     {
         CreatePillText(
             parent,
@@ -2148,31 +2135,16 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             MenuCream,
             new Color(0.31f, 0.18f, 0.02f, 1f)).gameObject.AddComponent<BalloonDogCoinLabel>();
 
-        if (usePauseButtonStyle)
-        {
-            CreateSettingsActionButton(
-                parent,
-                screenName + "TopButton",
-                "X",
-                "PauseMenu/Buttons/PauseButtonBlueClean",
-                new Vector2(430f, 1030f),
-                new Vector2(118f, 96f),
-                rightAction,
-                39f);
-        }
-        else
-        {
-            CreateButton(
-                parent,
-                screenName + "TopButton",
-                screenName == "Settings" || screenName == "Privacy" ? "X" : string.Empty,
-                new Vector2(430f, 1030f),
-                new Vector2(105f, 105f),
-                MenuBlue,
-                Color.white,
-                rightAction,
-                46f);
-        }
+        CreateButton(
+            parent,
+            screenName + "TopButton",
+            screenName == "Settings" || screenName == "Privacy" ? "X" : string.Empty,
+            new Vector2(430f, 1030f),
+            new Vector2(105f, 105f),
+            MenuBlue,
+            Color.white,
+            rightAction,
+            46f);
     }
 
     private static void CreateRibbon(Transform parent, string title, Vector2 position)
