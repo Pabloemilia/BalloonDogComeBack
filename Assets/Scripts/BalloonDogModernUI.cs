@@ -26,6 +26,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         "SettingsMenu/Buttons/SettingsButtonBlue";
     private const int WheelTokenCost = 300;
 
+    // The Resume mint artwork has less transparent padding than the blue art.
+    // These sizes normalize the visible edges without resizing the labels.
+    private static readonly Vector2 SettingsBlueButtonSize =
+        new Vector2(780f, 180f);
+    private static readonly Vector2 SettingsMintButtonSize =
+        new Vector2(770f, 138f);
+
     private static readonly Color Ink = new Color(0.035f, 0.025f, 0.085f, 1f);
     private static readonly Color InkSoft = new Color(0.075f, 0.055f, 0.15f, 1f);
     private static readonly Color Purple = new Color(0.20f, 0.035f, 0.60f, 1f);
@@ -1135,7 +1142,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             SettingsBlueButtonResource,
             string.Empty,
             new Vector2(0f, -490f),
-            new Vector2(780f, 180f),
+            SettingsBlueButtonSize,
             ShowPrivacyScreen,
             50f);
 
@@ -1146,7 +1153,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             SettingsMintButtonResource,
             SettingsMintButtonMaterialResource,
             Vector2.zero,
-            new Vector2(720f, 150f),
+            SettingsMintButtonSize,
             CloseSettings,
             46f);
         RectTransform doneRect = doneButton.transform as RectTransform;
@@ -1916,7 +1923,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             SettingsBlueButtonResource,
             string.Empty,
             position,
-            new Vector2(780f, 180f),
+            SettingsBlueButtonSize,
             action,
             50f);
 
@@ -3075,6 +3082,16 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
         if (view.StateBackground != null)
         {
+            RectTransform backgroundRect =
+                view.StateBackground.rectTransform;
+            if (backgroundRect != null)
+            {
+                backgroundRect.sizeDelta =
+                    enabled
+                        ? SettingsMintButtonSize
+                        : SettingsBlueButtonSize;
+            }
+
             ApplySettingsButtonBackground(
                 view.StateBackground,
                 enabled
