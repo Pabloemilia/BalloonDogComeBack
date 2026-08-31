@@ -20,6 +20,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private const string SoundPreferenceKey = "BalloonDog.SoundEnabled";
     private const string SettingsMintButtonResource =
         "SettingsMenu/Buttons/SettingsButtonMint";
+    private const string SettingsMintButtonDataResource =
+        "SettingsMenu/Buttons/SettingsButtonMintRuntime";
     private const string SettingsBlueButtonResource =
         "SettingsMenu/Buttons/SettingsButtonBlue";
     private const int WheelTokenCost = 300;
@@ -130,6 +132,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private static Sprite roundedSprite;
     private static Sprite circleSprite;
     private static Sprite patternSprite;
+    private static Texture2D settingsMintRuntimeTexture;
     private static readonly Dictionary<string, Sprite> ResourceSprites =
         new Dictionary<string, Sprite>();
 
@@ -3432,9 +3435,41 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             return cached;
         }
 
-        // These sprites carry their measured borders and pixel density in the
-        // importer. Recreating them from Texture2D would discard those settings
-        // and reapply crop coordinates belonging to the previous artwork.
+        // The final mint art is loaded from raw bytes so a stale or mismatched
+        // TextureImporter can never make the ON and DONE backgrounds disappear.
+        if (path == SettingsMintButtonResource)
+        {
+            TextAsset mintData =
+                Resources.Load<TextAsset>(SettingsMintButtonDataResource);
+            if (mintData != null && mintData.bytes != null &&
+                mintData.bytes.Length > 0)
+            {
+                settingsMintRuntimeTexture =
+                    new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                settingsMintRuntimeTexture.name = "SettingsButtonMintRuntime";
+                settingsMintRuntimeTexture.wrapMode = TextureWrapMode.Clamp;
+                settingsMintRuntimeTexture.filterMode = FilterMode.Bilinear;
+
+                if (settingsMintRuntimeTexture.LoadImage(mintData.bytes, false))
+                {
+                    Sprite runtimeSprite = Sprite.Create(
+                        settingsMintRuntimeTexture,
+                        new Rect(
+                            0f,
+                            0f,
+                            settingsMintRuntimeTexture.width,
+                            settingsMintRuntimeTexture.height),
+                        new Vector2(0.5f, 0.5f),
+                        100f);
+                    runtimeSprite.name = "SettingsButtonMintRuntimeSprite";
+                    ResourceSprites[cacheKey] = runtimeSprite;
+                    return runtimeSprite;
+                }
+            }
+        }
+
+        // The regular imported sprites retain their measured borders and pixel
+        // density. This remains the normal path for the blue button artwork.
         Sprite sprite = Resources.Load<Sprite>(path);
         if (sprite == null)
         {
