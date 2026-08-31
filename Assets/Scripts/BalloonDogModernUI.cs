@@ -87,6 +87,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private TMP_Text mainBestText;
     private TMP_Text equippedNameText;
     private TMP_Text resultTitleText;
+    private TMP_Text resultTitleBottomText;
     private TMP_Text resultReasonText;
     private TMP_Text resultScoreText;
     private TMP_Text resultBestText;
@@ -243,6 +244,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         mainBestText = null;
         equippedNameText = null;
         resultTitleText = null;
+        resultTitleBottomText = null;
         resultReasonText = null;
         resultScoreText = null;
         resultBestText = null;
@@ -1306,130 +1308,375 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         resultScreen = CreateScreen(
             "ModernResultScreen",
-            new Color(0.39f, 0.07f, 0.98f, 1f),
-            new Color(0.45f, 0.05f, 0.83f, 1f));
+            new Color(0.24f, 0.03f, 0.78f, 1f),
+            new Color(0.04f, 0.36f, 0.96f, 1f));
 
-        resultTitleText = CreateText(
+        CreateResultDecorations(resultScreen.transform);
+
+        resultTitleText = CreateResultTitleLine(
             resultScreen.transform,
-            "ResultTitle",
-            "GAME OVER",
-            new Vector2(0f, 850f),
-            new Vector2(760f, 150f),
-            76f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-        AddTextShadow(resultTitleText, new Color(0f, 0f, 0f, 0.65f), new Vector2(5f, -6f));
+            "ResultTitleTop",
+            "GAME",
+            new Vector2(0f, 855f),
+            new Color(1f, 1f, 1f, 1f),
+            new Color(0.66f, 0.86f, 1f, 1f),
+            122f);
+        resultTitleBottomText = CreateResultTitleLine(
+            resultScreen.transform,
+            "ResultTitleBottom",
+            "OVER",
+            new Vector2(0f, 670f),
+            new Color(1f, 0.96f, 0.42f, 1f),
+            new Color(1f, 0.42f, 0.02f, 1f),
+            132f);
 
-        resultReasonText = CreateText(
+        // Kept for the existing result-state wiring, but intentionally hidden
+        // because the supplied reference contains no separate reason line.
+        resultReasonText = CreatePauseText(
             resultScreen.transform,
             "ResultReason",
-            "KEEP GOING",
-            new Vector2(0f, 705f),
-            new Vector2(680f, 58f),
-            25f,
-            new Color(0.82f, 0.76f, 0.94f, 1f),
-            FontStyles.Bold,
+            string.Empty,
+            Vector2.zero,
+            Vector2.zero,
+            1f,
+            Color.clear,
             TextAlignmentOptions.Center);
+        resultReasonText.gameObject.SetActive(false);
 
-        CreateText(
+        resultScoreText = CreateResultStatCard(
             resultScreen.transform,
-            "ScoreCaption",
-            "SCORE",
-            new Vector2(0f, 520f),
-            new Vector2(400f, 55f),
-            27f,
-            Gold,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-
-        resultScoreText = CreateText(
+            "ResultScoreCard",
+            "•  SCORE  •",
+            new Vector2(0f, 270f),
+            "PauseMenu/Icons/Crown",
+            false,
+            new Color(0.78f, 0.68f, 1f, 1f),
+            new Color(0.58f, 0.20f, 1f, 1f));
+        resultRewardText = CreateResultStatCard(
             resultScreen.transform,
-            "ResultScore",
-            "0",
-            new Vector2(0f, 420f),
-            new Vector2(700f, 130f),
-            76f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-
-        CreateText(
+            "ResultTokenCard",
+            "•  TOKENS  •",
+            new Vector2(0f, -50f),
+            "CustomCoin",
+            true,
+            new Color(0.32f, 0.84f, 1f, 1f),
+            new Color(0.02f, 0.80f, 1f, 1f));
+        resultBestText = CreateResultStatCard(
             resultScreen.transform,
-            "TokenCaption",
-            "TOKENS",
-            new Vector2(0f, 175f),
-            new Vector2(400f, 55f),
-            27f,
-            Gold,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
+            "ResultBestCard",
+            "•  BEST  •",
+            new Vector2(0f, -370f),
+            "PauseMenu/Icons/Crown",
+            false,
+            new Color(0.82f, 0.66f, 1f, 1f),
+            new Color(1f, 0.24f, 0.78f, 1f));
 
-        resultRewardText = CreateText(
+        CreateResultBonusButton(
             resultScreen.transform,
-            "ResultReward",
-            "+0",
-            new Vector2(0f, 75f),
-            new Vector2(700f, 120f),
-            68f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
+            new Vector2(0f, -680f));
 
-        CreateText(
-            resultScreen.transform,
-            "BestCaption",
-            "BEST",
-            new Vector2(0f, -160f),
-            new Vector2(400f, 55f),
-            27f,
-            Gold,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-
-        resultBestText = CreateText(
-            resultScreen.transform,
-            "ResultBest",
-            "0",
-            new Vector2(0f, -260f),
-            new Vector2(700f, 120f),
-            68f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-
-        CreateButton(
-            resultScreen.transform,
-            "ModernRestartButton",
-            "REVIVE",
-            new Vector2(0f, -665f),
-            new Vector2(790f, 150f),
-            Lime,
-            new Color(0.10f, 0.28f, 0.02f, 1f),
-            RestartGame,
-            40f);
-
-        CreateButton(
+        Button noThanks = CreateButton(
             resultScreen.transform,
             "ModernResultMenuButton",
             "NO THANKS",
-            new Vector2(0f, -855f),
-            new Vector2(420f, 70f),
-            new Color(1f, 1f, 1f, 0.05f),
-            Color.white,
+            new Vector2(0f, -875f),
+            new Vector2(500f, 78f),
+            new Color(1f, 1f, 1f, 0.001f),
+            new Color(0.76f, 0.70f, 1f, 1f),
             ReturnToMainMenu,
-            24f);
+            34f);
+        RemoveButtonShadow(noThanks);
+        BalloonDogTitanFont.Apply(
+            noThanks.GetComponentInChildren<TMP_Text>(true));
+    }
 
-        CreateText(
-            resultScreen.transform,
-            "ResultHint",
-            "TOKENS ARE SAVED AUTOMATICALLY",
-            new Vector2(0f, -1010f),
-            new Vector2(660f, 45f),
-            20f,
-            Muted,
-            FontStyles.Bold,
+    private static TMP_Text CreateResultTitleLine(
+        Transform parent,
+        string name,
+        string text,
+        Vector2 position,
+        Color topColor,
+        Color bottomColor,
+        float fontSize)
+    {
+        TMP_Text title = CreatePauseText(
+            parent,
+            name,
+            text,
+            position,
+            new Vector2(900f, 190f),
+            fontSize,
+            Color.white,
             TextAlignmentOptions.Center);
+        title.enableAutoSizing = true;
+        title.fontSizeMin = fontSize * 0.72f;
+        title.fontSizeMax = fontSize;
+        title.overflowMode = TextOverflowModes.Overflow;
+        title.enableVertexGradient = true;
+        title.colorGradient = new VertexGradient(
+            topColor,
+            topColor,
+            bottomColor,
+            bottomColor);
+        title.outlineColor = new Color(0.24f, 0.03f, 0.50f, 1f);
+        title.outlineWidth = 0.16f;
+        title.characterSpacing = -2f;
+
+        AddTextShadow(
+            title,
+            new Color(0.02f, 0.08f, 0.36f, 0.96f),
+            new Vector2(0f, -10f));
+        AddTextShadow(
+            title,
+            new Color(0.55f, 0.02f, 0.55f, 0.72f),
+            new Vector2(0f, -20f));
+        return title;
+    }
+
+    private static TMP_Text CreateResultStatCard(
+        Transform parent,
+        string name,
+        string label,
+        Vector2 position,
+        string iconResourcePath,
+        bool useCoinArtwork,
+        Color labelColor,
+        Color ringColor)
+    {
+        RectTransform card = CreateCard(
+            parent,
+            name,
+            position,
+            new Vector2(600f, 235f),
+            new Color(0.07f, 0.10f, 0.35f, 0.96f),
+            new Color(0.68f, 0.78f, 1f, 0.68f));
+        UiVerticalGradient cardGradient =
+            card.gameObject.AddComponent<UiVerticalGradient>();
+        cardGradient.Configure(
+            new Color(0.20f, 0.26f, 0.62f, 0.96f),
+            new Color(0.06f, 0.09f, 0.31f, 0.98f));
+
+        Image halo = CreateImage(
+            card,
+            "IconHalo",
+            new Vector2(0f, 118f),
+            new Vector2(122f, 122f),
+            new Color(ringColor.r, ringColor.g, ringColor.b, 0.24f),
+            true);
+        AddGraphicShadow(
+            halo,
+            new Color(ringColor.r, ringColor.g, ringColor.b, 0.42f),
+            new Vector2(0f, -3f));
+
+        Image medallion = CreateImage(
+            card,
+            "IconMedallion",
+            new Vector2(0f, 118f),
+            new Vector2(96f, 96f),
+            new Color(0.19f, 0.10f, 0.48f, 1f),
+            true);
+        Outline medallionOutline = medallion.gameObject.AddComponent<Outline>();
+        medallionOutline.effectColor = ringColor;
+        medallionOutline.effectDistance = new Vector2(4f, -4f);
+        AddGraphicShadow(
+            medallion,
+            new Color(0.02f, 0.02f, 0.18f, 0.80f),
+            new Vector2(0f, -7f));
+
+        Image icon = CreateResourceImage(
+            medallion.transform,
+            "Icon",
+            iconResourcePath,
+            Vector2.zero,
+            useCoinArtwork ? new Vector2(72f, 72f) : new Vector2(66f, 60f));
+        icon.color = useCoinArtwork
+            ? Color.white
+            : new Color(1f, 0.73f, 0.08f, 1f);
+
+        TMP_Text caption = CreatePauseText(
+            card,
+            "Caption",
+            label,
+            new Vector2(0f, 37f),
+            new Vector2(520f, 56f),
+            39f,
+            labelColor,
+            TextAlignmentOptions.Center);
+        caption.characterSpacing = 1f;
+
+        TMP_Text value = CreatePauseText(
+            card,
+            "Value",
+            "0",
+            new Vector2(0f, -47f),
+            new Vector2(540f, 128f),
+            98f,
+            Color.white,
+            TextAlignmentOptions.Center);
+        value.enableAutoSizing = true;
+        value.fontSizeMin = 58f;
+        value.fontSizeMax = 98f;
+        value.overflowMode = TextOverflowModes.Overflow;
+        AddTextShadow(
+            value,
+            new Color(0.01f, 0.03f, 0.20f, 0.82f),
+            new Vector2(0f, -6f));
+        return value;
+    }
+
+    private static void CreateResultBonusButton(
+        Transform parent,
+        Vector2 position)
+    {
+        Button button = CreateButton(
+            parent,
+            "ResultDoubleRewardButton",
+            string.Empty,
+            position,
+            new Vector2(800f, 235f),
+            Color.white,
+            Color.white,
+            null,
+            1f);
+
+        Image background = button.GetComponent<Image>();
+        UiVerticalGradient buttonGradient =
+            background.gameObject.AddComponent<UiVerticalGradient>();
+        buttonGradient.Configure(
+            new Color(0.76f, 1f, 0.05f, 1f),
+            new Color(0.04f, 0.76f, 0.08f, 1f));
+        Outline outline = button.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(0.15f, 1f, 0.83f, 0.92f);
+        outline.effectDistance = new Vector2(5f, -5f);
+
+        TMP_Text unusedLabel =
+            button.GetComponentInChildren<TMP_Text>(true);
+        if (unusedLabel != null)
+        {
+            unusedLabel.gameObject.SetActive(false);
+        }
+
+        TMP_Text multiplier = CreatePauseText(
+            button.transform,
+            "Multiplier",
+            "2X",
+            new Vector2(0f, 45f),
+            new Vector2(360f, 96f),
+            88f,
+            Color.white,
+            TextAlignmentOptions.Center);
+        multiplier.outlineColor = new Color(0.15f, 0.46f, 0.02f, 1f);
+        multiplier.outlineWidth = 0.08f;
+        AddTextShadow(
+            multiplier,
+            new Color(0.04f, 0.30f, 0.03f, 0.72f),
+            new Vector2(0f, -6f));
+
+        TMP_Text bonus = CreatePauseText(
+            button.transform,
+            "BonusLabel",
+            "BONUS",
+            new Vector2(0f, -24f),
+            new Vector2(420f, 62f),
+            44f,
+            new Color(1f, 0.96f, 0.36f, 1f),
+            TextAlignmentOptions.Center);
+        AddTextShadow(
+            bonus,
+            new Color(0.05f, 0.34f, 0.02f, 0.64f),
+            new Vector2(0f, -4f));
+
+        CreatePauseText(
+            button.transform,
+            "BonusHint",
+            "Watch an ad to claim 2x reward",
+            new Vector2(0f, -82f),
+            new Vector2(700f, 42f),
+            23f,
+            Color.white,
+            TextAlignmentOptions.Center);
+
+        CreateResultSparkle(
+            button.transform,
+            new Vector2(-285f, 43f),
+            42f,
+            Color.white);
+        CreateResultSparkle(
+            button.transform,
+            new Vector2(285f, 43f),
+            42f,
+            Color.white);
+
+        // Deliberately no onClick listener yet. The button still receives press
+        // feedback through MenuPressScale, but performs no reward/ad action.
+    }
+
+    private static void CreateResultDecorations(Transform parent)
+    {
+        RectTransform layer = CreateRect("ResultDecorativeLayer", parent);
+        Stretch(layer);
+        layer.SetAsFirstSibling();
+
+        CreatePauseDogDecoration(
+            layer, "ResultDogTopLeft",
+            new Vector2(-390f, 890f), new Vector2(190f, 175f), -12f,
+            0.08f, 7f, 10f, 20f, 0.18f, 1.2f);
+        CreatePauseDogDecoration(
+            layer, "ResultDogTopRight",
+            new Vector2(390f, 900f), new Vector2(205f, 188f), 10f,
+            0.07f, 8f, 9f, 18f, 0.61f, 1.4f);
+        CreatePauseDogDecoration(
+            layer, "ResultDogMidLeft",
+            new Vector2(-445f, 150f), new Vector2(185f, 170f), 8f,
+            0.07f, 8f, 8f, 22f, 0.39f, 1.1f);
+        CreatePauseDogDecoration(
+            layer, "ResultDogMidRight",
+            new Vector2(455f, -240f), new Vector2(205f, 185f), -9f,
+            0.06f, 7f, 10f, 19f, 0.82f, 1.6f);
+
+        CreatePauseCloud(
+            layer, "ResultCloudBottomLeft",
+            new Vector2(-385f, -1010f), new Vector2(490f, 320f), 3f, 0.18f,
+            7f, 8f, 23f, 0.58f);
+        CreatePauseCloud(
+            layer, "ResultCloudBottomRight",
+            new Vector2(390f, -980f), new Vector2(520f, 340f), -5f, 0.17f,
+            8f, 9f, 21f, 0.87f);
+
+        CreateResultSparkle(
+            layer, new Vector2(-455f, 655f), 34f,
+            new Color(0.90f, 0.82f, 1f, 0.90f));
+        CreateResultSparkle(
+            layer, new Vector2(450f, 690f), 42f,
+            new Color(0.94f, 0.88f, 1f, 0.94f));
+        CreateResultSparkle(
+            layer, new Vector2(-480f, -740f), 20f,
+            new Color(0.82f, 0.91f, 1f, 0.72f));
+        CreateResultSparkle(
+            layer, new Vector2(470f, -680f), 22f,
+            new Color(0.82f, 0.91f, 1f, 0.72f));
+    }
+
+    private static void CreateResultSparkle(
+        Transform parent,
+        Vector2 position,
+        float size,
+        Color color)
+    {
+        CreateImage(
+            parent,
+            "SparkleVertical",
+            position,
+            new Vector2(size * 0.24f, size),
+            color,
+            false);
+        CreateImage(
+            parent,
+            "SparkleHorizontal",
+            position,
+            new Vector2(size, size * 0.24f),
+            color,
+            false);
     }
 
     private void BuildPauseScreen()
@@ -2585,13 +2832,18 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             resultRewardGranted = true;
         }
 
-        resultTitleText.text = gameManager.LastRunCompleted
-            ? "LEVEL COMPLETE"
-            : "GAME OVER";
-        resultTitleText.color = gameManager.LastRunCompleted ? Lime : Color.white;
-        resultReasonText.text = string.IsNullOrWhiteSpace(gameManager.LastEndReason)
-            ? "KEEP GOING"
-            : gameManager.LastEndReason.ToUpperInvariant();
+        bool completed = gameManager.LastRunCompleted;
+        resultTitleText.text = completed ? "LEVEL" : "GAME";
+        if (resultTitleBottomText != null)
+        {
+            resultTitleBottomText.text = completed ? "COMPLETE" : "OVER";
+        }
+        if (resultReasonText != null)
+        {
+            resultReasonText.text = string.IsNullOrWhiteSpace(gameManager.LastEndReason)
+                ? "KEEP GOING"
+                : gameManager.LastEndReason.ToUpperInvariant();
+        }
         resultScoreText.text = gameManager.LastScore.ToString("N0");
         resultBestText.text = GameManager.BestScore.ToString("N0");
         resultRewardText.text = "+" + lastRunReward.ToString("N0");
