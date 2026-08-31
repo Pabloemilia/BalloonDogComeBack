@@ -1118,23 +1118,21 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(0f, -140f),
             ToggleVibration);
 
-        CreateSettingsActionButton(
+        CreateSettingsWideActionButton(
             settingsScreen.transform,
             "SettingsPrivacyButton",
             "PRIVACY",
             "PauseMenu/Buttons/PauseButtonBlueClean",
             new Vector2(0f, -500f),
-            new Vector2(980f, 190f),
             ShowPrivacyScreen,
             52f);
 
-        CreateSettingsActionButton(
+        CreateSettingsWideActionButton(
             settingsScreen.transform,
             "SettingsClose",
             "DONE",
             "PauseMenu/Buttons/PauseButtonMintClean",
             new Vector2(0f, -900f),
-            new Vector2(980f, 190f),
             CloseSettings,
             52f);
     }
@@ -2487,27 +2485,30 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Vector2 position,
         UnityAction action)
     {
-        Button button = CreateSettingsActionButton(
+        Button button = CreateSettingsWideButton(
             parent,
             label + "Toggle",
-            label,
             "PauseMenu/Buttons/PauseButtonBlueClean",
             position,
-            new Vector2(980f, 190f),
-            action,
-            52f);
+            action);
 
-        TMP_Text labelText = button.GetComponentInChildren<TMP_Text>(true);
-        if (labelText != null)
-        {
-            SetRect(
-                labelText.rectTransform,
-                new Vector2(-260f, 0f),
-                new Vector2(430f, 125f));
-            labelText.alignment = TextAlignmentOptions.Center;
-            labelText.fontSizeMin = 36f;
-            labelText.fontSizeMax = 52f;
-        }
+        TMP_Text labelText = CreatePauseText(
+            button.transform,
+            label + "Label",
+            label,
+            new Vector2(-260f, 0f),
+            new Vector2(430f, 125f),
+            52f,
+            Color.white,
+            TextAlignmentOptions.Center);
+        labelText.enableAutoSizing = true;
+        labelText.fontSizeMin = 36f;
+        labelText.fontSizeMax = 52f;
+        labelText.overflowMode = TextOverflowModes.Overflow;
+        AddTextShadow(
+            labelText,
+            new Color(0.01f, 0.16f, 0.42f, 0.34f),
+            new Vector2(0f, -3f));
 
         TMP_Text stateLabel = CreatePauseText(
             button.transform,
@@ -2533,6 +2534,74 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             StateLabel = stateLabel,
             StateBackground = stateBackground
         };
+    }
+
+    private static Button CreateSettingsWideActionButton(
+        Transform parent,
+        string name,
+        string label,
+        string backgroundResourcePath,
+        Vector2 position,
+        UnityAction action,
+        float fontSize)
+    {
+        Button button = CreateSettingsWideButton(
+            parent,
+            name,
+            backgroundResourcePath,
+            position,
+            action);
+
+        TMP_Text labelText = CreatePauseText(
+            button.transform,
+            name + "Label",
+            label,
+            Vector2.zero,
+            new Vector2(880f, 125f),
+            fontSize,
+            Color.white,
+            TextAlignmentOptions.Center);
+        labelText.enableAutoSizing = true;
+        labelText.fontSizeMin = Mathf.Max(36f, fontSize * 0.72f);
+        labelText.fontSizeMax = fontSize;
+        labelText.overflowMode = TextOverflowModes.Overflow;
+        AddTextShadow(
+            labelText,
+            new Color(0.01f, 0.16f, 0.42f, 0.34f),
+            new Vector2(0f, -3f));
+        return button;
+    }
+
+    private static Button CreateSettingsWideButton(
+        Transform parent,
+        string name,
+        string backgroundResourcePath,
+        Vector2 position,
+        UnityAction action)
+    {
+        Button button = CreateButton(
+            parent,
+            name,
+            string.Empty,
+            position,
+            new Vector2(980f, 190f),
+            Color.white,
+            Color.white,
+            action,
+            1f);
+
+        TMP_Text unusedLabel =
+            button.GetComponentInChildren<TMP_Text>(true);
+        if (unusedLabel != null)
+        {
+            unusedLabel.gameObject.SetActive(false);
+        }
+
+        ApplySettingsButtonBackground(
+            button.GetComponent<Image>(),
+            backgroundResourcePath);
+        RemoveButtonShadow(button);
+        return button;
     }
 
     private void CreateInfoRow(Transform parent, string label, string value, Vector2 position)
