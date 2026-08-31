@@ -19,7 +19,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private const string MasterVolumeKey = "BalloonDog.MasterVolume";
     private const string SoundPreferenceKey = "BalloonDog.SoundEnabled";
     private const string SettingsMintButtonResource =
-        "SettingsMenu/Buttons/SettingsButtonMintFinal";
+        "SettingsMenu/Buttons/SettingsButtonMint";
     private const string SettingsBlueButtonResource =
         "SettingsMenu/Buttons/SettingsButtonBlue";
     private const int WheelTokenCost = 300;
