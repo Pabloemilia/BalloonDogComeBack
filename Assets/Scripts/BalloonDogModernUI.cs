@@ -1102,43 +1102,41 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(0f, -7f));
         CreatePauseTitleAccents(settingsScreen.transform, 815f);
 
-        RectTransform card = CreateCard(
+        musicToggle = CreateToggleRow(
             settingsScreen.transform,
-            "SettingsCard",
-            new Vector2(0f, -35f),
-            new Vector2(910f, 1050f),
-            new Color(0.12f, 0.60f, 0.82f, 0.33f),
-            new Color(0.76f, 0.95f, 1f, 0.48f));
-        UiVerticalGradient cardGradient =
-            card.gameObject.AddComponent<UiVerticalGradient>();
-        cardGradient.Configure(
-            new Color(0.57f, 0.86f, 1f, 0.30f),
-            new Color(0.05f, 0.68f, 0.82f, 0.38f));
-
-        musicToggle = CreateToggleRow(card, "MUSIC", new Vector2(0f, 330f), ToggleMusic);
-        soundToggle = CreateToggleRow(card, "SFX", new Vector2(0f, 165f), ToggleSound);
-        vibrationToggle = CreateToggleRow(card, "VIBRATION", new Vector2(0f, 0f), ToggleVibration);
-        CreateInfoRow(card, "SAVE DATA", "LOCAL DEVICE", new Vector2(0f, -165f));
+            "MUSIC",
+            new Vector2(0f, 500f),
+            ToggleMusic);
+        soundToggle = CreateToggleRow(
+            settingsScreen.transform,
+            "SFX",
+            new Vector2(0f, 180f),
+            ToggleSound);
+        vibrationToggle = CreateToggleRow(
+            settingsScreen.transform,
+            "VIBRATION",
+            new Vector2(0f, -140f),
+            ToggleVibration);
 
         CreateSettingsActionButton(
-            card,
+            settingsScreen.transform,
             "SettingsPrivacyButton",
-            "PRIVACY NOTICE",
+            "PRIVACY",
             "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(0f, -345f),
-            new Vector2(700f, 112f),
+            new Vector2(0f, -500f),
+            new Vector2(980f, 190f),
             ShowPrivacyScreen,
-            34f);
+            52f);
 
         CreateSettingsActionButton(
             settingsScreen.transform,
             "SettingsClose",
             "DONE",
             "PauseMenu/Buttons/PauseButtonMintClean",
-            new Vector2(0f, -760f),
-            new Vector2(700f, 132f),
+            new Vector2(0f, -900f),
+            new Vector2(980f, 190f),
             CloseSettings,
-            43f);
+            52f);
     }
 
     private GameObject CreatePauseThemedSettingsScreen()
@@ -2489,36 +2487,47 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Vector2 position,
         UnityAction action)
     {
-        RectTransform row = CreateCard(
-            parent,
-            label + "Row",
-            position,
-            new Vector2(760f, 120f),
-            new Color(0.15f, 0.63f, 0.84f, 0.34f),
-            new Color(0.76f, 0.95f, 1f, 0.42f));
-
-        CreatePauseText(
-            row,
-            label + "Label",
-            label,
-            new Vector2(-235f, 0f),
-            new Vector2(280f, 75f),
-            29f,
-            Color.white,
-            TextAlignmentOptions.Left);
-
         Button button = CreateSettingsActionButton(
-            row,
+            parent,
             label + "Toggle",
-            string.Empty,
+            label,
             "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(260f, 0f),
-            new Vector2(190f, 76f),
+            position,
+            new Vector2(980f, 190f),
             action,
-            23f);
+            52f);
+
+        TMP_Text labelText = button.GetComponentInChildren<TMP_Text>(true);
+        if (labelText != null)
+        {
+            SetRect(
+                labelText.rectTransform,
+                new Vector2(-260f, 0f),
+                new Vector2(430f, 125f));
+            labelText.alignment = TextAlignmentOptions.Center;
+            labelText.fontSizeMin = 36f;
+            labelText.fontSizeMax = 52f;
+        }
+
+        TMP_Text stateLabel = CreatePauseText(
+            button.transform,
+            label + "State",
+            "OFF",
+            new Vector2(350f, 0f),
+            new Vector2(210f, 125f),
+            48f,
+            Color.white,
+            TextAlignmentOptions.Center);
+        stateLabel.enableAutoSizing = true;
+        stateLabel.fontSizeMin = 34f;
+        stateLabel.fontSizeMax = 48f;
+        stateLabel.overflowMode = TextOverflowModes.Overflow;
+        AddTextShadow(
+            stateLabel,
+            new Color(0.01f, 0.16f, 0.42f, 0.34f),
+            new Vector2(0f, -3f));
 
         Image stateBackground = button.GetComponent<Image>();
-        TMP_Text stateLabel = button.GetComponentInChildren<TMP_Text>(true);
         return new ToggleRowView
         {
             StateLabel = stateLabel,
