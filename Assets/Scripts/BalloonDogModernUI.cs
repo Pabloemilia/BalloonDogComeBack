@@ -16,6 +16,8 @@ using UnityEngine.UI;
 public sealed class BalloonDogModernUI : MonoBehaviour
 {
     private const string RuntimeObjectName = "__BalloonDogModernUI";
+    private const string SettingsLayoutMarkerName =
+        "__PauseButtonSettingsLayoutV2";
     private const string MasterVolumeKey = "BalloonDog.MasterVolume";
     private const string SoundPreferenceKey = "BalloonDog.SoundEnabled";
     private const int WheelTokenCost = 300;
@@ -1081,6 +1083,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private void BuildSettingsScreen()
     {
         settingsScreen = CreatePauseThemedSettingsScreen();
+
+        RectTransform layoutMarker = CreateRect(
+            SettingsLayoutMarkerName,
+            settingsScreen.transform);
+        layoutMarker.gameObject.SetActive(false);
 
         TMP_Text title = CreatePauseText(
             settingsScreen.transform,
@@ -2695,10 +2702,32 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         settingsReturnTarget = returnTarget;
         Time.timeScale = 0f;
+        EnsureCurrentSettingsScreen();
         HideAllScreens();
         gameplayOverlay.SetActive(false);
         settingsScreen.SetActive(true);
         RefreshSettingsViews();
+    }
+
+    private void EnsureCurrentSettingsScreen()
+    {
+        if (settingsScreen != null &&
+            settingsScreen.transform.Find(SettingsLayoutMarkerName) != null)
+        {
+            return;
+        }
+
+        if (settingsScreen != null)
+        {
+            settingsScreen.SetActive(false);
+            Destroy(settingsScreen);
+        }
+
+        settingsScreen = null;
+        musicToggle = null;
+        soundToggle = null;
+        vibrationToggle = null;
+        BuildSettingsScreen();
     }
 
     private void CloseSettings()
