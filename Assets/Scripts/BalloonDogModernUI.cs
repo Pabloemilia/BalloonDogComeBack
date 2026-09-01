@@ -1081,7 +1081,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private void BuildSettingsScreen()
     {
         settingsScreen = CreatePauseThemedSettingsScreen();
-        CreateSettingsTopBar(settingsScreen.transform);
 
         TMP_Text title = CreatePauseText(
             settingsScreen.transform,
@@ -1102,43 +1101,55 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(0f, -7f));
         CreatePauseTitleAccents(settingsScreen.transform, 815f);
 
-        RectTransform card = CreateCard(
+        musicToggle = CreateToggleRow(
             settingsScreen.transform,
-            "SettingsCard",
-            new Vector2(0f, -35f),
-            new Vector2(910f, 1050f),
-            new Color(0.12f, 0.60f, 0.82f, 0.33f),
-            new Color(0.76f, 0.95f, 1f, 0.48f));
-        UiVerticalGradient cardGradient =
-            card.gameObject.AddComponent<UiVerticalGradient>();
-        cardGradient.Configure(
-            new Color(0.57f, 0.86f, 1f, 0.30f),
-            new Color(0.05f, 0.68f, 0.82f, 0.38f));
+            "MUSIC",
+            new Vector2(0f, 500f),
+            ToggleMusic);
+        soundToggle = CreateToggleRow(
+            settingsScreen.transform,
+            "SFX",
+            new Vector2(0f, 180f),
+            ToggleSound);
+        vibrationToggle = CreateToggleRow(
+            settingsScreen.transform,
+            "VIBRATION",
+            new Vector2(0f, -140f),
+            ToggleVibration);
 
-        musicToggle = CreateToggleRow(card, "MUSIC", new Vector2(0f, 330f), ToggleMusic);
-        soundToggle = CreateToggleRow(card, "SFX", new Vector2(0f, 165f), ToggleSound);
-        vibrationToggle = CreateToggleRow(card, "VIBRATION", new Vector2(0f, 0f), ToggleVibration);
-        CreateInfoRow(card, "SAVE DATA", "LOCAL DEVICE", new Vector2(0f, -165f));
-
-        CreateSettingsActionButton(
-            card,
+        CreatePauseActionButton(
+            settingsScreen.transform,
             "SettingsPrivacyButton",
-            "PRIVACY NOTICE",
+            "PRIVACY",
+            string.Empty,
             "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(0f, -345f),
-            new Vector2(700f, 112f),
+            new Vector2(0f, -500f),
+            new Vector2(980f, 190f),
+            new Color(0.35f, 0.68f, 1f, 1f),
+            new Color(0.04f, 0.36f, 0.91f, 1f),
             ShowPrivacyScreen,
-            34f);
+            52f,
+            0f);
 
-        CreateSettingsActionButton(
+        CreatePauseActionButton(
             settingsScreen.transform,
             "SettingsClose",
             "DONE",
+            string.Empty,
             "PauseMenu/Buttons/PauseButtonMintClean",
-            new Vector2(0f, -760f),
-            new Vector2(700f, 132f),
+            new Vector2(0f, -900f),
+            new Vector2(980f, 190f),
+            new Color(0.43f, 1f, 0.12f, 1f),
+            new Color(0.02f, 0.77f, 0.32f, 1f),
             CloseSettings,
-            43f);
+            52f,
+            0f);
+
+        foreach (TMP_Text settingsText in
+                 settingsScreen.GetComponentsInChildren<TMP_Text>(true))
+        {
+            BalloonDogTitanFont.Apply(settingsText);
+        }
     }
 
     private GameObject CreatePauseThemedSettingsScreen()
@@ -1225,19 +1236,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             0.12f, 10f, 12f, 21.6f, 0.94f, 1.5f);
 
         return root.gameObject;
-    }
-
-    private void CreateSettingsTopBar(Transform parent)
-    {
-        CreateSettingsActionButton(
-            parent,
-            "SettingsTopButton",
-            "X",
-            "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(430f, 1030f),
-            new Vector2(118f, 96f),
-            CloseSettings,
-            39f);
     }
 
     private void BuildPrivacyScreen()
@@ -2048,30 +2046,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
 
         Image baseImage = button.GetComponent<Image>();
-        Sprite backgroundSprite =
-            GetResourceSlicedSprite(backgroundResourcePath);
-        if (backgroundSprite != null)
-        {
-            baseImage.sprite = backgroundSprite;
-            baseImage.type = Image.Type.Sliced;
-            baseImage.color = Color.white;
-
-            // Soften only the background artwork. The original sprite alpha,
-            // nine-slice borders, labels, icons and Button tint states stay intact.
-            Material satinMaterial =
-                Resources.Load<Material>(backgroundResourcePath + "Satin");
-            if (satinMaterial != null && satinMaterial.shader != null &&
-                satinMaterial.shader.isSupported)
-            {
-                baseImage.material = satinMaterial;
-            }
-            else
-            {
-                Debug.LogWarning("Pause button satin material unavailable: " +
-                    backgroundResourcePath + "Satin");
-            }
-        }
-        else
+        if (!ApplyPauseButtonBackground(
+                baseImage,
+                backgroundResourcePath))
         {
             UiVerticalGradient fallbackGradient =
                 baseImage.gameObject.AddComponent<UiVerticalGradient>();
@@ -2090,10 +2067,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
         if (text != null)
         {
+            bool hasIcon = !string.IsNullOrWhiteSpace(iconResourcePath);
             SetRect(
                 text.rectTransform,
-                new Vector2(65f, 0f),
-                new Vector2(size.x - 230f, size.y - 26f));
+                hasIcon ? new Vector2(65f, 0f) : Vector2.zero,
+                hasIcon
+                    ? new Vector2(size.x - 230f, size.y - 26f)
+                    : new Vector2(size.x - 100f, size.y - 26f));
             text.enableAutoSizing = true;
             text.fontSizeMin = Mathf.Max(24f, fontSize * 0.68f);
             text.fontSizeMax = fontSize;
@@ -2106,80 +2086,42 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 new Vector2(0f, -4f));
         }
 
-        Image icon = CreateResourceImage(
-            button.transform,
-            "PauseButtonIcon",
-            iconResourcePath,
-            new Vector2(-size.x * 0.31f + iconOffsetX, 2f),
-            new Vector2(iconSize, iconSize));
-        icon.color = Color.white;
-        AddGraphicShadow(
-            icon,
-            new Color(0.01f, 0.16f, 0.42f, 0.45f),
-            new Vector2(0f, -4f));
-        return button;
-    }
-
-    private static Button CreateSettingsActionButton(
-        Transform parent,
-        string name,
-        string label,
-        string backgroundResourcePath,
-        Vector2 position,
-        Vector2 size,
-        UnityAction action,
-        float fontSize)
-    {
-        Button button = CreateButton(
-            parent,
-            name,
-            label,
-            position,
-            size,
-            Color.white,
-            Color.white,
-            action,
-            fontSize);
-
-        Image background = button.GetComponent<Image>();
-        ApplySettingsButtonBackground(background, backgroundResourcePath);
-
-        RemoveButtonShadow(button);
-        TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
-        if (text != null)
+        if (!string.IsNullOrWhiteSpace(iconResourcePath))
         {
-            BalloonDogTitanFont.Apply(text);
-            text.enableAutoSizing = true;
-            text.fontSizeMin = Mathf.Max(20f, fontSize * 0.68f);
-            text.fontSizeMax = fontSize;
-            text.overflowMode = TextOverflowModes.Overflow;
-            text.margin = new Vector4(18f, 5f, 18f, 8f);
-            AddTextShadow(
-                text,
-                new Color(0.01f, 0.16f, 0.42f, 0.34f),
-                new Vector2(0f, -3f));
+            Image icon = CreateResourceImage(
+                button.transform,
+                "PauseButtonIcon",
+                iconResourcePath,
+                new Vector2(-size.x * 0.31f + iconOffsetX, 2f),
+                new Vector2(iconSize, iconSize));
+            icon.color = Color.white;
+            AddGraphicShadow(
+                icon,
+                new Color(0.01f, 0.16f, 0.42f, 0.45f),
+                new Vector2(0f, -4f));
         }
-
         return button;
     }
 
-    private static void ApplySettingsButtonBackground(
+    private static bool ApplyPauseButtonBackground(
         Image background,
         string backgroundResourcePath)
     {
         if (background == null)
         {
-            return;
+            return false;
         }
 
         Sprite backgroundSprite =
             GetResourceSlicedSprite(backgroundResourcePath);
-        if (backgroundSprite != null)
+        if (backgroundSprite == null)
         {
-            background.sprite = backgroundSprite;
-            background.type = Image.Type.Sliced;
-            background.color = Color.white;
+            return false;
         }
+
+        background.sprite = backgroundSprite;
+        background.type = Image.Type.Sliced;
+        background.color = Color.white;
 
         Material satinMaterial =
             Resources.Load<Material>(backgroundResourcePath + "Satin");
@@ -2188,6 +2130,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             satinMaterial.shader.isSupported
                 ? satinMaterial
                 : null;
+        return true;
     }
 
     private static TMP_Text CreatePauseText(
@@ -2489,55 +2432,69 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Vector2 position,
         UnityAction action)
     {
-        RectTransform row = CreateCard(
+        Button button = CreatePauseActionButton(
             parent,
-            label + "Row",
-            position,
-            new Vector2(760f, 120f),
-            new Color(0.15f, 0.63f, 0.84f, 0.34f),
-            new Color(0.76f, 0.95f, 1f, 0.42f));
-
-        CreatePauseText(
-            row,
-            label + "Label",
-            label,
-            new Vector2(-235f, 0f),
-            new Vector2(280f, 75f),
-            29f,
-            Color.white,
-            TextAlignmentOptions.Left);
-
-        Button button = CreateSettingsActionButton(
-            row,
             label + "Toggle",
             string.Empty,
+            string.Empty,
             "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(260f, 0f),
-            new Vector2(190f, 76f),
+            position,
+            new Vector2(980f, 190f),
+            new Color(0.35f, 0.68f, 1f, 1f),
+            new Color(0.04f, 0.36f, 0.91f, 1f),
             action,
-            23f);
+            52f,
+            0f);
+
+        TMP_Text generatedLabel =
+            button.GetComponentInChildren<TMP_Text>(true);
+        if (generatedLabel != null)
+        {
+            generatedLabel.gameObject.SetActive(false);
+        }
+
+        TMP_Text labelText = CreatePauseText(
+            button.transform,
+            label + "Label",
+            label,
+            new Vector2(-260f, 0f),
+            new Vector2(430f, 125f),
+            52f,
+            Color.white,
+            TextAlignmentOptions.Center);
+        labelText.enableAutoSizing = true;
+        labelText.fontSizeMin = 36f;
+        labelText.fontSizeMax = 52f;
+        labelText.overflowMode = TextOverflowModes.Overflow;
+        AddTextShadow(
+            labelText,
+            new Color(0.01f, 0.16f, 0.42f, 0.34f),
+            new Vector2(0f, -3f));
+
+        TMP_Text stateLabel = CreatePauseText(
+            button.transform,
+            label + "State",
+            "OFF",
+            new Vector2(350f, 0f),
+            new Vector2(210f, 125f),
+            48f,
+            Color.white,
+            TextAlignmentOptions.Center);
+        stateLabel.enableAutoSizing = true;
+        stateLabel.fontSizeMin = 34f;
+        stateLabel.fontSizeMax = 48f;
+        stateLabel.overflowMode = TextOverflowModes.Overflow;
+        AddTextShadow(
+            stateLabel,
+            new Color(0.01f, 0.16f, 0.42f, 0.34f),
+            new Vector2(0f, -3f));
 
         Image stateBackground = button.GetComponent<Image>();
-        TMP_Text stateLabel = button.GetComponentInChildren<TMP_Text>(true);
         return new ToggleRowView
         {
             StateLabel = stateLabel,
             StateBackground = stateBackground
         };
-    }
-
-    private void CreateInfoRow(Transform parent, string label, string value, Vector2 position)
-    {
-        RectTransform row = CreateCard(
-            parent,
-            label + "InfoRow",
-            position,
-            new Vector2(760f, 105f),
-            new Color(0.08f, 0.48f, 0.72f, 0.32f),
-            new Color(0.76f, 0.95f, 1f, 0.36f));
-
-        CreatePauseText(row, "Label", label, new Vector2(-230f, 0f), new Vector2(290f, 60f), 25f, Color.white, TextAlignmentOptions.Left);
-        CreatePauseText(row, "Value", value, new Vector2(190f, 0f), new Vector2(380f, 60f), 23f, new Color(0.91f, 0.98f, 1f, 1f), TextAlignmentOptions.Right);
     }
 
     private void StartGame()
@@ -3182,7 +3139,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
         if (view.StateBackground != null)
         {
-            ApplySettingsButtonBackground(
+            ApplyPauseButtonBackground(
                 view.StateBackground,
                 enabled
                     ? "PauseMenu/Buttons/PauseButtonMintClean"
