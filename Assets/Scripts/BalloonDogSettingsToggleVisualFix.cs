@@ -3,8 +3,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Keeps only the SFX and VIBRATION controls visually identical to MUSIC.
-/// It also supports the older serialized Settings row hierarchy.
+/// Replaces only the legacy SFX and VIBRATION rows with clean standalone
+/// buttons built directly from the supplied blue and mint sprites.
 /// </summary>
 public sealed class BalloonDogSettingsToggleVisualFix : MonoBehaviour
 {
@@ -15,6 +15,16 @@ public sealed class BalloonDogSettingsToggleVisualFix : MonoBehaviour
     private const string MintButtonPath =
         "PauseMenu/Buttons/PauseButtonMintClean";
 
+    private sealed class FreshToggle
+    {
+        public Button LegacyButton;
+        public TMP_Text LegacyState;
+        public TMP_Text State;
+        public Image Background;
+    }
+
+    private FreshToggle sfxToggle;
+    private FreshToggle vibrationToggle;
     private float nextRefreshTime;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -37,128 +47,196 @@ public sealed class BalloonDogSettingsToggleVisualFix : MonoBehaviour
             return;
         }
 
-        nextRefreshTime = Time.unscaledTime + 0.2f;
-        MatchMusicButton("SFX");
-        MatchMusicButton("VIBRATION");
+        nextRefreshTime = Time.unscaledTime + 0.15f;
+        sfxToggle = EnsureFreshToggle("SFX", sfxToggle);
+        vibrationToggle =
+            EnsureFreshToggle("VIBRATION", vibrationToggle);
+        RefreshToggle(sfxToggle);
+        RefreshToggle(vibrationToggle);
     }
 
-    private static void MatchMusicButton(string controlName)
+    private static FreshToggle EnsureFreshToggle(
+        string controlName,
+        FreshToggle existing)
     {
-        Button musicButton = FindSettingsButton("MUSICToggle");
-        Button targetButton = FindSettingsButton(controlName + "Toggle");
-        if (musicButton == null || targetButton == null)
+        if (existing != null && existing.Background != null)
+        {
+            return existing;
+        }
+
+        RectTransform legacyRow =
+            FindSettingsRect(controlName + "Row");
+        Button legacyButton =
+            FindSettingsButton(controlName + "Toggle");
+        if (legacyRow == null || legacyButton == null)
+        {
+            return existing;
+        }
+
+        RectTransform alreadyCreated =
+            FindSettingsRect(controlName + "FreshToggle");
+        if (alreadyCreated != null)
+        {
+            return new FreshToggle
+            {
+                LegacyButton = legacyButton,
+                LegacyState = legacyButton.GetComponentInChildren<TMP_Text>(true),
+                State = FindChildText(alreadyCreated, "State"),
+                Background = alreadyCreated.GetComponent<Image>()
+            };
+        }
+
+        TMP_Text legacyState =
+            legacyButton.GetComponentInChildren<TMP_Text>(true);
+        RectTransform buttonRect = CreateRect(
+            controlName + "FreshToggle",
+            legacyRow.parent);
+        buttonRect.anchorMin = new Vector2(0.5f, 0.5f);
+        buttonRect.anchorMax = new Vector2(0.5f, 0.5f);
+        buttonRect.pivot = new Vector2(0.5f, 0.5f);
+        buttonRect.anchoredPosition = legacyRow.anchoredPosition;
+        buttonRect.sizeDelta = new Vector2(900f, 150f);
+        buttonRect.localScale = Vector3.one;
+        buttonRect.SetSiblingIndex(legacyRow.GetSiblingIndex());
+
+        Image background = buttonRect.gameObject.AddComponent<Image>();
+        background.type = Image.Type.Sliced;
+        background.color = Color.white;
+        background.raycastTarget = true;
+
+        Button button = buttonRect.gameObject.AddComponent<Button>();
+        button.targetGraphic = background;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        ColorBlock colors = button.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = new Color(1f, 1f, 1f, 0.96f);
+        colors.pressedColor = new Color(0.82f, 0.82f, 0.86f, 1f);
+        colors.selectedColor = Color.white;
+        colors.disabledColor = new Color(0.55f, 0.55f, 0.60f, 0.75f);
+        colors.fadeDuration = 0.08f;
+        button.colors = colors;
+        button.onClick.AddListener(() => legacyButton.onClick.Invoke());
+        buttonRect.gameObject.AddComponent<MenuPressScale>();
+
+        TMP_Text label = CreateLabel(
+            buttonRect,
+            "Label",
+            controlName,
+            new Vector2(-255f, 2f),
+            new Vector2(410f, 105f),
+            48f);
+        label.alignment = TextAlignmentOptions.Center;
+
+        TMP_Text state = CreateLabel(
+            buttonRect,
+            "State",
+            legacyState != null ? legacyState.text : "OFF",
+            new Vector2(350f, 2f),
+            new Vector2(190f, 105f),
+            45f);
+        state.alignment = TextAlignmentOptions.Center;
+
+        legacyRow.gameObject.SetActive(false);
+        return new FreshToggle
+        {
+            LegacyButton = legacyButton,
+            LegacyState = legacyState,
+            State = state,
+            Background = background
+        };
+    }
+
+    private static void RefreshToggle(FreshToggle toggle)
+    {
+        if (toggle == null || toggle.Background == null)
         {
             return;
         }
 
-        RectTransform musicRect = musicButton.transform as RectTransform;
-        RectTransform targetRect = targetButton.transform as RectTransform;
-        if (musicRect == null || targetRect == null)
+        string stateText = toggle.LegacyState != null
+            ? toggle.LegacyState.text.Trim().ToUpperInvariant()
+            : "OFF";
+        bool enabled = stateText == "ON";
+        if (toggle.State != null)
         {
-            return;
+            toggle.State.text = enabled ? "ON" : "OFF";
         }
 
-        targetRect.anchorMin = musicRect.anchorMin;
-        targetRect.anchorMax = musicRect.anchorMax;
-        targetRect.pivot = musicRect.pivot;
-        targetRect.anchoredPosition = musicRect.anchoredPosition;
-        targetRect.sizeDelta = musicRect.sizeDelta;
-        targetRect.localScale = musicRect.localScale;
-        targetRect.localRotation = musicRect.localRotation;
-        targetRect.SetAsFirstSibling();
-
-        RectTransform row = FindSettingsRect(controlName + "Row");
-        if (row != null && targetRect.rect.width < 500f)
-        {
-            targetRect.anchorMin = new Vector2(0.5f, 0.5f);
-            targetRect.anchorMax = new Vector2(0.5f, 0.5f);
-            targetRect.pivot = new Vector2(0.5f, 0.5f);
-            targetRect.anchoredPosition = Vector2.zero;
-            targetRect.sizeDelta = new Vector2(900f, 150f);
-        }
-
-        if (row != null)
-        {
-            Image rowImage = row.GetComponent<Image>();
-            if (rowImage != null)
-            {
-                rowImage.color = Color.clear;
-                rowImage.raycastTarget = false;
-            }
-
-            foreach (Shadow decoration in row.GetComponents<Shadow>())
-            {
-                decoration.enabled = false;
-            }
-        }
-
-        TMP_Text musicState =
-            musicButton.GetComponentInChildren<TMP_Text>(true);
-        TMP_Text targetState =
-            targetButton.GetComponentInChildren<TMP_Text>(true);
-        if (musicState != null && targetState != null)
-        {
-            RectTransform musicStateRect = musicState.rectTransform;
-            RectTransform targetStateRect = targetState.rectTransform;
-            targetStateRect.anchorMin = musicStateRect.anchorMin;
-            targetStateRect.anchorMax = musicStateRect.anchorMax;
-            targetStateRect.pivot = musicStateRect.pivot;
-            targetStateRect.anchoredPosition =
-                musicStateRect.anchoredPosition;
-            targetStateRect.sizeDelta = musicStateRect.sizeDelta;
-            targetStateRect.localScale = musicStateRect.localScale;
-            targetState.font = musicState.font;
-            targetState.fontSharedMaterial = musicState.fontSharedMaterial;
-            targetState.fontSize = musicState.fontSize;
-            targetState.fontStyle = musicState.fontStyle;
-            targetState.alignment = musicState.alignment;
-            targetState.color = musicState.color;
-
-            if (row != null)
-            {
-                targetStateRect.anchorMin = new Vector2(0.5f, 0.5f);
-                targetStateRect.anchorMax = new Vector2(0.5f, 0.5f);
-                targetStateRect.pivot = new Vector2(0.5f, 0.5f);
-                targetStateRect.anchoredPosition = new Vector2(260f, 0f);
-                targetStateRect.sizeDelta = new Vector2(190f, 76f);
-            }
-        }
-
-        bool enabled = targetState != null &&
-            string.Equals(
-                targetState.text.Trim(),
-                "ON",
-                System.StringComparison.OrdinalIgnoreCase);
         ApplyButtonSprite(
-            targetButton,
+            toggle.Background,
             enabled ? MintButtonPath : BlueButtonPath);
     }
 
-    private static void ApplyButtonSprite(Button button, string resourcePath)
+    private static void ApplyButtonSprite(
+        Image background,
+        string resourcePath)
     {
-        Image image = button.GetComponent<Image>();
-        if (image == null)
-        {
-            return;
-        }
-
         Sprite sprite = Resources.Load<Sprite>(resourcePath);
-        if (sprite != null)
+        if (sprite != null && background.sprite != sprite)
         {
-            image.sprite = sprite;
-            image.type = Image.Type.Sliced;
+            background.sprite = sprite;
+            background.type = Image.Type.Sliced;
         }
 
-        image.color = Color.white;
-        image.raycastTarget = true;
+        background.color = Color.white;
         Material material =
             Resources.Load<Material>(resourcePath + "Satin");
-        image.material =
+        background.material =
             material != null && material.shader != null &&
             material.shader.isSupported
                 ? material
                 : null;
-        button.targetGraphic = image;
+    }
+
+    private static TMP_Text CreateLabel(
+        Transform parent,
+        string name,
+        string value,
+        Vector2 position,
+        Vector2 size,
+        float fontSize)
+    {
+        RectTransform rect = CreateRect(name, parent);
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = position;
+        rect.sizeDelta = size;
+        rect.localScale = Vector3.one;
+
+        TextMeshProUGUI text =
+            rect.gameObject.AddComponent<TextMeshProUGUI>();
+        text.text = value;
+        text.fontSize = fontSize;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 32f;
+        text.fontSizeMax = fontSize;
+        text.color = Color.white;
+        text.enableWordWrapping = false;
+        text.overflowMode = TextOverflowModes.Overflow;
+        text.raycastTarget = false;
+        BalloonDogTitanFont.Apply(text);
+
+        Shadow shadow = text.gameObject.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0.01f, 0.16f, 0.42f, 0.34f);
+        shadow.effectDistance = new Vector2(0f, -3f);
+        shadow.useGraphicAlpha = true;
+        return text;
+    }
+
+    private static TMP_Text FindChildText(
+        Transform parent,
+        string childName)
+    {
+        foreach (TMP_Text text in parent.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (text.name == childName)
+            {
+                return text;
+            }
+        }
+
+        return null;
     }
 
     private static Button FindSettingsButton(string objectName)
@@ -200,5 +278,12 @@ public sealed class BalloonDogSettingsToggleVisualFix : MonoBehaviour
         }
 
         return false;
+    }
+
+    private static RectTransform CreateRect(string name, Transform parent)
+    {
+        GameObject gameObject = new GameObject(name, typeof(RectTransform));
+        gameObject.transform.SetParent(parent, false);
+        return gameObject.GetComponent<RectTransform>();
     }
 }
