@@ -10818,6 +10818,7 @@ GameObject:
   - component: {fileID: 291108609}
   - component: {fileID: 291108607}
   - component: {fileID: 291108608}
+  - component: {fileID: 291108610}
   m_Layer: 0
   m_Name: player
   m_TagString: Untagged
@@ -10839,7 +10840,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRunner
   forwardSpeed: 6.4
   balloonSizeController: {fileID: 291108599}
-  smallBalloonSpeedMultiplier: 2
+  smallBalloonSpeedMultiplier: 1.08
 --- !u!54 &291108594
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -10963,6 +10964,7 @@ Transform:
   - {fileID: 1486399884}
   - {fileID: 1153884008}
   - {fileID: 940422919}
+  - {fileID: 1703622586}
   - {fileID: 364394122}
   - {fileID: 1920473829}
   m_Father: {fileID: 0}
@@ -10985,8 +10987,10 @@ MonoBehaviour:
   minimumSizeMultiplier: 0.55
   maximumSizeMultiplier: 1.2
   resizeSpeed: 16
-  shrinkAirDrainPerSecond: 72
-  instantShrinkAirBurst: 24
+  forcedSmallMultiplier: 0.66
+  smallStateDuration: 1.2
+  cooldownAfterSmall: 1.6
+  airLossFractionPerShrink: 0.2
 --- !u!114 &291108600
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11086,6 +11090,12 @@ MonoBehaviour:
   maximumFlightTime: 8
   metersPerMultiplier: 10.5
   maximumMultiplier: 10
+  launchOffsetAfterFinish: 2.25
+  launchHeight: 1.35
+  finalTrackWidth: 6.4
+  finalWallHeight: 5
+  finalWallThickness: 1.1
+  finalTrackSurfaceHeight: 0.08
 --- !u!114 &291108606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11148,6 +11158,40 @@ MonoBehaviour:
   finishZ: 185
   maximumSpeedMultiplier: 1.34
   smoothness: 2.5
+--- !u!114 &291108610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 291108592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 104fc440b76194e4999a8dac8fba5a5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BalloonDogSkinSwitcher
+  starterVisual: {fileID: 901176546}
+  skinRoot: {fileID: 1703622586}
+  legacyVisual: {fileID: 0}
+  skinPrefabs:
+  - {fileID: 6001488783179994064, guid: da3af64f00cfc2a408706f519a7f3536, type: 3}
+  - {fileID: 1751186224811646664, guid: 4c4b238ee137f3241b44424c8167f43a, type: 3}
+  - {fileID: 2169488786981417268, guid: e796c495182c10b4090bf2637ce26c4f, type: 3}
+  - {fileID: 7059378261736308308, guid: 8dca4a908380c0f4bbe7bccb53831fe8, type: 3}
+  - {fileID: 3035484807361415819, guid: b337a992b77780b41bd8d6398eed3661, type: 3}
+  - {fileID: 7662203013087627812, guid: a316eda683c13ea40b69c8459c28bc41, type: 3}
+  - {fileID: 6733107960371418926, guid: 0e41460ce9b172f4f9cccf6288bf6d33, type: 3}
+  - {fileID: 8845987069381204317, guid: e642d092c186bd34981e8ed18a1c19f2, type: 3}
+  - {fileID: 1636602231762988091, guid: bbc41dd85bbf8614b922d14c1b9b6aa4, type: 3}
+  - {fileID: 8589407138510892235, guid: 09997170d703fbf4da0f609b0bd83df2, type: 3}
+  - {fileID: 7467856314163090874, guid: 79b0f308e1463bf45add0d8a1af5c5d4, type: 3}
+  - {fileID: 7576507335646061672, guid: 09bcc5002d65184449af97eca2a8b09b, type: 3}
+  - {fileID: 7495501387218053198, guid: 5b72eee7f23166d47bc3dfe6459b3776, type: 3}
+  - {fileID: 1165237013511897542, guid: 9ce0d92c5daebde43a20f1d089cce080, type: 3}
+  - {fileID: 8690244877322344178, guid: 6a6280c47c03d1f4db9992ddab3c66a7, type: 3}
+  rememberSelection: 0
+  playerPrefsKey: BalloonDog.SelectedSkin.V5
+  currentSkinIndex: -1
 --- !u!1 &293182533
 GameObject:
   m_ObjectHideFlags: 0
@@ -24598,7 +24642,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294957875
+    rgba: 4294960704
   m_fontColor: {r: 0.25, g: 0.9, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -32028,6 +32072,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HoldShrinkButton
   sizeController: {fileID: 291108599}
+  cooldownDuration: 1.5
+  cooldownFill: {fileID: 0}
+  cooldownText: {fileID: 0}
 --- !u!114 &807907890
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33725,7 +33772,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4290946700
+    rgba: 4291602554
   m_fontColor: {r: 0.48, g: 0.66, b: 0.8, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -48991,7 +49038,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294962656
+    rgba: 4294963409
   m_fontColor: {r: 0.82, g: 0.94, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -64505,6 +64552,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1703403339}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1703622585
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1703622586}
+  m_Layer: 0
+  m_Name: BalloonDog_SkinRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1703622586
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1703622585}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 291108598}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1704329895
 GameObject:
   m_ObjectHideFlags: 0
@@ -77310,7 +77388,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4281583615
   m_fontColor: {r: 1, g: 0.78, b: 0.2, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -77323,7 +77401,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
