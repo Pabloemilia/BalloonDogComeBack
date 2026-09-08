@@ -17,7 +17,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 {
     private const string RuntimeObjectName = "__BalloonDogModernUI";
     private const string SettingsLayoutMarkerName =
-        "__PauseButtonSettingsLayoutV2";
+        "__SettingsReferenceLayoutV3";
     private const string MasterVolumeKey = "BalloonDog.MasterVolume";
     private const string SoundPreferenceKey = "BalloonDog.SoundEnabled";
     private const int WheelTokenCost = 300;
@@ -1082,167 +1082,16 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildSettingsScreen()
     {
-        settingsScreen = CreatePauseThemedSettingsScreen();
-
-        RectTransform layoutMarker = CreateRect(
-            SettingsLayoutMarkerName,
-            settingsScreen.transform);
-        layoutMarker.gameObject.SetActive(false);
-
-        TMP_Text title = CreatePauseText(
-            settingsScreen.transform,
-            "SettingsTitle",
-            "SETTINGS",
-            new Vector2(0f, 815f),
-            new Vector2(820f, 150f),
-            94f,
-            Color.white,
-            TextAlignmentOptions.Center);
-        title.enableAutoSizing = true;
-        title.fontSizeMin = 70f;
-        title.fontSizeMax = 94f;
-        title.overflowMode = TextOverflowModes.Overflow;
-        AddTextShadow(
-            title,
-            new Color(0.01f, 0.16f, 0.46f, 0.52f),
-            new Vector2(0f, -7f));
-        CreatePauseTitleAccents(settingsScreen.transform, 815f);
-
-        musicToggle = CreateToggleRow(
-            settingsScreen.transform,
-            "MUSIC",
-            new Vector2(0f, 500f),
-            ToggleMusic);
-        soundToggle = CreateToggleRow(
-            settingsScreen.transform,
-            "SFX",
-            new Vector2(0f, 180f),
-            ToggleSound);
-        vibrationToggle = CreateToggleRow(
-            settingsScreen.transform,
-            "VIBRATION",
-            new Vector2(0f, -140f),
-            ToggleVibration);
-
-        CreatePauseActionButton(
-            settingsScreen.transform,
-            "SettingsPrivacyButton",
-            "PRIVACY",
-            string.Empty,
-            "PauseMenu/Buttons/PauseButtonBlueClean",
-            new Vector2(0f, -500f),
-            new Vector2(980f, 190f),
-            new Color(0.35f, 0.68f, 1f, 1f),
-            new Color(0.04f, 0.36f, 0.91f, 1f),
-            ShowPrivacyScreen,
-            52f,
-            0f);
-
-        CreatePauseActionButton(
-            settingsScreen.transform,
-            "SettingsClose",
-            "DONE",
-            string.Empty,
-            "PauseMenu/Buttons/PauseButtonMintClean",
-            new Vector2(0f, -900f),
-            new Vector2(980f, 190f),
-            new Color(0.43f, 1f, 0.12f, 1f),
-            new Color(0.02f, 0.77f, 0.32f, 1f),
-            CloseSettings,
-            52f,
-            0f);
-
-        foreach (TMP_Text settingsText in
-                 settingsScreen.GetComponentsInChildren<TMP_Text>(true))
-        {
-            BalloonDogTitanFont.Apply(settingsText);
-        }
-    }
-
-    private GameObject CreatePauseThemedSettingsScreen()
-    {
         RectTransform root = CreateRect("ModernSettingsScreen", safeRoot);
         Stretch(root);
-
-        Image background = root.gameObject.AddComponent<Image>();
-        background.sprite =
-            GetResourceSprite("ModernUI/SecondaryGradientBackground");
-        background.type = Image.Type.Simple;
-        background.preserveAspect = false;
-        background.color = Color.white;
-        background.raycastTarget = true;
-        if (background.sprite == null)
-        {
-            UiVerticalGradient fallbackGradient =
-                root.gameObject.AddComponent<UiVerticalGradient>();
-            fallbackGradient.Configure(
-                new Color(0.08f, 0.62f, 0.96f, 1f),
-                new Color(0.15f, 0.88f, 0.78f, 1f));
-        }
-
-        Image softTint = CreateImage(
-            root,
-            "SettingsBackgroundOverlay",
-            Vector2.zero,
-            new Vector2(1080f, 2348f),
-            new Color(0.02f, 0.38f, 0.68f, 0.07f),
-            false);
-        Stretch(softTint.rectTransform);
-
-        RectTransform decorativeLayer =
-            CreateRect("SettingsDecorativeLayer", root);
-        Stretch(decorativeLayer);
-        CreatePauseCloud(
-            decorativeLayer, "SettingsCloud_01",
-            new Vector2(-335f, 950f), new Vector2(285f, 185f), -5f, 0.14f,
-            7f, 9f, 16.5f, 0.12f);
-        CreatePauseCloud(
-            decorativeLayer, "SettingsCloud_02",
-            new Vector2(415f, 775f), new Vector2(225f, 150f), 7f, 0.11f,
-            6f, 11f, 19.2f, 0.46f);
-        CreatePauseCloud(
-            decorativeLayer, "SettingsCloud_03",
-            new Vector2(-455f, 375f), new Vector2(250f, 168f), 3f, 0.16f,
-            9f, 7f, 21.4f, 0.73f);
-        CreatePauseCloud(
-            decorativeLayer, "SettingsCloud_04",
-            new Vector2(470f, -115f), new Vector2(205f, 138f), -8f, 0.12f,
-            5f, 9f, 18.1f, 0.31f);
-        CreatePauseCloud(
-            decorativeLayer, "SettingsCloud_05",
-            new Vector2(-365f, -650f), new Vector2(245f, 165f), 6f, 0.15f,
-            8f, 10f, 24.3f, 0.58f);
-        CreatePauseCloud(
-            decorativeLayer, "SettingsCloud_06",
-            new Vector2(330f, -985f), new Vector2(180f, 122f), -3f, 0.10f,
-            6f, 8f, 20.7f, 0.87f);
-
-        CreatePauseDogDecoration(
-            decorativeLayer, "SettingsBalloonDog_01",
-            new Vector2(-445f, 735f), new Vector2(220f, 200f), -12f,
-            0.11f, 9f, 12f, 20.5f, 0.18f, 1.2f);
-        CreatePauseDogDecoration(
-            decorativeLayer, "SettingsBalloonDog_02",
-            new Vector2(450f, 520f), new Vector2(190f, 175f), 10f,
-            0.09f, 7f, 10f, 17.8f, 0.61f, 1.7f);
-        CreatePauseDogDecoration(
-            decorativeLayer, "SettingsBalloonDog_03",
-            new Vector2(-465f, 80f), new Vector2(235f, 215f), 6f,
-            0.13f, 11f, 8f, 23.2f, 0.39f, 1.4f);
-        CreatePauseDogDecoration(
-            decorativeLayer, "SettingsBalloonDog_04",
-            new Vector2(470f, -390f), new Vector2(205f, 188f), -8f,
-            0.10f, 8f, 11f, 19.8f, 0.82f, 1.9f);
-        CreatePauseDogDecoration(
-            decorativeLayer, "SettingsBalloonDog_05",
-            new Vector2(-330f, -880f), new Vector2(175f, 160f), 14f,
-            0.08f, 7f, 9f, 25.1f, 0.52f, 0.9f);
-        CreatePauseDogDecoration(
-            decorativeLayer, "SettingsBalloonDog_06",
-            new Vector2(355f, -815f), new Vector2(225f, 205f), -4f,
-            0.12f, 10f, 12f, 21.6f, 0.94f, 1.5f);
-
-        return root.gameObject;
+        settingsScreen = root.gameObject;
+        RectTransform marker = CreateRect(SettingsLayoutMarkerName, root);
+        marker.gameObject.SetActive(false);
+        var reference = root.gameObject.AddComponent<BalloonDogSettingsReferenceLayout>();
+        reference.Build(ToggleMusic, ToggleSound, ToggleVibration, ShowPrivacyScreen, CloseSettings);
+        musicToggle = new ToggleRowView { StateLabel = reference.MusicState };
+        soundToggle = new ToggleRowView { StateLabel = reference.SoundState };
+        vibrationToggle = new ToggleRowView { StateLabel = reference.VibrationState };
     }
 
     private void BuildPrivacyScreen()
