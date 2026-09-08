@@ -368,12 +368,10 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
     private void FixSecondaryScreens()
     {
-        StyleSecondaryBackground("ModernSettingsScreen");
         StyleSecondaryBackground("ModernSkinsScreen");
         StyleSecondaryBackground("ModernMarketScreen");
         StyleSecondaryBackground("ModernPrivacyScreen");
 
-        StyleSecondaryTypography("ModernSettingsScreen");
         StyleSecondaryTypography("ModernSkinsScreen");
         StyleSecondaryTypography("ModernMarketScreen");
         StyleSecondaryTypography("ModernPrivacyScreen");
@@ -386,17 +384,14 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         StyleSecondaryTopButton("SkinsTopButton", false);
         StyleSecondaryTopButton("MarketTopButton", false);
 
-        StyleSettingsControls();
         StyleSkinControls();
         StyleMarketTabs();
 
-        StyleNavigationButton("SettingsClose", "DONE", new Vector2(0f, -1035f), new Vector2(420f, 104f));
         StyleNavigationButton("SkinsMarket", "MARKET", new Vector2(-225f, -1035f), new Vector2(370f, 104f));
         StyleNavigationButton("SkinsClose", "HOME", new Vector2(225f, -1035f), new Vector2(370f, 104f));
         StyleNavigationButton("MarketClose", "HOME", new Vector2(-230f, -1035f), new Vector2(350f, 104f));
         StyleNavigationButton("MarketSkins", "COLLECTION", new Vector2(210f, -1035f), new Vector2(430f, 104f));
 
-        RemoveSecondaryOutlines("ModernSettingsScreen");
         RemoveSecondaryOutlines("ModernSkinsScreen");
         RemoveSecondaryOutlines("ModernMarketScreen");
         RemoveSecondaryOutlines("ModernPrivacyScreen");
