@@ -90,6 +90,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private TMP_Text equippedNameText;
     private TMP_Text resultTitleText;
     private TMP_Text resultTitleBottomText;
+    private Image resultTitleArtwork;
     private TMP_Text resultReasonText;
     private TMP_Text resultScoreText;
     private TMP_Text resultBestText;
@@ -247,6 +248,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         equippedNameText = null;
         resultTitleText = null;
         resultTitleBottomText = null;
+        resultTitleArtwork = null;
         resultReasonText = null;
         resultScoreText = null;
         resultBestText = null;
@@ -1316,24 +1318,37 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.24f, 0.03f, 0.78f, 1f),
             new Color(0.04f, 0.36f, 0.96f, 1f));
 
+        Transform backgroundPattern = resultScreen.transform.Find("FigmaPattern");
+        if (backgroundPattern != null)
+        {
+            backgroundPattern.gameObject.SetActive(false);
+        }
+        Image background = resultScreen.GetComponent<Image>();
+        Sprite backgroundSprite = GetResourceSprite("ModernUI/SecondaryGradientBackground");
+        if (backgroundSprite != null)
+        {
+            resultScreen.GetComponent<UiVerticalGradient>().enabled = false;
+            background.sprite = backgroundSprite;
+            background.type = Image.Type.Simple;
+        }
         CreateResultDecorations(resultScreen.transform);
 
+        // Fit the complete reference layout inside the existing safe area.
+        RectTransform content = CreateRect("ResultContent", resultScreen.transform);
+        SetRect(content, Vector2.zero, new Vector2(1080f, 2348f));
+        content.gameObject.AddComponent<BalloonDogResultLayoutFit>();
+        resultTitleArtwork = CreateResourceImage(
+            content, "GameOverTitleArtwork", "GameOver/Title",
+            new Vector2(0f, 740f), new Vector2(840f, 420f));
+        // Completion keeps its existing LEVEL COMPLETE wording.
         resultTitleText = CreateResultTitleLine(
-            resultScreen.transform,
-            "ResultTitleTop",
-            "GAME",
-            new Vector2(0f, 855f),
-            new Color(1f, 1f, 1f, 1f),
-            new Color(0.66f, 0.86f, 1f, 1f),
-            122f);
+            content, "ResultTitleTop", "LEVEL", new Vector2(0f, 830f),
+            Color.white, new Color(0.66f, 0.86f, 1f, 1f), 122f);
         resultTitleBottomText = CreateResultTitleLine(
-            resultScreen.transform,
-            "ResultTitleBottom",
-            "OVER",
-            new Vector2(0f, 670f),
-            new Color(1f, 0.96f, 0.42f, 1f),
-            new Color(1f, 0.42f, 0.02f, 1f),
-            132f);
+            content, "ResultTitleBottom", "COMPLETE", new Vector2(0f, 650f),
+            new Color(1f, 0.96f, 0.42f, 1f), new Color(1f, 0.42f, 0.02f, 1f), 132f);
+        resultTitleText.gameObject.SetActive(false);
+        resultTitleBottomText.gameObject.SetActive(false);
 
         // Kept for the existing result-state wiring, but intentionally hidden
         // because the supplied reference contains no separate reason line.
@@ -1349,42 +1364,42 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultReasonText.gameObject.SetActive(false);
 
         resultScoreText = CreateResultStatCard(
-            resultScreen.transform,
+            content,
             "ResultScoreCard",
             "•  SCORE  •",
-            new Vector2(0f, 270f),
+            new Vector2(0f, 240f),
             "PauseMenu/Icons/Crown",
             false,
             new Color(0.78f, 0.68f, 1f, 1f),
             new Color(0.58f, 0.20f, 1f, 1f));
         resultRewardText = CreateResultStatCard(
-            resultScreen.transform,
+            content,
             "ResultTokenCard",
             "•  TOKENS  •",
-            new Vector2(0f, -50f),
+            new Vector2(0f, -175f),
             "CustomCoin",
             true,
             new Color(0.32f, 0.84f, 1f, 1f),
             new Color(0.02f, 0.80f, 1f, 1f));
         resultBestText = CreateResultStatCard(
-            resultScreen.transform,
+            content,
             "ResultBestCard",
             "•  BEST  •",
-            new Vector2(0f, -370f),
+            new Vector2(0f, -575f),
             "PauseMenu/Icons/Crown",
             false,
             new Color(0.82f, 0.66f, 1f, 1f),
             new Color(1f, 0.24f, 0.78f, 1f));
 
         CreateResultBonusButton(
-            resultScreen.transform,
-            new Vector2(0f, -680f));
+            content,
+            new Vector2(0f, -900f));
 
         Button noThanks = CreateButton(
-            resultScreen.transform,
+            content,
             "ModernResultMenuButton",
             "NO THANKS",
-            new Vector2(0f, -875f),
+            new Vector2(0f, -1120f),
             new Vector2(500f, 78f),
             new Color(1f, 1f, 1f, 0.001f),
             new Color(0.76f, 0.70f, 1f, 1f),
@@ -1448,24 +1463,16 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Color labelColor,
         Color ringColor)
     {
-        RectTransform card = CreateCard(
-            parent,
-            name,
-            position,
-            new Vector2(600f, 235f),
-            new Color(0.07f, 0.10f, 0.35f, 0.96f),
-            new Color(0.68f, 0.78f, 1f, 0.68f));
-        UiVerticalGradient cardGradient =
-            card.gameObject.AddComponent<UiVerticalGradient>();
-        cardGradient.Configure(
-            new Color(0.20f, 0.26f, 0.62f, 0.96f),
-            new Color(0.06f, 0.09f, 0.31f, 0.98f));
+        RectTransform card = CreateRect(name, parent);
+        SetRect(card, position, new Vector2(680f, 340f));
+        CreateResourceImage(card, "CardArtwork", "GameOver/StatCard",
+            Vector2.zero, new Vector2(680f, 340f));
 
         Image halo = CreateImage(
             card,
             "IconHalo",
-            new Vector2(0f, 118f),
-            new Vector2(122f, 122f),
+            new Vector2(0f, 148f),
+            new Vector2(148f, 148f),
             new Color(ringColor.r, ringColor.g, ringColor.b, 0.24f),
             true);
         AddGraphicShadow(
@@ -1476,8 +1483,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Image medallion = CreateImage(
             card,
             "IconMedallion",
-            new Vector2(0f, 118f),
-            new Vector2(96f, 96f),
+            new Vector2(0f, 148f),
+            new Vector2(128f, 128f),
             new Color(0.19f, 0.10f, 0.48f, 1f),
             true);
         Outline medallionOutline = medallion.gameObject.AddComponent<Outline>();
@@ -1493,7 +1500,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "Icon",
             iconResourcePath,
             Vector2.zero,
-            useCoinArtwork ? new Vector2(72f, 72f) : new Vector2(66f, 60f));
+            useCoinArtwork ? new Vector2(96f, 96f) : new Vector2(88f, 80f));
         icon.color = useCoinArtwork
             ? Color.white
             : new Color(1f, 0.73f, 0.08f, 1f);
@@ -1502,7 +1509,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "Caption",
             label,
-            new Vector2(0f, 37f),
+            new Vector2(0f, 64f),
             new Vector2(520f, 56f),
             39f,
             labelColor,
@@ -1513,7 +1520,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "Value",
             "0",
-            new Vector2(0f, -47f),
+            new Vector2(0f, -40f),
             new Vector2(540f, 128f),
             98f,
             Color.white,
@@ -1521,7 +1528,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         value.enableAutoSizing = true;
         value.fontSizeMin = 58f;
         value.fontSizeMax = 98f;
-        value.overflowMode = TextOverflowModes.Overflow;
+        value.overflowMode = TextOverflowModes.Ellipsis;
         AddTextShadow(
             value,
             new Color(0.01f, 0.03f, 0.20f, 0.82f),
@@ -1529,91 +1536,22 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         return value;
     }
 
-    private static void CreateResultBonusButton(
-        Transform parent,
-        Vector2 position)
+    private static void CreateResultBonusButton(Transform parent, Vector2 position)
     {
         Button button = CreateButton(
-            parent,
-            "ResultDoubleRewardButton",
-            string.Empty,
-            position,
-            new Vector2(800f, 235f),
-            Color.white,
-            Color.white,
-            null,
-            1f);
-
+            parent, "ResultDoubleRewardButton", string.Empty, position,
+            new Vector2(940f, 382f), Color.white, Color.white, null, 1f);
+        RemoveButtonShadow(button);
+        button.GetComponentInChildren<TMP_Text>(true).gameObject.SetActive(false);
         Image background = button.GetComponent<Image>();
-        UiVerticalGradient buttonGradient =
-            background.gameObject.AddComponent<UiVerticalGradient>();
-        buttonGradient.Configure(
-            new Color(0.76f, 1f, 0.05f, 1f),
-            new Color(0.04f, 0.76f, 0.08f, 1f));
-        Outline outline = button.gameObject.AddComponent<Outline>();
-        outline.effectColor = new Color(0.15f, 1f, 0.83f, 0.92f);
-        outline.effectDistance = new Vector2(5f, -5f);
-
-        TMP_Text unusedLabel =
-            button.GetComponentInChildren<TMP_Text>(true);
-        if (unusedLabel != null)
-        {
-            unusedLabel.gameObject.SetActive(false);
-        }
-
-        TMP_Text multiplier = CreatePauseText(
-            button.transform,
-            "Multiplier",
-            "2X",
-            new Vector2(0f, 45f),
-            new Vector2(360f, 96f),
-            88f,
-            Color.white,
-            TextAlignmentOptions.Center);
-        multiplier.outlineColor = new Color(0.15f, 0.46f, 0.02f, 1f);
-        multiplier.outlineWidth = 0.08f;
-        AddTextShadow(
-            multiplier,
-            new Color(0.04f, 0.30f, 0.03f, 0.72f),
-            new Vector2(0f, -6f));
-
-        TMP_Text bonus = CreatePauseText(
-            button.transform,
-            "BonusLabel",
-            "BONUS",
-            new Vector2(0f, -24f),
-            new Vector2(420f, 62f),
-            44f,
-            new Color(1f, 0.96f, 0.36f, 1f),
-            TextAlignmentOptions.Center);
-        AddTextShadow(
-            bonus,
-            new Color(0.05f, 0.34f, 0.02f, 0.64f),
-            new Vector2(0f, -4f));
-
-        CreatePauseText(
-            button.transform,
-            "BonusHint",
-            "Watch an ad to claim 2x reward",
-            new Vector2(0f, -82f),
-            new Vector2(700f, 42f),
-            23f,
-            Color.white,
-            TextAlignmentOptions.Center);
-
-        CreateResultSparkle(
-            button.transform,
-            new Vector2(-285f, 43f),
-            42f,
-            Color.white);
-        CreateResultSparkle(
-            button.transform,
-            new Vector2(285f, 43f),
-            42f,
-            Color.white);
-
-        // Deliberately no onClick listener yet. The button still receives press
-        // feedback through MenuPressScale, but performs no reward/ad action.
+        background.sprite = GetResourceSprite("GameOver/DoubleBonus");
+        background.type = Image.Type.Simple;
+        background.preserveAspect = true;
+        CreatePauseText(button.transform, "BonusHint",
+            "Watch an ad to claim 2x reward", new Vector2(0f, -125f),
+            new Vector2(780f, 44f), 28f, Color.white, TextAlignmentOptions.Center);
+        // Existing visual-only bonus: connect an ad completion callback before
+        // granting any additional reward. NO THANKS returns to the main menu.
     }
 
     private static void CreateResultDecorations(Transform parent)
@@ -2819,6 +2757,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
 
         bool completed = gameManager.LastRunCompleted;
+        if (resultTitleArtwork != null)
+        {
+            resultTitleArtwork.gameObject.SetActive(!completed);
+        }
+        resultTitleText.gameObject.SetActive(completed);
+        resultTitleBottomText.gameObject.SetActive(completed);
         resultTitleText.text = completed ? "LEVEL" : "GAME";
         if (resultTitleBottomText != null)
         {
