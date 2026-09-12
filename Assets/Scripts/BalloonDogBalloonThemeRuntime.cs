@@ -835,6 +835,13 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
     private void FixResultScreen()
     {
+        // The bonus layout already places NO THANKS below the reward button.
+        // Legacy result styling would move it over the bonus and relabel it HOME.
+        if (FindRect("ResultDoubleRewardButton") != null)
+        {
+            return;
+        }
+
         TMP_Text title = FindComponent<TMP_Text>("ResultTitle");
         if (title != null)
         {
