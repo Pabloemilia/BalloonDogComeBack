@@ -545,94 +545,104 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "ModernMarketScreen",
             MenuSkyTop,
             MenuSkyBottom);
+        Transform pattern = marketScreen.transform.Find("FigmaPattern");
+        if (pattern != null) pattern.gameObject.SetActive(false);
+        Image background = marketScreen.GetComponent<Image>();
+        Sprite sky = GetResourceSprite("ModernUI/SecondaryGradientBackground");
+        if (sky != null)
+        {
+            marketScreen.GetComponent<UiVerticalGradient>().enabled = false;
+            background.sprite = sky;
+            background.type = Image.Type.Simple;
+        }
 
-        CreateImage(
-            marketScreen.transform,
-            "MarketTreeBubbleLeft",
-            new Vector2(-490f, 520f),
-            new Vector2(220f, 220f),
-            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.34f),
-            true);
-        CreateImage(
-            marketScreen.transform,
-            "MarketTreeBubbleRight",
-            new Vector2(500f, 180f),
-            new Vector2(260f, 260f),
-            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.24f),
-            true);
+        RectTransform decorations = CreateRect("MarketDecorations", marketScreen.transform);
+        Stretch(decorations);
+        CreatePauseCloud(decorations, "MarketCloudTop", new Vector2(230f, 910f),
+            new Vector2(250f, 150f), 0f, 0.12f, 7f, 8f, 20f, 0.2f);
+        CreatePauseCloud(decorations, "MarketCloudBottom", new Vector2(-380f, -850f),
+            new Vector2(240f, 150f), 0f, 0.12f, 8f, 7f, 22f, 0.6f);
+        CreatePauseDogDecoration(decorations, "MarketDogLeft", new Vector2(-450f, 750f),
+            new Vector2(185f, 170f), -10f, 0.11f, 7f, 9f, 19f, 0.25f, 1f);
+        CreatePauseDogDecoration(decorations, "MarketDogRight", new Vector2(445f, 690f),
+            new Vector2(185f, 170f), 10f, 0.11f, 8f, 7f, 21f, 0.7f, 1f);
 
-        CreateTopBar(marketScreen.transform, "Market", () => ShowSettingsScreen(SettingsReturnTarget.Main));
-        CreateRibbon(marketScreen.transform, "MARKET", new Vector2(0f, 815f));
+        RectTransform content = CreateRect("MarketContent", marketScreen.transform);
+        SetRect(content, Vector2.zero, new Vector2(1080f, 1920f));
+        content.gameObject.AddComponent<BalloonDogSettingsFit>();
 
-        marketSkinsTabButton = CreateButton(
-            marketScreen.transform,
+        CreatePillText(content, "MarketTokens", BalloonDogEconomy.Coins.ToString("N0"),
+            new Vector2(-380f, 895f), new Vector2(270f, 95f), MenuCream,
+            new Color(0.31f, 0.18f, 0.02f, 1f)).gameObject.AddComponent<BalloonDogCoinLabel>();
+        Button settings = CreateButton(content, "MarketSettingsButton", string.Empty,
+            new Vector2(445f, 895f), new Vector2(95f, 95f), MenuBlue, Color.white,
+            () => ShowSettingsScreen(SettingsReturnTarget.Main), 1f);
+        Image settingsImage = settings.GetComponent<Image>();
+        settingsImage.sprite = GetCircleSprite();
+        settingsImage.type = Image.Type.Simple;
+        CreateResourceImage(settings.transform, "SettingsIcon", "PauseMenu/Icons/Settings",
+            Vector2.zero, new Vector2(60f, 60f));
+
+        TMP_Text marketTitle = CreatePauseText(content, "MarketTitle", "MARKET",
+            new Vector2(0f, 755f), new Vector2(850f, 145f), 110f,
+            Color.white, TextAlignmentOptions.Center);
+        AddTextShadow(marketTitle, new Color(0.01f, 0.20f, 0.55f, 0.38f),
+            new Vector2(0f, -6f));
+
+        marketSkinsTabButton = CreatePauseActionButton(
+            content,
             "MarketSkinsTabButton",
             "SKINS",
-            new Vector2(-205f, 625f),
-            new Vector2(380f, 92f),
-            MenuGreen,
-            Color.white,
+            null, "SettingsUI/Mint",
+            new Vector2(-220f, 575f), new Vector2(420f, 115f),
+            MenuGreen, Cyan,
             () => ShowMarketTab(true),
-            29f);
+            43f, 0f);
 
-        marketExtrasTabButton = CreateButton(
-            marketScreen.transform,
+        marketExtrasTabButton = CreatePauseActionButton(
+            content,
             "MarketExtrasTabButton",
             "EXTRAS",
-            new Vector2(205f, 625f),
-            new Vector2(380f, 92f),
-            MenuBlue,
-            Color.white,
+            null, "SettingsUI/Blue",
+            new Vector2(220f, 575f), new Vector2(420f, 115f),
+            Cyan, MenuBlue,
             () => ShowMarketTab(false),
-            29f);
+            43f, 0f);
 
-        RectTransform shelves = CreateCard(
-            marketScreen.transform,
-            "MarketShelvesCard",
-            new Vector2(0f, -115f),
-            new Vector2(910f, 1260f),
-            MenuBlueDark,
-            new Color(0.43f, 0.76f, 1f, 0.58f));
-
-        RectTransform skinPanel = CreateRect("MarketSkinOffersPanel", shelves);
-        SetRect(skinPanel, new Vector2(0f, -10f), new Vector2(850f, 1160f));
+        RectTransform skinPanel = CreateRect("MarketSkinOffersPanel", content);
+        SetRect(skinPanel, new Vector2(0f, -110f), new Vector2(900f, 1180f));
         marketSkinOffersPanel = skinPanel.gameObject;
         marketSkinOffersPanel.AddComponent<UiPanelAnimator>();
         BuildLockedSkinMarketGrid(skinPanel);
 
-        RectTransform extrasPanel = CreateRect("MarketExtrasPanel", shelves);
-        SetRect(extrasPanel, new Vector2(0f, -10f), new Vector2(850f, 1160f));
+        RectTransform extrasPanel = CreateRect("MarketExtrasPanel", content);
+        SetRect(extrasPanel, new Vector2(0f, -110f), new Vector2(900f, 1180f));
         marketExtrasPanel = extrasPanel.gameObject;
         marketExtrasPanel.AddComponent<UiPanelAnimator>();
         BuildMarketExtras(extrasPanel);
 
-        CreateRoundNavButton(
-            marketScreen.transform,
-            "MarketClose",
-            "HOME",
-            new Vector2(-90f, -1035f),
-            ShowMainScreen);
-        CreateRoundNavButton(
-            marketScreen.transform,
-            "MarketSkins",
-            "COLLECTION",
-            new Vector2(90f, -1035f),
-            ShowSkinsScreen);
+        CreatePauseActionButton(content, "MarketClose", "HOME",
+            "PauseMenu/Icons/Home", "SettingsUI/Blue",
+            new Vector2(-225f, -870f), new Vector2(425f, 130f),
+            Cyan, MenuBlue, ShowMainScreen, 42f, 72f);
+        CreatePauseActionButton(content, "MarketSkins", "COLLECTION",
+            "MarketUI/CollectionShelf", "SettingsUI/Blue",
+            new Vector2(225f, -870f), new Vector2(425f, 130f),
+            Cyan, MenuBlue, ShowSkinsScreen, 38f, 76f);
 
         ShowMarketTab(true);
     }
 
     private void BuildLockedSkinMarketGrid(Transform parent)
     {
-        CreateText(
+        CreatePauseText(
             parent,
             "MarketSkinGridTitle",
             "15 MYSTERY SKINS",
-            new Vector2(0f, 535f),
-            new Vector2(720f, 48f),
-            27f,
+            new Vector2(0f, 545f),
+            new Vector2(720f, 62f),
+            38f,
             Color.white,
-            FontStyles.Bold,
             TextAlignmentOptions.Center);
 
         for (int index = 0; index < 15; index++)
@@ -640,8 +650,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             int column = index % 3;
             int row = index / 3;
             Vector2 position = new Vector2(
-                (column - 1) * 275f,
-                420f - row * 215f);
+                (column - 1) * 265f,
+                395f - row * 232f);
 
             GetMarketRarity(index, out string rarity, out Color fill, out Color outline);
             CreateLockedSkinSlot(parent, index, rarity, fill, outline, position);
@@ -693,46 +703,32 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Color outline,
         Vector2 position)
     {
-        RectTransform card = CreateCard(
-            parent,
-            "MarketSkinSlot_" + (index + 1),
-            position,
-            new Vector2(250f, 190f),
-            fill,
-            outline);
+        RectTransform card = CreateRect("MarketSkinSlot_" + (index + 1), parent);
+        SetRect(card, position, new Vector2(236f, 219f));
+        string artwork = "MarketUI/Cards/" + rarity;
+        Image cardImage = CreateResourceImage(card, "RarityCard", artwork,
+            Vector2.zero, new Vector2(236f, 219f));
+        if (cardImage.sprite == null)
+        {
+            cardImage.sprite = GetRoundedSprite();
+            cardImage.color = fill;
+        }
 
-        Image sheen = CreateImage(
-            card,
-            "RaritySheen",
-            new Vector2(0f, 48f),
-            new Vector2(220f, 72f),
-            new Color(1f, 1f, 1f, 0.10f),
-            false);
-        sheen.raycastTarget = false;
+        Image dog = CreateResourceImage(card, "MysteryDog", "MarketUI/MysteryDog",
+            new Vector2(0f, 21f), new Vector2(137f, 124f));
+        dog.color = Color.white;
+        Image question = CreateResourceImage(card, "MysteryMark", "MarketUI/QuestionMark",
+            new Vector2(0f, 20f), new Vector2(66f, 86f));
+        question.color = Color.white;
 
-        CreateBalloonDogSilhouette(card, new Vector2(-4f, 24f), new Color(0.015f, 0.05f, 0.09f, 0.66f), 0.72f);
-
-        CreateText(
-            card,
-            "MysteryMark",
-            "?",
-            new Vector2(0f, 25f),
-            new Vector2(95f, 100f),
-            58f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-
-        CreateText(
-            card,
-            "RarityLabel",
-            rarity,
-            new Vector2(0f, -67f),
-            new Vector2(220f, 32f),
-            18f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
+        TMP_Text label = CreatePauseText(card, "RarityLabel", rarity,
+            new Vector2(0f, -78f), new Vector2(234f, 42f), 24f,
+            Color.white, TextAlignmentOptions.Center);
+        label.enableAutoSizing = true;
+        label.fontSizeMin = 17f;
+        label.fontSizeMax = 24f;
+        AddTextShadow(label, new Color(0f, 0.12f, 0.30f, 0.45f),
+            new Vector2(0f, -2f));
     }
 
     private static void CreateBalloonDogSilhouette(
@@ -941,7 +937,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             Image image = marketSkinsTabButton.GetComponent<Image>();
             if (image != null)
             {
-                image.color = showSkins ? MenuGreen : MenuBlue;
+                ApplyPauseButtonBackground(image,
+                    showSkins ? "SettingsUI/Mint" : "SettingsUI/Blue");
             }
         }
 
@@ -950,7 +947,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             Image image = marketExtrasTabButton.GetComponent<Image>();
             if (image != null)
             {
-                image.color = showSkins ? MenuBlue : MenuGreen;
+                ApplyPauseButtonBackground(image,
+                    showSkins ? "SettingsUI/Blue" : "SettingsUI/Mint");
             }
         }
     }

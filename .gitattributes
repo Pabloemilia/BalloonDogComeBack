@@ -180,3 +180,7 @@ Assets/Resources/PauseMenu/Buttons/*.png                       -filter -diff -me
 
 # Game Over runtime artwork uses regular Git blobs.
 Assets/Resources/GameOver/*.png -filter -diff -merge -text
+
+# Market UI sprites are used directly by Resources at runtime.
+Assets/Resources/MarketUI/*.png -filter -diff -merge -text
+Assets/Resources/MarketUI/Cards/*.png -filter -diff -merge -text
