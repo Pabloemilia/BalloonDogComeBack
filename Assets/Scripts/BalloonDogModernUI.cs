@@ -1275,8 +1275,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         resultScreen = CreateScreen(
             "ModernResultScreen",
-            new Color(0.24f, 0.03f, 0.78f, 1f),
-            new Color(0.04f, 0.36f, 0.96f, 1f));
+            new Color(0.12f, 0.43f, 0.96f, 1f),
+            new Color(0.28f, 0.84f, 0.52f, 1f));
 
         Transform backgroundPattern = resultScreen.transform.Find("FigmaPattern");
         if (backgroundPattern != null)
@@ -1284,13 +1284,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             backgroundPattern.gameObject.SetActive(false);
         }
         Image background = resultScreen.GetComponent<Image>();
-        Sprite backgroundSprite = GetResourceSprite("ModernUI/SecondaryGradientBackground");
-        if (backgroundSprite != null)
-        {
-            resultScreen.GetComponent<UiVerticalGradient>().enabled = false;
-            background.sprite = backgroundSprite;
-            background.type = Image.Type.Simple;
-        }
+        // The result screen uses its own blue -> aqua -> mint palette.
+        // A small generated texture gives the middle color its own stop without
+        // changing gradients used by the rest of the front end.
+        resultScreen.GetComponent<UiVerticalGradient>().enabled = false;
+        background.sprite = CreateResultBackgroundSprite();
+        background.type = Image.Type.Simple;
+        background.color = Color.white;
         CreateResultDecorations(resultScreen.transform);
 
         // Fit the complete reference layout inside the existing safe area.
@@ -1330,8 +1330,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(0f, 240f),
             "PauseMenu/Icons/Crown",
             false,
-            new Color(0.78f, 0.68f, 1f, 1f),
-            new Color(0.58f, 0.20f, 1f, 1f));
+            new Color(0.77f, 0.97f, 1f, 1f),
+            new Color(0.23f, 0.94f, 1f, 1f));
         resultRewardText = CreateResultStatCard(
             content,
             "ResultTokenCard",
@@ -1348,8 +1348,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(0f, -575f),
             "PauseMenu/Icons/Crown",
             false,
-            new Color(0.82f, 0.66f, 1f, 1f),
-            new Color(1f, 0.24f, 0.78f, 1f));
+            new Color(0.77f, 0.97f, 1f, 1f),
+            new Color(0.23f, 0.94f, 1f, 1f));
 
         CreateResultBonusButton(
             content,
@@ -1362,12 +1362,34 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(0f, -1140f),
             new Vector2(500f, 60f),
             new Color(1f, 1f, 1f, 0.001f),
-            new Color(0.76f, 0.70f, 1f, 1f),
+            new Color(0.81f, 1f, 0.96f, 1f),
             ReturnToMainMenu,
             34f);
         RemoveButtonShadow(noThanks);
         BalloonDogTitanFont.Apply(
             noThanks.GetComponentInChildren<TMP_Text>(true));
+    }
+
+    private static Sprite CreateResultBackgroundSprite()
+    {
+        const int height = 256;
+        Texture2D texture = new Texture2D(1, height, TextureFormat.RGBA32, false);
+        texture.name = "ResultBlueMintGradient";
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+        Color top = new Color(0.12f, 0.43f, 0.96f, 1f);
+        Color middle = new Color(0.13f, 0.74f, 0.78f, 1f);
+        Color bottom = new Color(0.28f, 0.84f, 0.52f, 1f);
+        for (int y = 0; y < height; y++)
+        {
+            float t = y / (height - 1f);
+            texture.SetPixel(0, y, t < 0.5f
+                ? Color.Lerp(bottom, middle, t * 2f)
+                : Color.Lerp(middle, top, (t - 0.5f) * 2f));
+        }
+        texture.Apply(false, true);
+        return Sprite.Create(texture, new Rect(0f, 0f, 1f, height),
+            new Vector2(0.5f, 0.5f), 100f);
     }
 
     private static TMP_Text CreateResultTitleLine(
@@ -1425,8 +1447,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         RectTransform card = CreateRect(name, parent);
         SetRect(card, position, new Vector2(680f, 340f));
-        CreateResourceImage(card, "CardArtwork", "GameOver/StatCard",
+        Image cardArtwork = CreateResourceImage(card, "CardArtwork", "GameOver/StatCard",
             Vector2.zero, new Vector2(680f, 340f));
+        cardArtwork.color = new Color(0.42f, 1f, 1f, 1f);
 
         Image halo = CreateImage(
             card,
@@ -1445,7 +1468,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "IconMedallion",
             new Vector2(0f, 148f),
             new Vector2(128f, 128f),
-            new Color(0.19f, 0.10f, 0.48f, 1f),
+            new Color(0.02f, 0.20f, 0.34f, 1f),
             true);
         Outline medallionOutline = medallion.gameObject.AddComponent<Outline>();
         medallionOutline.effectColor = ringColor;
