@@ -58,6 +58,7 @@ public sealed class BalloonDogStarGlint : MonoBehaviour
     private float phase;
     private bool bonusStar;
     private float burstUntil;
+    private Vector2 origin;
 
     public static Sprite Sprite
     {
@@ -102,6 +103,7 @@ public sealed class BalloonDogStarGlint : MonoBehaviour
     {
         image = GetComponent<Image>();
         rect = GetComponent<RectTransform>();
+        origin = rect.anchoredPosition;
     }
 
     private void Update()
@@ -116,5 +118,11 @@ public sealed class BalloonDogStarGlint : MonoBehaviour
         image.color = new Color(1f, 0.94f, 0.62f, glow);
         rect.localScale = Vector3.one *
             (0.86f + 0.20f * wave + 0.26f * accent + 0.22f * burst);
+        // Two slow frequencies per axis give each star a small diagonal drift.
+        float x = Mathf.Sin(t * 0.83f + phase * 1.7f) * 7f +
+            Mathf.Sin(t * 1.31f + phase) * 3f;
+        float y = Mathf.Cos(t * 0.69f + phase * 2.1f) * 6f +
+            Mathf.Sin(t * 1.17f + phase * 0.7f) * 3f;
+        rect.anchoredPosition = origin + new Vector2(x, y);
     }
 }

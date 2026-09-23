@@ -1578,40 +1578,15 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(390f, -980f), new Vector2(520f, 340f), -5f, 0.17f,
             8f, 9f, 21f, 0.87f);
 
-        CreateResultSparkle(
-            layer, new Vector2(-455f, 655f), 34f,
-            new Color(0.90f, 0.82f, 1f, 0.90f));
-        CreateResultSparkle(
-            layer, new Vector2(450f, 690f), 42f,
-            new Color(0.94f, 0.88f, 1f, 0.94f));
-        CreateResultSparkle(
-            layer, new Vector2(-480f, -740f), 20f,
-            new Color(0.82f, 0.91f, 1f, 0.72f));
-        CreateResultSparkle(
-            layer, new Vector2(470f, -680f), 22f,
-            new Color(0.82f, 0.91f, 1f, 0.72f));
-    }
-
-    private static void CreateResultSparkle(
-        Transform parent,
-        Vector2 position,
-        float size,
-        Color color)
-    {
-        CreateImage(
-            parent,
-            "SparkleVertical",
-            position,
-            new Vector2(size * 0.24f, size),
-            color,
-            false);
-        CreateImage(
-            parent,
-            "SparkleHorizontal",
-            position,
-            new Vector2(size, size * 0.24f),
-            color,
-            false);
+        // Replace the old static white cross shapes with drifting glints.
+        CreateResultGlint(layer, "ResultStarTopLeft",
+            new Vector2(-455f, 655f), 42f, 0.4f, false);
+        CreateResultGlint(layer, "ResultStarTopRight",
+            new Vector2(450f, 690f), 48f, 1.6f, false);
+        CreateResultGlint(layer, "ResultStarBottomLeft",
+            new Vector2(-480f, -740f), 30f, 2.4f, false);
+        CreateResultGlint(layer, "ResultStarBottomRight",
+            new Vector2(470f, -680f), 32f, 3.1f, false);
     }
 
     private void BuildPauseScreen()
