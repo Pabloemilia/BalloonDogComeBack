@@ -1300,7 +1300,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         content.gameObject.AddComponent<BalloonDogResultLayoutFit>();
         resultTitleArtwork = CreateResourceImage(
             content, "GameOverTitleArtwork", "GameOver/Title",
-            new Vector2(0f, 740f), new Vector2(840f, 420f));
+            new Vector2(0f, 695f), new Vector2(840f, 420f));
         // The title artwork already has its own stars; do not stack glints on them.
         // Completion keeps its existing LEVEL COMPLETE wording.
         resultTitleText = CreateResultTitleLine(
