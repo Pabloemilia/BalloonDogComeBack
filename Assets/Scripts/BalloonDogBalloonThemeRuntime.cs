@@ -390,13 +390,13 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
         if (!ownsSettings) StyleSettingsControls();
         StyleSkinControls();
-        StyleMarketTabs();
+        // Market builds its own artwork buttons and Titan One labels.
+        // Styling them here recreates legacy TMP labels over the new text.
+        StyleMarketExtras();
 
         if (!ownsSettings) StyleNavigationButton("SettingsClose", "DONE", new Vector2(0f, -1035f), new Vector2(420f, 104f));
         StyleNavigationButton("SkinsMarket", "MARKET", new Vector2(-225f, -1035f), new Vector2(370f, 104f));
         StyleNavigationButton("SkinsClose", "HOME", new Vector2(225f, -1035f), new Vector2(370f, 104f));
-        StyleNavigationButton("MarketClose", "HOME", new Vector2(-230f, -1035f), new Vector2(350f, 104f));
-        StyleNavigationButton("MarketSkins", "COLLECTION", new Vector2(210f, -1035f), new Vector2(430f, 104f));
 
         if (!ownsSettings) RemoveSecondaryOutlines("ModernSettingsScreen");
         RemoveSecondaryOutlines("ModernSkinsScreen");
@@ -628,37 +628,8 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         }
     }
 
-    private static void StyleMarketTabs()
+    private static void StyleMarketExtras()
     {
-        GameObject skinsPanel = FindSceneObject("MarketSkinOffersPanel");
-        bool skinsActive = skinsPanel != null && skinsPanel.activeSelf;
-
-        RectTransform skinsTab = FindRect("MarketSkinsTabButton");
-        if (skinsTab != null)
-        {
-            StyleButton(
-                skinsTab,
-                skinsActive
-                    ? new Color(0.35f, 0.84f, 0.23f, 1f)
-                    : new Color(0.18f, 0.54f, 0.96f, 1f),
-                "SKINS",
-                29f);
-            SoftenPillOutline(skinsTab, 0.04f, 0.12f);
-        }
-
-        RectTransform extrasTab = FindRect("MarketExtrasTabButton");
-        if (extrasTab != null)
-        {
-            StyleButton(
-                extrasTab,
-                skinsActive
-                    ? new Color(0.18f, 0.54f, 0.96f, 1f)
-                    : new Color(0.35f, 0.84f, 0.23f, 1f),
-                "EXTRAS",
-                29f);
-            SoftenPillOutline(extrasTab, 0.04f, 0.12f);
-        }
-
         GameObject extrasPanel = FindSceneObject("MarketExtrasPanel");
         if (extrasPanel == null)
         {
