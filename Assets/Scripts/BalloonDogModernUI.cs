@@ -1301,15 +1301,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultTitleArtwork = CreateResourceImage(
             content, "GameOverTitleArtwork", "GameOver/Title",
             new Vector2(0f, 740f), new Vector2(840f, 420f));
-        // Animated glints sit on the stars already painted into the title.
-        CreateResultGlint(resultTitleArtwork.transform, "TitleStarLeft",
-            new Vector2(-370f, -12f), 94f, 0.0f, false);
-        CreateResultGlint(resultTitleArtwork.transform, "TitleStarRight",
-            new Vector2(370f, -12f), 94f, 0.9f, false);
-        CreateResultGlint(resultTitleArtwork.transform, "TitleStarLeftSmall",
-            new Vector2(-335f, -91f), 45f, 1.6f, false);
-        CreateResultGlint(resultTitleArtwork.transform, "TitleStarRightSmall",
-            new Vector2(335f, -91f), 45f, 2.3f, false);
+        // The title artwork already has its own stars; do not stack glints on them.
         // Completion keeps its existing LEVEL COMPLETE wording.
         resultTitleText = CreateResultTitleLine(
             content, "ResultTitleTop", "LEVEL", new Vector2(0f, 830f),
@@ -1568,11 +1560,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         background.preserveAspect = true;
         button.transition = Selectable.Transition.None;
         button.gameObject.AddComponent<BalloonDogBonusPressFeedback>();
-        // Independent stars alternate while the button artwork stays still.
-        CreateResultGlint(button.transform, "BonusStarLeft",
-            new Vector2(-218f, 12f), 93f, 0f, true);
-        CreateResultGlint(button.transform, "BonusStarRight",
-            new Vector2(218f, 12f), 93f, 1.15f, true);
+        // The bonus button stays free of decorative stars.
         // Keep the hint below the visible button and independent of its press scale.
         TMP_Text hint = CreatePauseText(parent, "BonusHint",
             "Watch an ad to claim 2x reward",
@@ -1662,7 +1650,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreateResultGlint(layer, "ResultStarUpperLeft",
             new Vector2(-315f, 430f), 45f, 0.8f, false);
         CreateResultGlint(layer, "ResultStarUpperRight",
-            new Vector2(340f, 455f), 43f, 2.8f, false);
+            new Vector2(465f, 535f), 43f, 2.8f, false);
         CreateResultGlint(layer, "ResultStarScoreLeft",
             new Vector2(-425f, 255f), 41f, 1.3f, false);
         CreateResultGlint(layer, "ResultStarScoreRight",
@@ -1674,7 +1662,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreateResultGlint(layer, "ResultStarLowerLeft",
             new Vector2(-430f, -610f), 43f, 5.7f, false);
         CreateResultGlint(layer, "ResultStarLowerRight",
-            new Vector2(395f, -835f), 40f, 6.4f, false);
+            new Vector2(440f, -530f), 40f, 6.4f, false);
     }
 
     private void BuildPauseScreen()
