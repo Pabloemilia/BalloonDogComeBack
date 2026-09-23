@@ -694,22 +694,25 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Color outline,
         Vector2 position)
     {
-        RectTransform card = CreateCard(
-            parent,
-            "MarketSkinSlot_" + (index + 1),
-            position,
-            new Vector2(250f, 190f),
-            fill,
-            outline);
+        RectTransform card = CreateRect("MarketSkinSlot_" + (index + 1), parent);
+        SetRect(card, position, new Vector2(250f, 190f));
 
-        Image sheen = CreateImage(
-            card,
-            "RaritySheen",
-            new Vector2(0f, 48f),
-            new Vector2(220f, 72f),
-            new Color(1f, 1f, 1f, 0.10f),
-            false);
-        sheen.raycastTarget = false;
+        string backgroundPath;
+        switch (index / 3)
+        {
+            case 0: backgroundPath = "Market/RarityCommon"; break;
+            case 1: backgroundPath = "Market/RarityUncommon"; break;
+            case 2: backgroundPath = "Market/RarityRare"; break;
+            case 3: backgroundPath = "Market/RarityEpic"; break;
+            default: backgroundPath = "Market/RarityLegendary"; break;
+        }
+
+        // The supplied PNG includes its own edge, gloss and shadow.
+        Image background = card.gameObject.AddComponent<Image>();
+        background.sprite = GetResourceSprite(backgroundPath);
+        background.type = Image.Type.Simple;
+        background.color = Color.white;
+        background.raycastTarget = false;
 
         // Keep one light silhouette behind the question mark.
         CreateBalloonDogSilhouette(
