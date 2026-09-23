@@ -1625,20 +1625,20 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         // Four quieter silhouettes bring the backdrop to eight dogs total.
         CreatePauseDogDecoration(
             layer, "ResultDogUpperLeft",
-            new Vector2(-470f, 505f), new Vector2(130f, 118f), 17f,
-            0.045f, 6f, 8f, 16f, 0.27f, 1.0f);
+            new Vector2(-430f, 510f), new Vector2(190f, 175f), 17f,
+            0.07f, 6f, 8f, 16f, 0.27f, 1.0f);
         CreatePauseDogDecoration(
             layer, "ResultDogUpperRight",
-            new Vector2(470f, 390f), new Vector2(146f, 132f), -13f,
-            0.045f, 7f, 8f, 17f, 0.72f, 1.2f);
+            new Vector2(430f, 410f), new Vector2(190f, 175f), -13f,
+            0.07f, 7f, 8f, 17f, 0.72f, 1.2f);
         CreatePauseDogDecoration(
             layer, "ResultDogLowerLeft",
-            new Vector2(-465f, -450f), new Vector2(142f, 128f), -16f,
-            0.05f, 7f, 9f, 17f, 0.48f, 1.1f);
+            new Vector2(-430f, -445f), new Vector2(190f, 175f), -16f,
+            0.07f, 7f, 9f, 17f, 0.48f, 1.1f);
         CreatePauseDogDecoration(
             layer, "ResultDogLowerRight",
-            new Vector2(470f, -775f), new Vector2(122f, 110f), 14f,
-            0.05f, 6f, 8f, 15f, 0.95f, 1.3f);
+            new Vector2(430f, -780f), new Vector2(190f, 175f), 14f,
+            0.07f, 6f, 8f, 15f, 0.95f, 1.3f);
 
         CreatePauseCloud(
             layer, "ResultCloudBottomLeft",
@@ -1660,21 +1660,21 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(470f, -680f), 32f, 3.1f, false);
         // Scattered small stars fill the side margins without covering scores.
         CreateResultGlint(layer, "ResultStarUpperLeft",
-            new Vector2(-315f, 430f), 27f, 0.8f, false);
+            new Vector2(-315f, 430f), 45f, 0.8f, false);
         CreateResultGlint(layer, "ResultStarUpperRight",
-            new Vector2(340f, 455f), 25f, 2.8f, false);
+            new Vector2(340f, 455f), 43f, 2.8f, false);
         CreateResultGlint(layer, "ResultStarScoreLeft",
-            new Vector2(-425f, 255f), 23f, 1.3f, false);
+            new Vector2(-425f, 255f), 41f, 1.3f, false);
         CreateResultGlint(layer, "ResultStarScoreRight",
-            new Vector2(425f, 170f), 28f, 3.8f, false);
+            new Vector2(425f, 170f), 46f, 3.8f, false);
         CreateResultGlint(layer, "ResultStarMiddleLeft",
-            new Vector2(-390f, -115f), 21f, 4.4f, false);
+            new Vector2(-390f, -115f), 39f, 4.4f, false);
         CreateResultGlint(layer, "ResultStarMiddleRight",
-            new Vector2(420f, -420f), 26f, 5.1f, false);
+            new Vector2(420f, -420f), 44f, 5.1f, false);
         CreateResultGlint(layer, "ResultStarLowerLeft",
-            new Vector2(-430f, -610f), 25f, 5.7f, false);
+            new Vector2(-430f, -610f), 43f, 5.7f, false);
         CreateResultGlint(layer, "ResultStarLowerRight",
-            new Vector2(395f, -835f), 22f, 6.4f, false);
+            new Vector2(395f, -835f), 40f, 6.4f, false);
     }
 
     private void BuildPauseScreen()
