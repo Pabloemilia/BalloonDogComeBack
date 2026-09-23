@@ -75,14 +75,12 @@ public sealed class BalloonDogStarGlint : MonoBehaviour
             {
                 float dx = (x + 0.5f - size * 0.5f) / (size * 0.5f);
                 float dy = (y + 0.5f - size * 0.5f) / (size * 0.5f);
-                // Four tapered points; no round center or circular halo.
-                float ax = Mathf.Abs(dx);
-                float ay = Mathf.Abs(dy);
-                float vertical = Mathf.Clamp01(1f - ax / (0.23f * (1f - ay) + 0.001f))
-                    * Mathf.Clamp01((1f - ay) * 12f);
-                float horizontal = Mathf.Clamp01(1f - ay / (0.23f * (1f - ax) + 0.001f))
-                    * Mathf.Clamp01((1f - ax) * 12f);
-                float alpha = Mathf.Max(vertical, horizontal);
+                // A single filled four-point star with curved inward sides.
+                // This matches the gold stars in the title art instead of
+                // drawing two thin lines that resemble a plus sign.
+                float reach = Mathf.Sqrt(Mathf.Abs(dx)) +
+                    Mathf.Sqrt(Mathf.Abs(dy));
+                float alpha = Mathf.Clamp01((1f - reach) * 14f);
                 texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
             }
             texture.Apply(false, true);
@@ -119,7 +117,7 @@ public sealed class BalloonDogStarGlint : MonoBehaviour
             Mathf.Pow(Mathf.Max(0f, Mathf.Sin(t * 1.4f + phase)), 18f);
         float burst = Mathf.Clamp01((burstUntil - t) / 0.28f);
         float glow = Mathf.Clamp01(0.30f + 0.47f * wave + 0.33f * accent + 0.72f * burst);
-        image.color = new Color(1f, 0.94f, 0.62f, glow);
+        image.color = new Color(1f, 0.83f, 0.39f, glow);
         rect.localScale = Vector3.one *
             (0.86f + 0.20f * wave + 0.26f * accent + 0.22f * burst);
         // Two slow frequencies per axis give each star a small diagonal drift.
