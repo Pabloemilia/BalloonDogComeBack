@@ -559,6 +559,15 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreatePauseDogDecoration(marketScreen.transform, "MarketDogLowerRight",
             new Vector2(450f, -725f), new Vector2(170f, 155f), -11f,
             0.09f, 8f, 9f, 22f, 0.78f, 1.6f);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogUpperLeft",
+            new Vector2(-475f, 350f), new Vector2(155f, 145f), 7f,
+            0.08f, 7f, 8f, 24f, 0.12f, 1.3f);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogMiddleRight",
+            new Vector2(475f, 10f), new Vector2(160f, 148f), -8f,
+            0.08f, 7f, 8f, 23f, 0.58f, 1.2f);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogMiddleLeft",
+            new Vector2(-470f, -350f), new Vector2(150f, 140f), 11f,
+            0.08f, 7f, 8f, 25f, 0.89f, 1.4f);
 
         CreateTopBar(marketScreen.transform, "Market",
             () => ShowSettingsScreen(SettingsReturnTarget.Main));
@@ -567,12 +576,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         marketSkinsTabButton = CreateMarketArtworkButton(
             marketScreen.transform, "MarketSkinsTabButton", "SKINS",
-            new Vector2(-210f, 625f), new Vector2(390f, 125f),
-            () => ShowMarketTab(true), 42f);
+            new Vector2(-235f, 640f), new Vector2(450f, 145f),
+            () => ShowMarketTab(true), 46f);
         marketExtrasTabButton = CreateMarketArtworkButton(
             marketScreen.transform, "MarketExtrasTabButton", "EXTRAS",
-            new Vector2(210f, 625f), new Vector2(390f, 125f),
-            () => ShowMarketTab(false), 42f);
+            new Vector2(235f, 640f), new Vector2(450f, 145f),
+            () => ShowMarketTab(false), 46f);
 
         RectTransform shelves = CreateCard(
             marketScreen.transform, "MarketShelvesCard",
@@ -593,18 +602,18 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         CreateMarketArtworkButton(
             marketScreen.transform, "MarketClose", "HOME",
-            new Vector2(-215f, -865f), new Vector2(420f, 145f),
-            ShowMainScreen, 46f);
+            new Vector2(-235f, -855f), new Vector2(455f, 165f),
+            ShowMainScreen, 50f);
         Button collection = CreateMarketArtworkButton(
             marketScreen.transform, "MarketSkins", "COLLECTION",
-            new Vector2(215f, -865f), new Vector2(420f, 145f),
-            ShowSkinsScreen, 39f);
+            new Vector2(235f, -855f), new Vector2(455f, 165f),
+            ShowSkinsScreen, 42f);
         CreateResourceImage(collection.transform, "CollectionBook",
-            "Market/CollectionBook", new Vector2(-125f, 0f),
-            new Vector2(100f, 100f));
+            "Market/CollectionBook", new Vector2(-138f, 0f),
+            new Vector2(105f, 105f));
         Text collectionLabel = collection.GetComponentInChildren<Text>(true);
-        collectionLabel.rectTransform.anchoredPosition = new Vector2(45f, 0f);
-        collectionLabel.rectTransform.sizeDelta = new Vector2(310f, 105f);
+        collectionLabel.rectTransform.anchoredPosition = new Vector2(50f, 0f);
+        collectionLabel.rectTransform.sizeDelta = new Vector2(325f, 110f);
 
         ShowMarketTab(true);
         ApplyMarketTitanFont();
@@ -976,8 +985,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         if (tab == null) return;
         RectTransform rect = tab.transform as RectTransform;
-        rect.sizeDelta = selected ? new Vector2(410f, 132f)
-            : new Vector2(365f, 112f);
+        rect.sizeDelta = selected ? new Vector2(470f, 158f)
+            : new Vector2(425f, 138f);
         Image image = tab.GetComponent<Image>();
         image.color = selected ? Color.white
             : new Color(0.37f, 0.48f, 0.67f, 1f);
