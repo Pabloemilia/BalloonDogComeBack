@@ -711,11 +711,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             false);
         sheen.raycastTarget = false;
 
-        // Supplied transparent artwork: the dog sits behind the question mark.
-        Image mysteryDog = CreateResourceImage(
-            card, "MysteryDog", "Market/MysteryDog",
-            new Vector2(-3f, 20f), new Vector2(202f, 142f));
-        mysteryDog.color = new Color(1f, 1f, 1f, 0.42f);
+        // Keep one light silhouette behind the question mark.
+        CreateBalloonDogSilhouette(
+            card, new Vector2(-4f, 24f),
+            new Color(0.62f, 0.78f, 0.76f, 0.76f), 0.72f);
 
         Image mysteryMark = CreateResourceImage(
             card, "MysteryMark", "Market/MysteryQuestion",
