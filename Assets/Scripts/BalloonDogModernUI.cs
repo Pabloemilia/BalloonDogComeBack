@@ -1369,14 +1369,16 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "ModernResultMenuButton",
             "NO THANKS",
             new Vector2(0f, -1140f),
-            new Vector2(500f, 60f),
+            new Vector2(580f, 76f),
             new Color(1f, 1f, 1f, 0.001f),
             new Color(0.81f, 1f, 0.96f, 1f),
             ReturnToMainMenu,
-            34f);
+            42f);
         RemoveButtonShadow(noThanks);
-        BalloonDogTitanFont.Apply(
-            noThanks.GetComponentInChildren<TMP_Text>(true));
+        TMP_Text noThanksLabel = noThanks.GetComponentInChildren<TMP_Text>(true);
+        BalloonDogTitanFont.Apply(noThanksLabel);
+        AddTextShadow(noThanksLabel,
+            new Color(0.02f, 0.30f, 0.37f, 0.78f), new Vector2(0f, -3f));
     }
 
     private static Sprite CreateResultBackgroundSprite()
@@ -1525,9 +1527,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(-218f, 12f), 93f, 0f, true);
         CreateResultGlint(button.transform, "BonusStarRight",
             new Vector2(218f, 12f), 93f, 1.15f, true);
-        CreatePauseText(button.transform, "BonusHint",
-            "Watch an ad to claim 2x reward", new Vector2(0f, -125f),
-            new Vector2(780f, 44f), 28f, Color.white, TextAlignmentOptions.Center);
+        // Keep the hint below the visible button and independent of its press scale.
+        TMP_Text hint = CreatePauseText(parent, "BonusHint",
+            "Watch an ad to claim 2x reward",
+            position + new Vector2(0f, -177f),
+            new Vector2(780f, 48f), 30f,
+            new Color(0.02f, 0.29f, 0.35f, 1f),
+            TextAlignmentOptions.Center);
+        BalloonDogTitanFont.Apply(hint);
         // Existing visual-only bonus: connect an ad completion callback before
         // granting any additional reward. NO THANKS returns to the main menu.
     }
@@ -1569,6 +1576,24 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(455f, -240f), new Vector2(205f, 185f), -9f,
             0.06f, 7f, 10f, 19f, 0.82f, 1.6f);
 
+        // Four quieter silhouettes bring the backdrop to eight dogs total.
+        CreatePauseDogDecoration(
+            layer, "ResultDogUpperLeft",
+            new Vector2(-470f, 505f), new Vector2(130f, 118f), 17f,
+            0.045f, 6f, 8f, 16f, 0.27f, 1.0f);
+        CreatePauseDogDecoration(
+            layer, "ResultDogUpperRight",
+            new Vector2(470f, 390f), new Vector2(146f, 132f), -13f,
+            0.045f, 7f, 8f, 17f, 0.72f, 1.2f);
+        CreatePauseDogDecoration(
+            layer, "ResultDogLowerLeft",
+            new Vector2(-465f, -450f), new Vector2(142f, 128f), -16f,
+            0.05f, 7f, 9f, 17f, 0.48f, 1.1f);
+        CreatePauseDogDecoration(
+            layer, "ResultDogLowerRight",
+            new Vector2(470f, -775f), new Vector2(122f, 110f), 14f,
+            0.05f, 6f, 8f, 15f, 0.95f, 1.3f);
+
         CreatePauseCloud(
             layer, "ResultCloudBottomLeft",
             new Vector2(-385f, -1010f), new Vector2(490f, 320f), 3f, 0.18f,
@@ -1587,6 +1612,23 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(-480f, -740f), 30f, 2.4f, false);
         CreateResultGlint(layer, "ResultStarBottomRight",
             new Vector2(470f, -680f), 32f, 3.1f, false);
+        // Scattered small stars fill the side margins without covering scores.
+        CreateResultGlint(layer, "ResultStarUpperLeft",
+            new Vector2(-315f, 430f), 27f, 0.8f, false);
+        CreateResultGlint(layer, "ResultStarUpperRight",
+            new Vector2(340f, 455f), 25f, 2.8f, false);
+        CreateResultGlint(layer, "ResultStarScoreLeft",
+            new Vector2(-425f, 255f), 23f, 1.3f, false);
+        CreateResultGlint(layer, "ResultStarScoreRight",
+            new Vector2(425f, 170f), 28f, 3.8f, false);
+        CreateResultGlint(layer, "ResultStarMiddleLeft",
+            new Vector2(-390f, -115f), 21f, 4.4f, false);
+        CreateResultGlint(layer, "ResultStarMiddleRight",
+            new Vector2(420f, -420f), 26f, 5.1f, false);
+        CreateResultGlint(layer, "ResultStarLowerLeft",
+            new Vector2(-430f, -610f), 25f, 5.7f, false);
+        CreateResultGlint(layer, "ResultStarLowerRight",
+            new Vector2(395f, -835f), 22f, 6.4f, false);
     }
 
     private void BuildPauseScreen()
