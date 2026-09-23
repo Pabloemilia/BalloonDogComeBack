@@ -75,10 +75,14 @@ public sealed class BalloonDogStarGlint : MonoBehaviour
             {
                 float dx = (x + 0.5f - size * 0.5f) / (size * 0.5f);
                 float dy = (y + 0.5f - size * 0.5f) / (size * 0.5f);
-                float core = Mathf.Exp(-17f * (dx * dx + dy * dy));
-                float vertical = Mathf.Exp(-160f * dx * dx - 5f * dy * dy);
-                float horizontal = Mathf.Exp(-5f * dx * dx - 160f * dy * dy);
-                float alpha = Mathf.Clamp01(core + 0.68f * Mathf.Max(vertical, horizontal));
+                // Four tapered points; no round center or circular halo.
+                float ax = Mathf.Abs(dx);
+                float ay = Mathf.Abs(dy);
+                float vertical = Mathf.Clamp01(1f - ax / (0.23f * (1f - ay) + 0.001f))
+                    * Mathf.Clamp01((1f - ay) * 12f);
+                float horizontal = Mathf.Clamp01(1f - ay / (0.23f * (1f - ax) + 0.001f))
+                    * Mathf.Clamp01((1f - ax) * 12f);
+                float alpha = Mathf.Max(vertical, horizontal);
                 texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
             }
             texture.Apply(false, true);
@@ -114,7 +118,7 @@ public sealed class BalloonDogStarGlint : MonoBehaviour
         float accent = bonusStar ? 0f :
             Mathf.Pow(Mathf.Max(0f, Mathf.Sin(t * 1.4f + phase)), 18f);
         float burst = Mathf.Clamp01((burstUntil - t) / 0.28f);
-        float glow = Mathf.Clamp01(0.18f + 0.47f * wave + 0.33f * accent + 0.72f * burst);
+        float glow = Mathf.Clamp01(0.30f + 0.47f * wave + 0.33f * accent + 0.72f * burst);
         image.color = new Color(1f, 0.94f, 0.62f, glow);
         rect.localScale = Vector3.one *
             (0.86f + 0.20f * wave + 0.26f * accent + 0.22f * burst);
