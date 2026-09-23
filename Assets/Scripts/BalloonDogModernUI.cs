@@ -1300,6 +1300,15 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultTitleArtwork = CreateResourceImage(
             content, "GameOverTitleArtwork", "GameOver/Title",
             new Vector2(0f, 740f), new Vector2(840f, 420f));
+        // Animated glints sit on the stars already painted into the title.
+        CreateResultGlint(resultTitleArtwork.transform, "TitleStarLeft",
+            new Vector2(-370f, -12f), 94f, 0.0f, false);
+        CreateResultGlint(resultTitleArtwork.transform, "TitleStarRight",
+            new Vector2(370f, -12f), 94f, 0.9f, false);
+        CreateResultGlint(resultTitleArtwork.transform, "TitleStarLeftSmall",
+            new Vector2(-335f, -91f), 45f, 1.6f, false);
+        CreateResultGlint(resultTitleArtwork.transform, "TitleStarRightSmall",
+            new Vector2(335f, -91f), 45f, 2.3f, false);
         // Completion keeps its existing LEVEL COMPLETE wording.
         resultTitleText = CreateResultTitleLine(
             content, "ResultTitleTop", "LEVEL", new Vector2(0f, 830f),
@@ -1511,11 +1520,30 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         background.preserveAspect = true;
         button.transition = Selectable.Transition.None;
         button.gameObject.AddComponent<BalloonDogBonusPressFeedback>();
+        // Independent stars alternate while the button artwork stays still.
+        CreateResultGlint(button.transform, "BonusStarLeft",
+            new Vector2(-218f, 12f), 93f, 0f, true);
+        CreateResultGlint(button.transform, "BonusStarRight",
+            new Vector2(218f, 12f), 93f, 1.15f, true);
         CreatePauseText(button.transform, "BonusHint",
             "Watch an ad to claim 2x reward", new Vector2(0f, -125f),
             new Vector2(780f, 44f), 28f, Color.white, TextAlignmentOptions.Center);
         // Existing visual-only bonus: connect an ad completion callback before
         // granting any additional reward. NO THANKS returns to the main menu.
+    }
+
+    private static void CreateResultGlint(
+        Transform parent, string name, Vector2 position, float size,
+        float phase, bool bonusStar)
+    {
+        RectTransform rect = CreateRect(name, parent);
+        SetRect(rect, position, Vector2.one * size);
+        Image glint = rect.gameObject.AddComponent<Image>();
+        glint.sprite = BalloonDogStarGlint.Sprite;
+        glint.raycastTarget = false;
+        glint.color = new Color(1f, 0.92f, 0.52f, 0.18f);
+        rect.gameObject.AddComponent<BalloonDogStarGlint>().Configure(
+            phase, bonusStar);
     }
 
     private static void CreateResultDecorations(Transform parent)
