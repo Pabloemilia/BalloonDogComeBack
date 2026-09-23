@@ -553,6 +553,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreatePauseDogDecoration(marketScreen.transform, "MarketDogRight",
             new Vector2(450f, 655f), new Vector2(175f, 160f), 12f,
             0.10f, 8f, 9f, 20f, 0.65f, 1f);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogLowerLeft",
+            new Vector2(-450f, -700f), new Vector2(165f, 150f), 8f,
+            0.09f, 8f, 9f, 21f, 0.42f, 1.4f);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogLowerRight",
+            new Vector2(450f, -725f), new Vector2(170f, 155f), -11f,
+            0.09f, 8f, 9f, 22f, 0.78f, 1.6f);
 
         CreateTopBar(marketScreen.transform, "Market",
             () => ShowSettingsScreen(SettingsReturnTarget.Main));
