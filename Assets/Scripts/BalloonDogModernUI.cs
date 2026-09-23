@@ -600,10 +600,16 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         marketExtrasPanel.AddComponent<UiPanelAnimator>();
         BuildMarketExtras(extrasPanel);
 
-        CreateMarketArtworkButton(
+        Button home = CreateMarketArtworkButton(
             marketScreen.transform, "MarketClose", "HOME",
             new Vector2(-265f, -890f), new Vector2(510f, 220f),
             ShowMainScreen, 61f);
+        Image homeIcon = CreateResourceImage(home.transform, "HomeIcon",
+            "Market/HomeIcon", new Vector2(-150f, 0f), new Vector2(115f, 115f));
+        homeIcon.sprite = GetMarketHomeIconSprite();
+        Text homeLabel = home.GetComponentInChildren<Text>(true);
+        homeLabel.rectTransform.anchoredPosition = new Vector2(54f, 0f);
+        homeLabel.rectTransform.sizeDelta = new Vector2(340f, 145f);
         Button collection = CreateMarketArtworkButton(
             marketScreen.transform, "MarketSkins", "COLLECTION",
             new Vector2(265f, -890f), new Vector2(510f, 220f),
@@ -663,6 +669,34 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         label.color = Color.white;
         label.raycastTarget = false;
         return label;
+    }
+
+    // The supplied SVG is rasterized to a transparent PNG so it can be used
+    // without adding Unity's optional SVG package.
+    private static Sprite GetMarketHomeIconSprite()
+    {
+        const string key = "Market/HomeIconPngBase64";
+        if (ResourceSprites.TryGetValue(key, out Sprite cached) && cached != null)
+            return cached;
+
+        TextAsset encoded = Resources.Load<TextAsset>(key);
+        if (encoded == null)
+        {
+            Debug.LogWarning("Market home icon resource is missing.");
+            return null;
+        }
+
+        Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        if (!texture.LoadImage(System.Convert.FromBase64String(encoded.text.Trim())))
+            return null;
+
+        texture.name = "MarketHomeIcon";
+        texture.filterMode = FilterMode.Bilinear;
+        Sprite sprite = Sprite.Create(texture,
+            new Rect(0f, 0f, texture.width, texture.height),
+            new Vector2(0.5f, 0.5f), 100f);
+        ResourceSprites[key] = sprite;
+        return sprite;
     }
 
     private void BuildLockedSkinMarketGrid(Transform parent)
