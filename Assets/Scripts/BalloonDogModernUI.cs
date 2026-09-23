@@ -128,6 +128,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private static Sprite roundedSprite;
     private static Sprite circleSprite;
+    private static Sprite resultSoftLightSprite;
     private static Sprite patternSprite;
     private static readonly Dictionary<string, Sprite> ResourceSprites =
         new Dictionary<string, Sprite>();
@@ -1468,12 +1469,23 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(0f, 148f), new Vector2(148f, 148f));
         medallion.color = Color.white;
 
+        if (useCoinArtwork)
+        {
+            // Soft warm light and a short diffuse shadow sit inside the blue badge.
+            CreateResultSoftLight(medallion.transform, "CoinWarmLight",
+                new Vector2(0f, 0f), new Vector2(116f, 116f),
+                new Color(1f, 0.73f, 0.20f, 0.24f));
+            CreateResultSoftLight(medallion.transform, "CoinSoftShadow",
+                new Vector2(0f, -7f), new Vector2(76f, 70f),
+                new Color(0.02f, 0.08f, 0.18f, 0.28f));
+        }
+
         Image icon = CreateResourceImage(
             medallion.transform,
             "Icon",
             iconResourcePath,
             Vector2.zero,
-            useCoinArtwork ? new Vector2(96f, 96f) : new Vector2(88f, 80f));
+            useCoinArtwork ? new Vector2(78f, 78f) : new Vector2(88f, 80f));
         icon.color = useCoinArtwork
             ? Color.white
             : new Color(1f, 0.73f, 0.08f, 1f);
@@ -1507,6 +1519,40 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.01f, 0.03f, 0.20f, 0.82f),
             new Vector2(0f, -6f));
         return value;
+    }
+
+    private static void CreateResultSoftLight(
+        Transform parent, string name, Vector2 position, Vector2 size, Color color)
+    {
+        RectTransform rect = CreateRect(name, parent);
+        SetRect(rect, position, size);
+        Image image = rect.gameObject.AddComponent<Image>();
+        image.sprite = GetResultSoftLightSprite();
+        image.color = color;
+        image.raycastTarget = false;
+    }
+
+    private static Sprite GetResultSoftLightSprite()
+    {
+        if (resultSoftLightSprite != null) return resultSoftLightSprite;
+        const int size = 64;
+        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        texture.name = "ResultSoftLight";
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+        for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+            float dx = (x + 0.5f - size * 0.5f) / (size * 0.5f);
+            float dy = (y + 0.5f - size * 0.5f) / (size * 0.5f);
+            float radius = dx * dx + dy * dy;
+            float alpha = Mathf.Pow(Mathf.Clamp01(1f - radius), 2f);
+            texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+        }
+        texture.Apply(false, true);
+        resultSoftLightSprite = Sprite.Create(
+            texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+        return resultSoftLightSprite;
     }
 
     private static void CreateResultBonusButton(Transform parent, Vector2 position)
