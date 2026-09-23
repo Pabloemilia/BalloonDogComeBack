@@ -711,18 +711,16 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             false);
         sheen.raycastTarget = false;
 
-        CreateBalloonDogSilhouette(card, new Vector2(-4f, 24f), new Color(0.015f, 0.05f, 0.09f, 0.66f), 0.72f);
+        // Supplied transparent artwork: the dog sits behind the question mark.
+        Image mysteryDog = CreateResourceImage(
+            card, "MysteryDog", "Market/MysteryDog",
+            new Vector2(-3f, 20f), new Vector2(202f, 142f));
+        mysteryDog.color = new Color(1f, 1f, 1f, 0.42f);
 
-        CreateText(
-            card,
-            "MysteryMark",
-            "?",
-            new Vector2(0f, 25f),
-            new Vector2(95f, 100f),
-            58f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
+        Image mysteryMark = CreateResourceImage(
+            card, "MysteryMark", "Market/MysteryQuestion",
+            new Vector2(0f, 25f), new Vector2(94f, 112f));
+        mysteryMark.color = new Color(1f, 1f, 1f, 0.82f);
 
         CreateText(
             card,
