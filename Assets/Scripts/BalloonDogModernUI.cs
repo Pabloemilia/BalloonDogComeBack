@@ -887,7 +887,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "StoreOfferButton",
             "COMING SOON",
-            new Vector2(0f, -125f),
+            new Vector2(0f, -132f),
             new Vector2(300f, 82f),
             MenuBlue,
             Color.white,
@@ -1299,7 +1299,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         content.gameObject.AddComponent<BalloonDogResultLayoutFit>();
         resultTitleArtwork = CreateResourceImage(
             content, "GameOverTitleArtwork", "GameOver/Title",
-            new Vector2(0f, 740f), new Vector2(840f, 420f));
+            new Vector2(0f, 740f), new Vector2(640f, 320f));
         // Completion keeps its existing LEVEL COMPLETE wording.
         resultTitleText = CreateResultTitleLine(
             content, "ResultTitleTop", "LEVEL", new Vector2(0f, 830f),
@@ -1446,44 +1446,23 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Color ringColor)
     {
         RectTransform card = CreateRect(name, parent);
-        SetRect(card, position, new Vector2(680f, 340f));
+        SetRect(card, position, new Vector2(560f, 230f));
         Image cardArtwork = CreateResourceImage(card, "CardArtwork", "GameOver/StatCard",
-            Vector2.zero, new Vector2(680f, 340f));
-        cardArtwork.color = new Color(0.42f, 1f, 1f, 1f);
+            Vector2.zero, new Vector2(560f, 230f));
+        cardArtwork.color = Color.white;
 
-        Image halo = CreateImage(
-            card,
-            "IconHalo",
-            new Vector2(0f, 148f),
-            new Vector2(148f, 148f),
-            new Color(ringColor.r, ringColor.g, ringColor.b, 0.24f),
-            true);
-        AddGraphicShadow(
-            halo,
-            new Color(ringColor.r, ringColor.g, ringColor.b, 0.42f),
-            new Vector2(0f, -3f));
-
-        Image medallion = CreateImage(
-            card,
-            "IconMedallion",
-            new Vector2(0f, 148f),
-            new Vector2(128f, 128f),
-            new Color(0.02f, 0.20f, 0.34f, 1f),
-            true);
-        Outline medallionOutline = medallion.gameObject.AddComponent<Outline>();
-        medallionOutline.effectColor = ringColor;
-        medallionOutline.effectDistance = new Vector2(4f, -4f);
-        AddGraphicShadow(
-            medallion,
-            new Color(0.02f, 0.02f, 0.18f, 0.80f),
-            new Vector2(0f, -7f));
+        // Use the supplied cyan badge artwork at its original aspect ratio.
+        Image medallion = CreateResourceImage(
+            card, "IconBadge", "GameOver/IconBadge",
+            new Vector2(0f, 108f), new Vector2(132f, 132f));
+        medallion.color = Color.white;
 
         Image icon = CreateResourceImage(
             medallion.transform,
             "Icon",
             iconResourcePath,
             Vector2.zero,
-            useCoinArtwork ? new Vector2(96f, 96f) : new Vector2(88f, 80f));
+            useCoinArtwork ? new Vector2(76f, 76f) : new Vector2(69f, 63f));
         icon.color = useCoinArtwork
             ? Color.white
             : new Color(1f, 0.73f, 0.08f, 1f);
@@ -1492,9 +1471,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "Caption",
             label,
-            new Vector2(0f, 64f),
-            new Vector2(520f, 56f),
-            39f,
+            new Vector2(0f, 30f),
+            new Vector2(450f, 48f),
+            34f,
             labelColor,
             TextAlignmentOptions.Center);
         caption.characterSpacing = 1f;
@@ -1503,14 +1482,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "Value",
             "0",
-            new Vector2(0f, -40f),
-            new Vector2(540f, 128f),
-            98f,
+            new Vector2(0f, -48f),
+            new Vector2(460f, 110f),
+            84f,
             Color.white,
             TextAlignmentOptions.Center);
         value.enableAutoSizing = true;
         value.fontSizeMin = 58f;
-        value.fontSizeMax = 98f;
+        value.fontSizeMax = 84f;
         value.overflowMode = TextOverflowModes.Ellipsis;
         AddTextShadow(
             value,
@@ -1523,16 +1502,18 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         Button button = CreateButton(
             parent, "ResultDoubleRewardButton", string.Empty, position,
-            new Vector2(940f, 382f), Color.white, Color.white, null, 1f);
+            new Vector2(650f, 264f), Color.white, Color.white, null, 1f);
         RemoveButtonShadow(button);
         button.GetComponentInChildren<TMP_Text>(true).gameObject.SetActive(false);
         Image background = button.GetComponent<Image>();
         background.sprite = GetResourceSprite("GameOver/DoubleBonus");
         background.type = Image.Type.Simple;
         background.preserveAspect = true;
+        button.transition = Selectable.Transition.None;
+        button.gameObject.AddComponent<BalloonDogBonusPressFeedback>();
         CreatePauseText(button.transform, "BonusHint",
             "Watch an ad to claim 2x reward", new Vector2(0f, -125f),
-            new Vector2(780f, 44f), 28f, Color.white, TextAlignmentOptions.Center);
+            new Vector2(650f, 44f), 28f, Color.white, TextAlignmentOptions.Center);
         // Existing visual-only bonus: connect an ad completion callback before
         // granting any additional reward. NO THANKS returns to the main menu.
     }
