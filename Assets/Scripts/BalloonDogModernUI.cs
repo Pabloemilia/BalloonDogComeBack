@@ -547,16 +547,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.13f, 0.44f, 0.96f, 1f),
             new Color(0.27f, 0.84f, 0.53f, 1f));
 
-        // Match the soft clouds and balloon-dog backdrop of Settings.
-        CreatePauseCloud(marketScreen.transform, "MarketCloudTop",
-            new Vector2(80f, 1010f), new Vector2(270f, 150f), -3f, 0.16f,
-            6f, 8f, 20f, 0.12f);
-        CreatePauseCloud(marketScreen.transform, "MarketCloudLeft",
-            new Vector2(-485f, 515f), new Vector2(210f, 140f), 5f, 0.14f,
-            7f, 8f, 19f, 0.42f);
-        CreatePauseCloud(marketScreen.transform, "MarketCloudBottom",
-            new Vector2(425f, -930f), new Vector2(310f, 180f), -4f, 0.18f,
-            7f, 8f, 21f, 0.77f);
         CreatePauseDogDecoration(marketScreen.transform, "MarketDogLeft",
             new Vector2(-445f, 760f), new Vector2(175f, 160f), -9f,
             0.10f, 8f, 9f, 19f, 0.21f, 1f);
@@ -566,9 +556,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         CreateTopBar(marketScreen.transform, "Market",
             () => ShowSettingsScreen(SettingsReturnTarget.Main));
-        CreatePauseText(marketScreen.transform, "MarketTitle", "MARKET",
-            new Vector2(0f, 825f), new Vector2(800f, 170f),
-            112f, Color.white, TextAlignmentOptions.Center);
+        CreateMarketFontText(marketScreen.transform, "MarketTitle", "MARKET",
+            new Vector2(0f, 825f), new Vector2(800f, 170f), 112f);
 
         marketSkinsTabButton = CreateMarketArtworkButton(
             marketScreen.transform, "MarketSkinsTabButton", "SKINS",
@@ -607,7 +596,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreateResourceImage(collection.transform, "CollectionBook",
             "Market/CollectionBook", new Vector2(-125f, 0f),
             new Vector2(100f, 100f));
-        TMP_Text collectionLabel = collection.GetComponentInChildren<TMP_Text>(true);
+        Text collectionLabel = collection.GetComponentInChildren<Text>(true);
         collectionLabel.rectTransform.anchoredPosition = new Vector2(45f, 0f);
         collectionLabel.rectTransform.sizeDelta = new Vector2(310f, 105f);
 
@@ -640,12 +629,25 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         button.navigation = new Navigation { mode = Navigation.Mode.None };
         if (action != null) button.onClick.AddListener(action);
 
-        TMP_Text text = CreatePauseText(rect, "Label", label,
-            Vector2.zero, size - new Vector2(40f, 20f),
-            fontSize, Color.white, TextAlignmentOptions.Center);
-        text.enableAutoSizing = false;
-        BalloonDogTitanFont.Apply(text);
+        CreateMarketFontText(rect, "Label", label,
+            Vector2.zero, size - new Vector2(40f, 20f), fontSize);
         return button;
+    }
+
+    private static Text CreateMarketFontText(
+        Transform parent, string name, string content, Vector2 position,
+        Vector2 size, float fontSize)
+    {
+        RectTransform rect = CreateRect(name, parent);
+        SetRect(rect, position, size);
+        Text label = rect.gameObject.AddComponent<Text>();
+        label.font = Resources.Load<Font>("Fonts/TitanOne/TitanOne-Regular");
+        label.text = content;
+        label.fontSize = Mathf.RoundToInt(fontSize);
+        label.alignment = TextAnchor.MiddleCenter;
+        label.color = Color.white;
+        label.raycastTarget = false;
+        return label;
     }
 
     private void BuildLockedSkinMarketGrid(Transform parent)
@@ -973,7 +975,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Image image = tab.GetComponent<Image>();
         image.color = selected ? Color.white
             : new Color(0.37f, 0.48f, 0.67f, 1f);
-        TMP_Text label = tab.GetComponentInChildren<TMP_Text>(true);
+        Text label = tab.GetComponentInChildren<Text>(true);
         if (label != null) label.color = selected
             ? Color.white : new Color(0.77f, 0.87f, 0.97f, 1f);
     }
