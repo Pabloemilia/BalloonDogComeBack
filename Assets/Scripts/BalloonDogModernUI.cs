@@ -614,9 +614,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             marketScreen.transform, "MarketSkins", "COLLECTION",
             new Vector2(265f, -890f), new Vector2(510f, 220f),
             ShowSkinsScreen, 49f);
-        CreateResourceImage(collection.transform, "CollectionBook",
-            "Market/CollectionBook", new Vector2(-158f, 0f),
-            new Vector2(120f, 120f));
+        Image collectionIcon = CreateResourceImage(
+            collection.transform, "CollectionCardsIcon",
+            "Market/CollectionBook", new Vector2(-154f, -2f),
+            new Vector2(108f, 108f));
+        collectionIcon.sprite = GetMarketEmbeddedIconSprite(
+            "Market/CollectionCardsIconPngBase64", "MarketCollectionCardsIcon");
         Text collectionLabel = collection.GetComponentInChildren<Text>(true);
         collectionLabel.rectTransform.anchoredPosition = new Vector2(61f, 0f);
         collectionLabel.rectTransform.sizeDelta = new Vector2(365f, 140f);
@@ -675,14 +678,20 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     // without adding Unity's optional SVG package.
     private static Sprite GetMarketHomeIconSprite()
     {
-        const string key = "Market/HomeIconPngBase64";
+        return GetMarketEmbeddedIconSprite(
+            "Market/HomeIconPngBase64", "MarketHomeIcon");
+    }
+
+    private static Sprite GetMarketEmbeddedIconSprite(
+        string key, string textureName)
+    {
         if (ResourceSprites.TryGetValue(key, out Sprite cached) && cached != null)
             return cached;
 
         TextAsset encoded = Resources.Load<TextAsset>(key);
         if (encoded == null)
         {
-            Debug.LogWarning("Market home icon resource is missing.");
+            Debug.LogWarning("Market icon resource is missing: " + key);
             return null;
         }
 
@@ -690,7 +699,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         if (!texture.LoadImage(System.Convert.FromBase64String(encoded.text.Trim())))
             return null;
 
-        texture.name = "MarketHomeIcon";
+        texture.name = textureName;
         texture.filterMode = FilterMode.Bilinear;
         Sprite sprite = Sprite.Create(texture,
             new Rect(0f, 0f, texture.width, texture.height),
