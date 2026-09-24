@@ -605,10 +605,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(-265f, -890f), new Vector2(510f, 220f),
             ShowMainScreen, 61f);
         Image homeIcon = CreateResourceImage(home.transform, "HomeIcon",
-            "Market/HomeIcon", new Vector2(-150f, 0f), new Vector2(115f, 115f));
+            "Market/HomeIcon", new Vector2(-145f, -3f), new Vector2(78f, 78f));
         homeIcon.sprite = GetMarketHomeIconSprite();
         Text homeLabel = home.GetComponentInChildren<Text>(true);
-        homeLabel.rectTransform.anchoredPosition = new Vector2(54f, 0f);
+        homeLabel.rectTransform.anchoredPosition = new Vector2(49f, -3f);
         homeLabel.rectTransform.sizeDelta = new Vector2(340f, 145f);
         Button collection = CreateMarketArtworkButton(
             marketScreen.transform, "MarketSkins", "COLLECTION",
@@ -701,16 +701,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildLockedSkinMarketGrid(Transform parent)
     {
-        CreateText(
-            parent,
-            "MarketSkinGridTitle",
-            "15 MYSTERY SKINS",
-            new Vector2(0f, 535f),
-            new Vector2(720f, 48f),
-            27f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
+        CreateMarketFontText(parent, "MarketSkinGridTitle",
+            "15 MYSTERY SKINS", new Vector2(0f, 535f),
+            new Vector2(720f, 52f), 30f);
 
         for (int index = 0; index < 15; index++)
         {
@@ -1025,8 +1018,18 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         image.color = selected ? Color.white
             : new Color(0.37f, 0.48f, 0.67f, 1f);
         Text label = tab.GetComponentInChildren<Text>(true);
-        if (label != null) label.color = selected
-            ? Color.white : new Color(0.77f, 0.87f, 0.97f, 1f);
+        if (label != null)
+        {
+            // Recenter the label after changing the selected tab's size.
+            RectTransform labelRect = label.rectTransform;
+            labelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            labelRect.pivot = new Vector2(0.5f, 0.5f);
+            labelRect.anchoredPosition = new Vector2(0f, -4f);
+            labelRect.sizeDelta = rect.sizeDelta - new Vector2(36f, 30f);
+            label.color = selected
+                ? Color.white : new Color(0.77f, 0.87f, 0.97f, 1f);
+        }
     }
 
     private void BuildSkinsScreen()
