@@ -1040,7 +1040,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             labelRect.anchorMin = new Vector2(0.5f, 0.5f);
             labelRect.anchorMax = new Vector2(0.5f, 0.5f);
             labelRect.pivot = new Vector2(0.5f, 0.5f);
-            labelRect.anchoredPosition = new Vector2(0f, -4f);
+            // Titan One sits optically low inside Unity's legacy Text bounds.
+            labelRect.anchoredPosition = new Vector2(0f, 6f);
             labelRect.sizeDelta = rect.sizeDelta - new Vector2(36f, 30f);
             label.color = selected
                 ? Color.white : new Color(0.77f, 0.87f, 0.97f, 1f);
