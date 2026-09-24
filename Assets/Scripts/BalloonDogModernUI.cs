@@ -1393,7 +1393,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         content.gameObject.AddComponent<BalloonDogResultLayoutFit>();
         resultTitleArtwork = CreateResourceImage(
             content, "GameOverTitleArtwork", "GameOver/Title",
-            new Vector2(0f, 695f), new Vector2(840f, 420f));
+            new Vector2(0f, 785f), new Vector2(840f, 420f));
         // The title artwork already has its own stars; do not stack glints on them.
         // Completion keeps its existing LEVEL COMPLETE wording.
         resultTitleText = CreateResultTitleLine(
@@ -1422,7 +1422,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "ResultScoreCard",
             "•  SCORE  •",
-            new Vector2(0f, 240f),
+            new Vector2(0f, 330f),
             "PauseMenu/Icons/Crown",
             false,
             new Color(0.77f, 0.97f, 1f, 1f),
@@ -1431,7 +1431,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "ResultTokenCard",
             "•  TOKENS  •",
-            new Vector2(0f, -175f),
+            new Vector2(0f, -80f),
             "CustomCoin",
             true,
             new Color(0.32f, 0.84f, 1f, 1f),
@@ -1440,7 +1440,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "ResultBestCard",
             "•  BEST  •",
-            new Vector2(0f, -575f),
+            new Vector2(0f, -475f),
             "PauseMenu/Icons/Crown",
             false,
             new Color(0.77f, 0.97f, 1f, 1f),
@@ -1448,13 +1448,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         CreateResultBonusButton(
             content,
-            new Vector2(0f, -900f));
+            new Vector2(0f, -805f));
 
         Button noThanks = CreateButton(
             content,
             "ModernResultMenuButton",
             "NO THANKS",
-            new Vector2(0f, -1140f),
+            new Vector2(0f, -1110f),
             new Vector2(580f, 76f),
             new Color(1f, 1f, 1f, 0.001f),
             new Color(0.81f, 1f, 0.96f, 1f),
@@ -1657,7 +1657,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         // Keep the hint below the visible button and independent of its press scale.
         TMP_Text hint = CreatePauseText(parent, "BonusHint",
             "Watch an ad to claim 2x reward",
-            position + new Vector2(0f, -177f),
+            position + new Vector2(0f, -205f),
             new Vector2(780f, 48f), 30f,
             new Color(0.02f, 0.29f, 0.35f, 1f),
             TextAlignmentOptions.Center);
