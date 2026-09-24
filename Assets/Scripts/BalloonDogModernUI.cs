@@ -2524,12 +2524,17 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         caption.enableAutoSizing = true;
         caption.fontSizeMin = 36f;
         caption.fontSizeMax = 48f;
-        Image state = CreateImage(row.transform, label + "StateBackground",
-            new Vector2(310f, 0f), new Vector2(210f, 105f), Color.white, false);
-        ApplyPauseButtonBackground(state, "SettingsUI/Blue");
-        TMP_Text stateLabel = CreatePauseText(state.transform, label + "State", "OFF",
-            Vector2.zero, new Vector2(180f, 90f), 38f, Color.white, TextAlignmentOptions.Center);
-        return new ToggleRowView { StateLabel = stateLabel, StateBackground = state };
+        // ON/OFF is part of the main row; there is no nested state button.
+        TMP_Text stateLabel = CreatePauseText(
+            row.transform, label + "State", "OFF",
+            new Vector2(310f, 0f), new Vector2(210f, 105f),
+            38f, Color.white, TextAlignmentOptions.Center);
+        Image rowBackground = row.GetComponent<Image>();
+        return new ToggleRowView
+        {
+            StateLabel = stateLabel,
+            StateBackground = rowBackground
+        };
     }
 
     private void StartGame()
