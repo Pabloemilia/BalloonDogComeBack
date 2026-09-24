@@ -608,21 +608,23 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "Market/HomeIcon", new Vector2(-145f, -3f), new Vector2(78f, 78f));
         homeIcon.sprite = GetMarketHomeIconSprite();
         Text homeLabel = home.GetComponentInChildren<Text>(true);
-        homeLabel.rectTransform.anchoredPosition = new Vector2(49f, -3f);
-        homeLabel.rectTransform.sizeDelta = new Vector2(340f, 145f);
+        homeLabel.alignment = TextAnchor.MiddleLeft;
+        homeLabel.rectTransform.anchoredPosition = new Vector2(55f, -3f);
+        homeLabel.rectTransform.sizeDelta = new Vector2(300f, 145f);
         Button collection = CreateMarketArtworkButton(
             marketScreen.transform, "MarketSkins", "COLLECTION",
             new Vector2(265f, -890f), new Vector2(510f, 220f),
             ShowSkinsScreen, 49f);
         Image collectionIcon = CreateResourceImage(
             collection.transform, "CollectionCardsIcon",
-            "Market/CollectionBook", new Vector2(-154f, -2f),
-            new Vector2(108f, 108f));
+            "Market/CollectionBook", new Vector2(-158f, -2f),
+            new Vector2(97f, 97f));
         collectionIcon.sprite = GetMarketEmbeddedIconSprite(
             "Market/CollectionCardsIconPngBase64", "MarketCollectionCardsIcon");
         Text collectionLabel = collection.GetComponentInChildren<Text>(true);
-        collectionLabel.rectTransform.anchoredPosition = new Vector2(61f, 0f);
-        collectionLabel.rectTransform.sizeDelta = new Vector2(365f, 140f);
+        collectionLabel.alignment = TextAnchor.MiddleLeft;
+        collectionLabel.rectTransform.anchoredPosition = new Vector2(55f, -3f);
+        collectionLabel.rectTransform.sizeDelta = new Vector2(300f, 145f);
 
         ShowMarketTab(true);
         ApplyMarketTitanFont();
