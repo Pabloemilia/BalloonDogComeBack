@@ -602,19 +602,21 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         Button home = CreateMarketArtworkButton(
             marketScreen.transform, "MarketClose", "HOME",
-            new Vector2(-265f, -890f), new Vector2(510f, 220f),
+            new Vector2(-270f, -885f), new Vector2(530f, 230f),
             ShowMainScreen, 61f);
         Image homeIcon = CreateResourceImage(home.transform, "HomeIcon",
-            "Market/HomeIcon", new Vector2(-145f, -3f), new Vector2(78f, 78f));
+            "Market/HomeIcon", new Vector2(-148f, 5f), new Vector2(78f, 78f));
         homeIcon.sprite = GetMarketHomeIconSprite();
         Text homeLabel = home.GetComponentInChildren<Text>(true);
         homeLabel.alignment = TextAnchor.MiddleLeft;
-        homeLabel.rectTransform.anchoredPosition = new Vector2(55f, -3f);
-        homeLabel.rectTransform.sizeDelta = new Vector2(300f, 145f);
+        homeLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
+        homeLabel.verticalOverflow = VerticalWrapMode.Overflow;
+        homeLabel.rectTransform.anchoredPosition = new Vector2(82f, 5f);
+        homeLabel.rectTransform.sizeDelta = new Vector2(340f, 150f);
         Button collection = CreateMarketArtworkButton(
             marketScreen.transform, "MarketSkins", "COLLECTION",
-            new Vector2(265f, -890f), new Vector2(510f, 220f),
-            ShowSkinsScreen, 49f);
+            new Vector2(270f, -885f), new Vector2(530f, 230f),
+            ShowSkinsScreen, 46f);
         Image collectionIcon = CreateResourceImage(
             collection.transform, "CollectionCardsIcon",
             "Market/CollectionBook", new Vector2(-158f, -2f),
@@ -623,8 +625,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "Market/CollectionCardsIconPngBase64", "MarketCollectionCardsIcon");
         Text collectionLabel = collection.GetComponentInChildren<Text>(true);
         collectionLabel.alignment = TextAnchor.MiddleLeft;
-        collectionLabel.rectTransform.anchoredPosition = new Vector2(55f, -3f);
-        collectionLabel.rectTransform.sizeDelta = new Vector2(300f, 145f);
+        collectionLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
+        collectionLabel.verticalOverflow = VerticalWrapMode.Overflow;
+        collectionLabel.rectTransform.anchoredPosition = new Vector2(75f, 4f);
+        collectionLabel.rectTransform.sizeDelta = new Vector2(340f, 150f);
 
         ShowMarketTab(true);
         ApplyMarketTitanFont();
