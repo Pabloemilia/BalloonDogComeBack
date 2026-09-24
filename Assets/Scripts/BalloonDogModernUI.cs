@@ -573,6 +573,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             () => ShowSettingsScreen(SettingsReturnTarget.Main));
         CreateMarketFontText(marketScreen.transform, "MarketTitle", "MARKET",
             new Vector2(0f, 825f), new Vector2(800f, 170f), 112f);
+        CreatePauseTitleAccents(marketScreen.transform, 825f);
 
         marketSkinsTabButton = CreateMarketArtworkButton(
             marketScreen.transform, "MarketSkinsTabButton", "SKINS",
