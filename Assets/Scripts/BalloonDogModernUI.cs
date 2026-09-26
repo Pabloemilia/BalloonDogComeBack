@@ -996,14 +996,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "StoreOfferButton",
             "COMING SOON",
             new Vector2(0f, -145f),
-            new Vector2(320f, 98f),
+            new Vector2(328f, 104f),
             Color.white,
             Color.white,
             () => ShowToast(title + " COMING SOON"),
             22f);
         RemoveButtonShadow(button);
         Image buttonImage = button.GetComponent<Image>();
-        Sprite buttonSprite = GetResourceSprite("MarketUI/Extras/Button_ComingSoon");
+        Sprite buttonSprite = GetResourceSprite("MarketUI/Extras/Button_ComingSoonClean");
         if (buttonSprite != null)
         {
             buttonImage.sprite = buttonSprite;
