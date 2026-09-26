@@ -877,7 +877,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             parent,
             "CoinsOffer",
             "COINS",
-            "₺29,99",
             new Vector2(-270f, 280f),
             "Card_Coins",
             "Icon_Coins");
@@ -885,7 +884,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             parent,
             "GemsOffer",
             "GEMS",
-            "₺49,99",
             new Vector2(270f, 280f),
             "Card_Gems",
             "Icon_Gems");
@@ -893,7 +891,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             parent,
             "NoAdsOffer",
             "ADS OFF",
-            "₺79,99",
             new Vector2(-270f, -280f),
             "Card_AdsOff",
             "Icon_AdsOff");
@@ -901,7 +898,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             parent,
             "StarterOffer",
             "STARTER PACK",
-            "₺99,99",
             new Vector2(270f, -280f),
             "Card_StarterPack",
             "Icon_StarterPack");
@@ -911,7 +907,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Transform parent,
         string objectName,
         string title,
-        string price,
         Vector2 position,
         string cardResource,
         string iconResource)
@@ -960,7 +955,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "OfferIcon",
             "MarketUI/Extras/" + iconResource,
-            new Vector2(0f, 105f),
+            new Vector2(0f, 57f),
             new Vector2(155f, 155f));
         icon.preserveAspect = true;
         icon.raycastTarget = false;
@@ -969,7 +964,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "OfferTitle",
             title,
-            new Vector2(0f, -2f),
+            new Vector2(0f, -97f),
             new Vector2(450f, 74f),
             41f,
             Color.white,
@@ -979,19 +974,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         AddTextShadow(titleText, new Color(0.03f, 0.12f, 0.28f, 0.72f),
             new Vector2(0f, -3f));
 
-        TMP_Text priceText = CreateText(
-            card,
-            "OfferPrice",
-            price,
-            new Vector2(0f, -158f),
-            new Vector2(400f, 80f),
-            37f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-        priceText.raycastTarget = false;
-        AddTextShadow(priceText, new Color(0.03f, 0.12f, 0.28f, 0.82f),
-            new Vector2(0f, -3f));
     }
 
     private static Sprite GetCenteredStoreCardSprite(string path)
@@ -1055,7 +1037,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             case "Card_Coins":
                 return new Color(0.93f, 0.56f, 0.05f, 1f);
             case "Card_Gems":
-                return new Color(0.04f, 0.63f, 0.85f, 1f);
+                return new Color(0.025f, 0.12f, 0.42f, 1f);
             case "Card_AdsOff":
                 return new Color(0.48f, 0.20f, 0.76f, 1f);
             case "Card_StarterPack":
