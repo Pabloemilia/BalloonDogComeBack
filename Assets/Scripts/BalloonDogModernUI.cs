@@ -873,23 +873,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildMarketExtras(Transform parent)
     {
-        CreateText(
-            parent,
-            "MarketExtrasTitle",
-            "CURRENCY & UPGRADES",
-            new Vector2(0f, 510f),
-            new Vector2(760f, 58f),
-            29f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-
         CreateStoreOfferCard(
             parent,
             "CoinsOffer",
             "COINS",
             "₺29,99",
-            new Vector2(-220f, 245f),
+            new Vector2(-255f, 300f),
             "Card_Coins",
             "Icon_Coins");
         CreateStoreOfferCard(
@@ -897,7 +886,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "GemsOffer",
             "GEMS",
             "₺49,99",
-            new Vector2(220f, 245f),
+            new Vector2(255f, 300f),
             "Card_Gems",
             "Icon_Gems");
         CreateStoreOfferCard(
@@ -905,7 +894,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "NoAdsOffer",
             "ADS OFF",
             "₺79,99",
-            new Vector2(-220f, -250f),
+            new Vector2(-255f, -310f),
             "Card_AdsOff",
             "Icon_AdsOff");
         CreateStoreOfferCard(
@@ -913,20 +902,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "StarterOffer",
             "STARTER PACK",
             "₺99,99",
-            new Vector2(220f, -250f),
+            new Vector2(255f, -310f),
             "Card_StarterPack",
             "Icon_StarterPack");
-
-        CreateText(
-            parent,
-            "StoreIntegrationNote",
-            "STORE CONNECTION WILL BE ADDED WITH IAP",
-            new Vector2(0f, -530f),
-            new Vector2(760f, 40f),
-            18f,
-            new Color(0.72f, 0.86f, 0.94f, 1f),
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
     }
 
     private void CreateStoreOfferCard(
@@ -938,11 +916,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         string cardResource,
         string iconResource)
     {
+        // Every product uses this single fixed size so all four remain identical.
+        Vector2 offerCardSize = new Vector2(500f, 570f);
         RectTransform card = CreateCard(
             parent,
             objectName,
             position,
-            new Vector2(420f, 485f),
+            offerCardSize,
             Color.white,
             Color.clear);
 
@@ -959,7 +939,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         cardButton.targetGraphic = cardImage;
         ColorBlock cardColors = cardButton.colors;
         cardColors.normalColor = Color.white;
-        cardColors.highlightedColor = new Color(1f, 1f, 1f, 1f);
+        cardColors.highlightedColor = Color.white;
         cardColors.pressedColor = new Color(0.82f, 0.88f, 1f, 1f);
         cardColors.selectedColor = Color.white;
         cardColors.fadeDuration = 0.08f;
@@ -971,8 +951,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "OfferIcon",
             "MarketUI/Extras/" + iconResource,
-            new Vector2(0f, 125f),
-            new Vector2(165f, 165f));
+            new Vector2(0f, 158f),
+            new Vector2(195f, 195f));
         icon.preserveAspect = true;
         icon.raycastTarget = false;
 
@@ -980,9 +960,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "OfferTitle",
             title,
-            new Vector2(0f, 18f),
-            new Vector2(370f, 64f),
-            35f,
+            new Vector2(0f, 22f),
+            new Vector2(450f, 74f),
+            41f,
             Color.white,
             FontStyles.Bold,
             TextAlignmentOptions.Center);
@@ -994,9 +974,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "OfferPrice",
             price,
-            new Vector2(0f, -135f),
-            new Vector2(330f, 70f),
-            31f,
+            new Vector2(0f, -172f),
+            new Vector2(400f, 80f),
+            37f,
             Color.white,
             FontStyles.Bold,
             TextAlignmentOptions.Center);
