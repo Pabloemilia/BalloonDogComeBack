@@ -128,6 +128,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private static Sprite roundedSprite;
     private static Sprite circleSprite;
+    private static Sprite resultSoftLightSprite;
     private static Sprite patternSprite;
     private static readonly Dictionary<string, Sprite> ResourceSprites =
         new Dictionary<string, Sprite>();
@@ -543,56 +544,50 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         marketScreen = CreateScreen(
             "ModernMarketScreen",
-            MenuSkyTop,
-            MenuSkyBottom);
+            new Color(0.13f, 0.44f, 0.96f, 1f),
+            new Color(0.27f, 0.84f, 0.53f, 1f));
 
-        CreateImage(
-            marketScreen.transform,
-            "MarketTreeBubbleLeft",
-            new Vector2(-490f, 520f),
-            new Vector2(220f, 220f),
-            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.34f),
-            true);
-        CreateImage(
-            marketScreen.transform,
-            "MarketTreeBubbleRight",
-            new Vector2(500f, 180f),
-            new Vector2(260f, 260f),
-            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.24f),
-            true);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogLeft",
+            new Vector2(-445f, 760f), new Vector2(175f, 160f), -9f,
+            0.10f, 8f, 9f, 19f, 0.21f, 1f);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogRight",
+            new Vector2(450f, 655f), new Vector2(175f, 160f), 12f,
+            0.10f, 8f, 9f, 20f, 0.65f, 1f);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogLowerLeft",
+            new Vector2(-450f, -700f), new Vector2(165f, 150f), 8f,
+            0.09f, 8f, 9f, 21f, 0.42f, 1.4f);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogLowerRight",
+            new Vector2(450f, -725f), new Vector2(170f, 155f), -11f,
+            0.09f, 8f, 9f, 22f, 0.78f, 1.6f);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogUpperLeft",
+            new Vector2(-475f, 350f), new Vector2(155f, 145f), 7f,
+            0.08f, 7f, 8f, 24f, 0.12f, 1.3f);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogMiddleRight",
+            new Vector2(475f, 10f), new Vector2(160f, 148f), -8f,
+            0.08f, 7f, 8f, 23f, 0.58f, 1.2f);
+        CreatePauseDogDecoration(marketScreen.transform, "MarketDogMiddleLeft",
+            new Vector2(-470f, -350f), new Vector2(150f, 140f), 11f,
+            0.08f, 7f, 8f, 25f, 0.89f, 1.4f);
 
-        CreateTopBar(marketScreen.transform, "Market", () => ShowSettingsScreen(SettingsReturnTarget.Main));
-        CreateRibbon(marketScreen.transform, "MARKET", new Vector2(0f, 815f));
+        CreateTopBar(marketScreen.transform, "Market",
+            () => ShowSettingsScreen(SettingsReturnTarget.Main));
+        CreateMarketFontText(marketScreen.transform, "MarketTitle", "MARKET",
+            new Vector2(0f, 825f), new Vector2(800f, 170f), 112f);
+        CreatePauseTitleAccents(marketScreen.transform, 825f);
 
-        marketSkinsTabButton = CreateButton(
-            marketScreen.transform,
-            "MarketSkinsTabButton",
-            "SKINS",
-            new Vector2(-205f, 625f),
-            new Vector2(380f, 92f),
-            MenuGreen,
-            Color.white,
-            () => ShowMarketTab(true),
-            29f);
-
-        marketExtrasTabButton = CreateButton(
-            marketScreen.transform,
-            "MarketExtrasTabButton",
-            "EXTRAS",
-            new Vector2(205f, 625f),
-            new Vector2(380f, 92f),
-            MenuBlue,
-            Color.white,
-            () => ShowMarketTab(false),
-            29f);
+        marketSkinsTabButton = CreateMarketArtworkButton(
+            marketScreen.transform, "MarketSkinsTabButton", "SKINS",
+            new Vector2(-265f, 645f), new Vector2(525f, 225f),
+            () => ShowMarketTab(true), 60f);
+        marketExtrasTabButton = CreateMarketArtworkButton(
+            marketScreen.transform, "MarketExtrasTabButton", "EXTRAS",
+            new Vector2(265f, 645f), new Vector2(525f, 225f),
+            () => ShowMarketTab(false), 60f);
 
         RectTransform shelves = CreateCard(
-            marketScreen.transform,
-            "MarketShelvesCard",
-            new Vector2(0f, -115f),
-            new Vector2(910f, 1260f),
-            MenuBlueDark,
-            new Color(0.43f, 0.76f, 1f, 0.58f));
+            marketScreen.transform, "MarketShelvesCard",
+            new Vector2(0f, -115f), new Vector2(910f, 1260f),
+            MenuBlueDark, new Color(0.32f, 0.87f, 1f, 0.68f));
 
         RectTransform skinPanel = CreateRect("MarketSkinOffersPanel", shelves);
         SetRect(skinPanel, new Vector2(0f, -10f), new Vector2(850f, 1160f));
@@ -606,34 +601,125 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         marketExtrasPanel.AddComponent<UiPanelAnimator>();
         BuildMarketExtras(extrasPanel);
 
-        CreateRoundNavButton(
-            marketScreen.transform,
-            "MarketClose",
-            "HOME",
-            new Vector2(-90f, -1035f),
-            ShowMainScreen);
-        CreateRoundNavButton(
-            marketScreen.transform,
-            "MarketSkins",
-            "COLLECTION",
-            new Vector2(90f, -1035f),
-            ShowSkinsScreen);
+        Button home = CreateMarketArtworkButton(
+            marketScreen.transform, "MarketClose", "HOME",
+            new Vector2(-270f, -885f), new Vector2(530f, 230f),
+            ShowMainScreen, 61f);
+        Image homeIcon = CreateResourceImage(home.transform, "HomeIcon",
+            "Market/HomeIcon", new Vector2(-148f, 5f), new Vector2(78f, 78f));
+        homeIcon.sprite = GetMarketHomeIconSprite();
+        Text homeLabel = home.GetComponentInChildren<Text>(true);
+        homeLabel.alignment = TextAnchor.MiddleLeft;
+        homeLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
+        homeLabel.verticalOverflow = VerticalWrapMode.Overflow;
+        homeLabel.rectTransform.anchoredPosition = new Vector2(82f, 5f);
+        homeLabel.rectTransform.sizeDelta = new Vector2(340f, 150f);
+        Button collection = CreateMarketArtworkButton(
+            marketScreen.transform, "MarketSkins", "COLLECTION",
+            new Vector2(270f, -885f), new Vector2(530f, 230f),
+            ShowSkinsScreen, 46f);
+        Image collectionIcon = CreateResourceImage(
+            collection.transform, "CollectionCardsIcon",
+            "Market/CollectionBook", new Vector2(-158f, -2f),
+            new Vector2(97f, 97f));
+        collectionIcon.sprite = GetMarketEmbeddedIconSprite(
+            "Market/CollectionCardsIconPngBase64", "MarketCollectionCardsIcon");
+        Text collectionLabel = collection.GetComponentInChildren<Text>(true);
+        collectionLabel.alignment = TextAnchor.MiddleLeft;
+        collectionLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
+        collectionLabel.verticalOverflow = VerticalWrapMode.Overflow;
+        collectionLabel.rectTransform.anchoredPosition = new Vector2(75f, 4f);
+        collectionLabel.rectTransform.sizeDelta = new Vector2(340f, 150f);
 
         ShowMarketTab(true);
+        ApplyMarketTitanFont();
+    }
+
+    private void ApplyMarketTitanFont()
+    {
+        if (marketScreen == null) return;
+        foreach (TMP_Text label in marketScreen.GetComponentsInChildren<TMP_Text>(true))
+            BalloonDogTitanFont.Apply(label);
+    }
+
+    private static Button CreateMarketArtworkButton(
+        Transform parent, string name, string label, Vector2 position,
+        Vector2 size, UnityAction action, float fontSize)
+    {
+        RectTransform rect = CreateRect(name, parent);
+        SetRect(rect, position, size);
+        Image artwork = rect.gameObject.AddComponent<Image>();
+        artwork.sprite = Resources.Load<Sprite>("Market/BlueButton");
+        artwork.type = Image.Type.Simple;
+        artwork.preserveAspect = false;
+        artwork.color = Color.white;
+
+        Button button = rect.gameObject.AddComponent<Button>();
+        button.targetGraphic = artwork;
+        button.transition = Selectable.Transition.None;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        if (action != null) button.onClick.AddListener(action);
+
+        CreateMarketFontText(rect, "Label", label,
+            Vector2.zero, size - new Vector2(40f, 20f), fontSize);
+        return button;
+    }
+
+    private static Text CreateMarketFontText(
+        Transform parent, string name, string content, Vector2 position,
+        Vector2 size, float fontSize)
+    {
+        RectTransform rect = CreateRect(name, parent);
+        SetRect(rect, position, size);
+        Text label = rect.gameObject.AddComponent<Text>();
+        label.font = Resources.Load<Font>("Fonts/TitanOne/TitanOne-Regular");
+        label.text = content;
+        label.fontSize = Mathf.RoundToInt(fontSize);
+        label.alignment = TextAnchor.MiddleCenter;
+        label.color = Color.white;
+        label.raycastTarget = false;
+        return label;
+    }
+
+    // The supplied SVG is rasterized to a transparent PNG so it can be used
+    // without adding Unity's optional SVG package.
+    private static Sprite GetMarketHomeIconSprite()
+    {
+        return GetMarketEmbeddedIconSprite(
+            "Market/HomeIconPngBase64", "MarketHomeIcon");
+    }
+
+    private static Sprite GetMarketEmbeddedIconSprite(
+        string key, string textureName)
+    {
+        if (ResourceSprites.TryGetValue(key, out Sprite cached) && cached != null)
+            return cached;
+
+        TextAsset encoded = Resources.Load<TextAsset>(key);
+        if (encoded == null)
+        {
+            Debug.LogWarning("Market icon resource is missing: " + key);
+            return null;
+        }
+
+        Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        if (!texture.LoadImage(System.Convert.FromBase64String(encoded.text.Trim())))
+            return null;
+
+        texture.name = textureName;
+        texture.filterMode = FilterMode.Bilinear;
+        Sprite sprite = Sprite.Create(texture,
+            new Rect(0f, 0f, texture.width, texture.height),
+            new Vector2(0.5f, 0.5f), 100f);
+        ResourceSprites[key] = sprite;
+        return sprite;
     }
 
     private void BuildLockedSkinMarketGrid(Transform parent)
     {
-        CreateText(
-            parent,
-            "MarketSkinGridTitle",
-            "15 MYSTERY SKINS",
-            new Vector2(0f, 535f),
-            new Vector2(720f, 48f),
-            27f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
+        CreateMarketFontText(parent, "MarketSkinGridTitle",
+            "15 MYSTERY SKINS", new Vector2(0f, 535f),
+            new Vector2(720f, 52f), 30f);
 
         for (int index = 0; index < 15; index++)
         {
@@ -693,35 +779,35 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Color outline,
         Vector2 position)
     {
-        RectTransform card = CreateCard(
-            parent,
-            "MarketSkinSlot_" + (index + 1),
-            position,
-            new Vector2(250f, 190f),
-            fill,
-            outline);
+        RectTransform card = CreateRect("MarketSkinSlot_" + (index + 1), parent);
+        SetRect(card, position, new Vector2(250f, 190f));
 
-        Image sheen = CreateImage(
-            card,
-            "RaritySheen",
-            new Vector2(0f, 48f),
-            new Vector2(220f, 72f),
-            new Color(1f, 1f, 1f, 0.10f),
-            false);
-        sheen.raycastTarget = false;
+        string backgroundPath;
+        switch (index / 3)
+        {
+            case 0: backgroundPath = "Market/RarityCommon"; break;
+            case 1: backgroundPath = "Market/RarityUncommon"; break;
+            case 2: backgroundPath = "Market/RarityRare"; break;
+            case 3: backgroundPath = "Market/RarityEpic"; break;
+            default: backgroundPath = "Market/RarityLegendary"; break;
+        }
 
-        CreateBalloonDogSilhouette(card, new Vector2(-4f, 24f), new Color(0.015f, 0.05f, 0.09f, 0.66f), 0.72f);
+        // The supplied PNG includes its own edge, gloss and shadow.
+        Image background = card.gameObject.AddComponent<Image>();
+        background.sprite = GetResourceSprite(backgroundPath);
+        background.type = Image.Type.Simple;
+        background.color = Color.white;
+        background.raycastTarget = false;
 
-        CreateText(
-            card,
-            "MysteryMark",
-            "?",
-            new Vector2(0f, 25f),
-            new Vector2(95f, 100f),
-            58f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
+        // Keep one light silhouette behind the question mark.
+        CreateBalloonDogSilhouette(
+            card, new Vector2(-4f, 24f),
+            new Color(0.62f, 0.78f, 0.76f, 0.76f), 0.72f);
+
+        Image mysteryMark = CreateResourceImage(
+            card, "MysteryMark", "Market/MysteryQuestion",
+            new Vector2(0f, 25f), new Vector2(94f, 112f));
+        mysteryMark.color = new Color(1f, 1f, 1f, 0.82f);
 
         CreateText(
             card,
@@ -887,7 +973,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "StoreOfferButton",
             "COMING SOON",
-            new Vector2(0f, -125f),
+            new Vector2(0f, -132f),
             new Vector2(300f, 82f),
             MenuBlue,
             Color.white,
@@ -929,29 +1015,37 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private void ShowMarketTab(bool showSkins)
     {
         if (marketSkinOffersPanel == null || marketExtrasPanel == null)
-        {
             return;
-        }
 
         marketSkinOffersPanel.SetActive(showSkins);
         marketExtrasPanel.SetActive(!showSkins);
 
-        if (marketSkinsTabButton != null)
-        {
-            Image image = marketSkinsTabButton.GetComponent<Image>();
-            if (image != null)
-            {
-                image.color = showSkins ? MenuGreen : MenuBlue;
-            }
-        }
+        SetMarketTabAppearance(marketSkinsTabButton, showSkins);
+        SetMarketTabAppearance(marketExtrasTabButton, !showSkins);
+    }
 
-        if (marketExtrasTabButton != null)
+    private static void SetMarketTabAppearance(Button tab, bool selected)
+    {
+        if (tab == null) return;
+        RectTransform rect = tab.transform as RectTransform;
+        rect.sizeDelta = selected ? new Vector2(525f, 225f)
+            : new Vector2(500f, 200f);
+        Image image = tab.GetComponent<Image>();
+        image.color = selected ? Color.white
+            : new Color(0.37f, 0.48f, 0.67f, 1f);
+        Text label = tab.GetComponentInChildren<Text>(true);
+        if (label != null)
         {
-            Image image = marketExtrasTabButton.GetComponent<Image>();
-            if (image != null)
-            {
-                image.color = showSkins ? MenuBlue : MenuGreen;
-            }
+            // Recenter the label after changing the selected tab's size.
+            RectTransform labelRect = label.rectTransform;
+            labelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            labelRect.pivot = new Vector2(0.5f, 0.5f);
+            // Titan One sits optically low inside Unity's legacy Text bounds.
+            labelRect.anchoredPosition = new Vector2(0f, 6f);
+            labelRect.sizeDelta = rect.sizeDelta - new Vector2(36f, 30f);
+            label.color = selected
+                ? Color.white : new Color(0.77f, 0.87f, 0.97f, 1f);
         }
     }
 
@@ -1299,7 +1393,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         content.gameObject.AddComponent<BalloonDogResultLayoutFit>();
         resultTitleArtwork = CreateResourceImage(
             content, "GameOverTitleArtwork", "GameOver/Title",
-            new Vector2(0f, 740f), new Vector2(840f, 420f));
+            new Vector2(0f, 785f), new Vector2(840f, 420f));
+        // The title artwork already has its own stars; do not stack glints on them.
         // Completion keeps its existing LEVEL COMPLETE wording.
         resultTitleText = CreateResultTitleLine(
             content, "ResultTitleTop", "LEVEL", new Vector2(0f, 830f),
@@ -1327,7 +1422,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "ResultScoreCard",
             "•  SCORE  •",
-            new Vector2(0f, 240f),
+            new Vector2(0f, 330f),
             "PauseMenu/Icons/Crown",
             false,
             new Color(0.77f, 0.97f, 1f, 1f),
@@ -1336,7 +1431,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "ResultTokenCard",
             "•  TOKENS  •",
-            new Vector2(0f, -175f),
+            new Vector2(0f, -80f),
             "CustomCoin",
             true,
             new Color(0.32f, 0.84f, 1f, 1f),
@@ -1345,7 +1440,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "ResultBestCard",
             "•  BEST  •",
-            new Vector2(0f, -575f),
+            new Vector2(0f, -475f),
             "PauseMenu/Icons/Crown",
             false,
             new Color(0.77f, 0.97f, 1f, 1f),
@@ -1353,21 +1448,23 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         CreateResultBonusButton(
             content,
-            new Vector2(0f, -900f));
+            new Vector2(0f, -805f));
 
         Button noThanks = CreateButton(
             content,
             "ModernResultMenuButton",
             "NO THANKS",
-            new Vector2(0f, -1140f),
-            new Vector2(500f, 60f),
+            new Vector2(0f, -1110f),
+            new Vector2(580f, 76f),
             new Color(1f, 1f, 1f, 0.001f),
             new Color(0.81f, 1f, 0.96f, 1f),
             ReturnToMainMenu,
-            34f);
+            42f);
         RemoveButtonShadow(noThanks);
-        BalloonDogTitanFont.Apply(
-            noThanks.GetComponentInChildren<TMP_Text>(true));
+        TMP_Text noThanksLabel = noThanks.GetComponentInChildren<TMP_Text>(true);
+        BalloonDogTitanFont.Apply(noThanksLabel);
+        AddTextShadow(noThanksLabel,
+            new Color(0.02f, 0.30f, 0.37f, 0.78f), new Vector2(0f, -3f));
     }
 
     private static Sprite CreateResultBackgroundSprite()
@@ -1449,41 +1546,31 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         SetRect(card, position, new Vector2(680f, 340f));
         Image cardArtwork = CreateResourceImage(card, "CardArtwork", "GameOver/StatCard",
             Vector2.zero, new Vector2(680f, 340f));
-        cardArtwork.color = new Color(0.42f, 1f, 1f, 1f);
+        cardArtwork.color = Color.white;
 
-        Image halo = CreateImage(
-            card,
-            "IconHalo",
-            new Vector2(0f, 148f),
-            new Vector2(148f, 148f),
-            new Color(ringColor.r, ringColor.g, ringColor.b, 0.24f),
-            true);
-        AddGraphicShadow(
-            halo,
-            new Color(ringColor.r, ringColor.g, ringColor.b, 0.42f),
-            new Vector2(0f, -3f));
+        // Use the supplied cyan badge artwork at its original aspect ratio.
+        Image medallion = CreateResourceImage(
+            card, "IconBadge", "GameOver/IconBadge",
+            new Vector2(0f, 148f), new Vector2(148f, 148f));
+        medallion.color = Color.white;
 
-        Image medallion = CreateImage(
-            card,
-            "IconMedallion",
-            new Vector2(0f, 148f),
-            new Vector2(128f, 128f),
-            new Color(0.02f, 0.20f, 0.34f, 1f),
-            true);
-        Outline medallionOutline = medallion.gameObject.AddComponent<Outline>();
-        medallionOutline.effectColor = ringColor;
-        medallionOutline.effectDistance = new Vector2(4f, -4f);
-        AddGraphicShadow(
-            medallion,
-            new Color(0.02f, 0.02f, 0.18f, 0.80f),
-            new Vector2(0f, -7f));
+        if (useCoinArtwork)
+        {
+            // Soft warm light and a short diffuse shadow sit inside the blue badge.
+            CreateResultSoftLight(medallion.transform, "CoinWarmLight",
+                new Vector2(0f, 0f), new Vector2(116f, 116f),
+                new Color(1f, 0.73f, 0.20f, 0.24f));
+            CreateResultSoftLight(medallion.transform, "CoinSoftShadow",
+                new Vector2(0f, -7f), new Vector2(76f, 70f),
+                new Color(0.02f, 0.08f, 0.18f, 0.28f));
+        }
 
         Image icon = CreateResourceImage(
             medallion.transform,
             "Icon",
             iconResourcePath,
             Vector2.zero,
-            useCoinArtwork ? new Vector2(96f, 96f) : new Vector2(88f, 80f));
+            useCoinArtwork ? new Vector2(78f, 78f) : new Vector2(88f, 80f));
         icon.color = useCoinArtwork
             ? Color.white
             : new Color(1f, 0.73f, 0.08f, 1f);
@@ -1519,6 +1606,40 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         return value;
     }
 
+    private static void CreateResultSoftLight(
+        Transform parent, string name, Vector2 position, Vector2 size, Color color)
+    {
+        RectTransform rect = CreateRect(name, parent);
+        SetRect(rect, position, size);
+        Image image = rect.gameObject.AddComponent<Image>();
+        image.sprite = GetResultSoftLightSprite();
+        image.color = color;
+        image.raycastTarget = false;
+    }
+
+    private static Sprite GetResultSoftLightSprite()
+    {
+        if (resultSoftLightSprite != null) return resultSoftLightSprite;
+        const int size = 64;
+        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        texture.name = "ResultSoftLight";
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+        for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+            float dx = (x + 0.5f - size * 0.5f) / (size * 0.5f);
+            float dy = (y + 0.5f - size * 0.5f) / (size * 0.5f);
+            float radius = dx * dx + dy * dy;
+            float alpha = Mathf.Pow(Mathf.Clamp01(1f - radius), 2f);
+            texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+        }
+        texture.Apply(false, true);
+        resultSoftLightSprite = Sprite.Create(
+            texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+        return resultSoftLightSprite;
+    }
+
     private static void CreateResultBonusButton(Transform parent, Vector2 position)
     {
         Button button = CreateButton(
@@ -1530,11 +1651,33 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         background.sprite = GetResourceSprite("GameOver/DoubleBonus");
         background.type = Image.Type.Simple;
         background.preserveAspect = true;
-        CreatePauseText(button.transform, "BonusHint",
-            "Watch an ad to claim 2x reward", new Vector2(0f, -125f),
-            new Vector2(780f, 44f), 28f, Color.white, TextAlignmentOptions.Center);
+        button.transition = Selectable.Transition.None;
+        button.gameObject.AddComponent<BalloonDogBonusPressFeedback>();
+        // The bonus button stays free of decorative stars.
+        // Keep the hint below the visible button and independent of its press scale.
+        TMP_Text hint = CreatePauseText(parent, "BonusHint",
+            "Watch an ad to claim 2x reward",
+            position + new Vector2(0f, -205f),
+            new Vector2(780f, 48f), 30f,
+            new Color(0.02f, 0.29f, 0.35f, 1f),
+            TextAlignmentOptions.Center);
+        BalloonDogTitanFont.Apply(hint);
         // Existing visual-only bonus: connect an ad completion callback before
         // granting any additional reward. NO THANKS returns to the main menu.
+    }
+
+    private static void CreateResultGlint(
+        Transform parent, string name, Vector2 position, float size,
+        float phase, bool bonusStar)
+    {
+        RectTransform rect = CreateRect(name, parent);
+        SetRect(rect, position, Vector2.one * size);
+        Image glint = rect.gameObject.AddComponent<Image>();
+        glint.sprite = BalloonDogStarGlint.Sprite;
+        glint.raycastTarget = false;
+        glint.color = new Color(1f, 0.92f, 0.52f, 0.18f);
+        rect.gameObject.AddComponent<BalloonDogStarGlint>().Configure(
+            phase, bonusStar);
     }
 
     private static void CreateResultDecorations(Transform parent)
@@ -1560,6 +1703,24 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(455f, -240f), new Vector2(205f, 185f), -9f,
             0.06f, 7f, 10f, 19f, 0.82f, 1.6f);
 
+        // Four quieter silhouettes bring the backdrop to eight dogs total.
+        CreatePauseDogDecoration(
+            layer, "ResultDogUpperLeft",
+            new Vector2(-430f, 510f), new Vector2(190f, 175f), 17f,
+            0.07f, 6f, 8f, 16f, 0.27f, 1.0f);
+        CreatePauseDogDecoration(
+            layer, "ResultDogUpperRight",
+            new Vector2(430f, 410f), new Vector2(190f, 175f), -13f,
+            0.07f, 7f, 8f, 17f, 0.72f, 1.2f);
+        CreatePauseDogDecoration(
+            layer, "ResultDogLowerLeft",
+            new Vector2(-430f, -445f), new Vector2(190f, 175f), -16f,
+            0.07f, 7f, 9f, 17f, 0.48f, 1.1f);
+        CreatePauseDogDecoration(
+            layer, "ResultDogLowerRight",
+            new Vector2(430f, -780f), new Vector2(190f, 175f), 14f,
+            0.07f, 6f, 8f, 15f, 0.95f, 1.3f);
+
         CreatePauseCloud(
             layer, "ResultCloudBottomLeft",
             new Vector2(-385f, -1010f), new Vector2(490f, 320f), 3f, 0.18f,
@@ -1569,40 +1730,32 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(390f, -980f), new Vector2(520f, 340f), -5f, 0.17f,
             8f, 9f, 21f, 0.87f);
 
-        CreateResultSparkle(
-            layer, new Vector2(-455f, 655f), 34f,
-            new Color(0.90f, 0.82f, 1f, 0.90f));
-        CreateResultSparkle(
-            layer, new Vector2(450f, 690f), 42f,
-            new Color(0.94f, 0.88f, 1f, 0.94f));
-        CreateResultSparkle(
-            layer, new Vector2(-480f, -740f), 20f,
-            new Color(0.82f, 0.91f, 1f, 0.72f));
-        CreateResultSparkle(
-            layer, new Vector2(470f, -680f), 22f,
-            new Color(0.82f, 0.91f, 1f, 0.72f));
-    }
-
-    private static void CreateResultSparkle(
-        Transform parent,
-        Vector2 position,
-        float size,
-        Color color)
-    {
-        CreateImage(
-            parent,
-            "SparkleVertical",
-            position,
-            new Vector2(size * 0.24f, size),
-            color,
-            false);
-        CreateImage(
-            parent,
-            "SparkleHorizontal",
-            position,
-            new Vector2(size, size * 0.24f),
-            color,
-            false);
+        // Replace the old static white cross shapes with drifting glints.
+        CreateResultGlint(layer, "ResultStarTopLeft",
+            new Vector2(-455f, 655f), 42f, 0.4f, false);
+        CreateResultGlint(layer, "ResultStarTopRight",
+            new Vector2(450f, 690f), 48f, 1.6f, false);
+        CreateResultGlint(layer, "ResultStarBottomLeft",
+            new Vector2(-480f, -740f), 30f, 2.4f, false);
+        CreateResultGlint(layer, "ResultStarBottomRight",
+            new Vector2(470f, -680f), 32f, 3.1f, false);
+        // Scattered small stars fill the side margins without covering scores.
+        CreateResultGlint(layer, "ResultStarUpperLeft",
+            new Vector2(-315f, 430f), 45f, 0.8f, false);
+        CreateResultGlint(layer, "ResultStarUpperRight",
+            new Vector2(465f, 535f), 43f, 2.8f, false);
+        CreateResultGlint(layer, "ResultStarScoreLeft",
+            new Vector2(-425f, 255f), 41f, 1.3f, false);
+        CreateResultGlint(layer, "ResultStarScoreRight",
+            new Vector2(425f, 170f), 46f, 3.8f, false);
+        CreateResultGlint(layer, "ResultStarMiddleLeft",
+            new Vector2(-390f, -115f), 39f, 4.4f, false);
+        CreateResultGlint(layer, "ResultStarMiddleRight",
+            new Vector2(420f, -420f), 44f, 5.1f, false);
+        CreateResultGlint(layer, "ResultStarLowerLeft",
+            new Vector2(-430f, -610f), 43f, 5.7f, false);
+        CreateResultGlint(layer, "ResultStarLowerRight",
+            new Vector2(440f, -530f), 40f, 6.4f, false);
     }
 
     private void BuildPauseScreen()
@@ -2371,12 +2524,17 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         caption.enableAutoSizing = true;
         caption.fontSizeMin = 36f;
         caption.fontSizeMax = 48f;
-        Image state = CreateImage(row.transform, label + "StateBackground",
-            new Vector2(310f, 0f), new Vector2(210f, 105f), Color.white, false);
-        ApplyPauseButtonBackground(state, "SettingsUI/Blue");
-        TMP_Text stateLabel = CreatePauseText(state.transform, label + "State", "OFF",
-            Vector2.zero, new Vector2(180f, 90f), 38f, Color.white, TextAlignmentOptions.Center);
-        return new ToggleRowView { StateLabel = stateLabel, StateBackground = state };
+        // ON/OFF is part of the main row; there is no nested state button.
+        TMP_Text stateLabel = CreatePauseText(
+            row.transform, label + "State", "OFF",
+            new Vector2(310f, 0f), new Vector2(210f, 105f),
+            38f, Color.white, TextAlignmentOptions.Center);
+        Image rowBackground = row.GetComponent<Image>();
+        return new ToggleRowView
+        {
+            StateLabel = stateLabel,
+            StateBackground = rowBackground
+        };
     }
 
     private void StartGame()
@@ -2563,6 +2721,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         marketScreen.SetActive(true);
         ShowMarketTab(true);
         RefreshPersistentViews();
+        ApplyMarketTitanFont();
     }
 
     private void ShowSkinsScreen()

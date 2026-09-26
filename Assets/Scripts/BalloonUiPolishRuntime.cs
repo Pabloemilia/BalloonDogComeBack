@@ -358,7 +358,8 @@ public sealed class BalloonUiPolishRuntime : MonoBehaviour
         {
             if (image == null ||
                 !image.gameObject.scene.IsValid() ||
-                image.GetComponentInParent<Button>() != null)
+                image.GetComponentInParent<Button>() != null ||
+                image.name.StartsWith("MarketDog"))
             {
                 continue;
             }
