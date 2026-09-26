@@ -935,7 +935,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         if (cardSprite != null)
         {
             RectTransform artworkRect = CreateRect("CardArtwork", card);
-            SetRect(artworkRect, Vector2.zero, offerCardSize);
+            // The Starter Pack source has slightly heavier right-side artwork
+            // and shadow padding. Shift only that decorative layer left so its
+            // visible square is optically centered inside the fixed 530 box.
+            float artworkOffsetX = cardResource == "Card_StarterPack" ? -6f : 0f;
+            SetRect(artworkRect, new Vector2(artworkOffsetX, 0f), offerCardSize);
             Image artwork = artworkRect.gameObject.AddComponent<Image>();
             artwork.sprite = cardSprite;
             artwork.type = Image.Type.Simple;
