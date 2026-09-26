@@ -996,7 +996,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "StoreOfferButton",
             "COMING SOON",
             new Vector2(0f, -145f),
-            new Vector2(292f, 82f),
+            new Vector2(320f, 98f),
             Color.white,
             Color.white,
             () => ShowToast(title + " COMING SOON"),
