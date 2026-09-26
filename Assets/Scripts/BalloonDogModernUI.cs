@@ -84,6 +84,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private GameObject gameplayOverlay;
     private GameObject marketSkinOffersPanel;
     private GameObject marketExtrasPanel;
+    private GameObject coinPacksScreen;
+    private GameObject gemPacksScreen;
 
     private TMP_Text coinText;
     private TMP_Text mainBestText;
@@ -242,6 +244,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         gameplayOverlay = null;
         marketSkinOffersPanel = null;
         marketExtrasPanel = null;
+        coinPacksScreen = null;
+        gemPacksScreen = null;
         marketSkinsTabButton = null;
         marketExtrasTabButton = null;
         coinText = null;
@@ -384,6 +388,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         BuildMainScreen();
         BuildMarketScreen();
+        coinPacksScreen = BuildCurrencyPacksScreen(false);
+        gemPacksScreen = BuildCurrencyPacksScreen(true);
         BuildSkinsScreen();
         BuildSettingsScreen();
         BuildPrivacyScreen();
@@ -948,8 +954,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         cardColors.selectedColor = Color.white;
         cardColors.fadeDuration = 0.08f;
         cardButton.colors = cardColors;
-        cardButton.onClick.AddListener(
-            () => ShowToast(title + " PURCHASE COMING SOON"));
+        if (cardResource == "Card_Coins" || cardResource == "Card_Gems")
+            cardButton.onClick.AddListener(() => ShowCurrencyPacks(cardResource == "Card_Gems"));
+        else
+            cardButton.onClick.AddListener(
+                () => ShowToast(title + " PURCHASE COMING SOON"));
 
         string price = cardResource == "Card_AdsOff" ? "₺79,99"
             : cardResource == "Card_StarterPack" ? "₺99,99" : null;
@@ -983,6 +992,94 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             AddGraphicShadow(priceText, new Color(0.03f, 0.12f, 0.28f, 0.82f),
                 new Vector2(0f, -3f));
         }
+    }
+
+    private GameObject BuildCurrencyPacksScreen(bool gems)
+    {
+        string currency = gems ? "GEMS" : "COINS";
+        string resource = gems ? "Card_Gems" : "Card_Coins";
+        GameObject screen = CreateScreen(
+            gems ? "ModernGemPacksScreen" : "ModernCoinPacksScreen",
+            new Color(0.13f, 0.44f, 0.96f, 1f),
+            new Color(0.27f, 0.84f, 0.53f, 1f));
+        CreatePauseDogDecoration(screen.transform, "PackDogLeft",
+            new Vector2(-445f, 760f), new Vector2(175f, 160f), -9f,
+            0.10f, 8f, 9f, 19f, 0.21f, 1f);
+        CreatePauseDogDecoration(screen.transform, "PackDogRight",
+            new Vector2(450f, -580f), new Vector2(175f, 160f), 12f,
+            0.10f, 8f, 9f, 20f, 0.65f, 1f);
+        CreateMarketFontText(screen.transform, "CurrencyTitle", currency,
+            new Vector2(0f, 825f), new Vector2(800f, 170f), 100f);
+        CreatePauseTitleAccents(screen.transform, 825f);
+
+        int[] amounts = gems
+            ? new[] { 50, 150, 350, 750, 1600 }
+            : new[] { 500, 1500, 3500, 7500, 16000 };
+        // Display-only sample prices; no payment or currency grant is performed.
+        string[] prices = { "₺19,99", "₺49,99", "₺99,99", "₺199,99", "₺399,99" };
+        Vector2[] positions =
+        {
+            new Vector2(-215f, 430f), new Vector2(215f, 430f),
+            new Vector2(-215f, 10f), new Vector2(215f, 10f),
+            new Vector2(0f, -410f)
+        };
+        for (int i = 0; i < amounts.Length; i++)
+        {
+            RectTransform card = CreateRect(currency + "Pack" + (i + 1), screen.transform);
+            SetRect(card, positions[i], new Vector2(390f, 390f));
+            Image backing = card.gameObject.AddComponent<Image>();
+            backing.sprite = GetRoundedSprite();
+            backing.type = Image.Type.Sliced;
+            backing.color = GetStoreOfferCardColor(resource);
+
+            Sprite sprite = GetCenteredStoreCardSprite("MarketUI/Extras/" + resource);
+            if (sprite != null)
+            {
+                RectTransform artRect = CreateRect("CardArtwork", card);
+                SetRect(artRect, Vector2.zero, new Vector2(364f, 364f));
+                Image art = artRect.gameObject.AddComponent<Image>();
+                art.sprite = sprite;
+                art.preserveAspect = false;
+                art.raycastTarget = false;
+            }
+
+            Button button = card.gameObject.AddComponent<Button>();
+            button.targetGraphic = backing;
+            button.navigation = new Navigation { mode = Navigation.Mode.None };
+            int amount = amounts[i];
+            button.onClick.AddListener(
+                () => ShowToast(amount + " " + currency + " PURCHASE COMING SOON"));
+
+            // Keep a blank, centered slot for the future unique pack logo.
+            RectTransform logoSlot = CreateRect("FuturePackLogo", card);
+            SetRect(logoSlot, new Vector2(0f, 18f), new Vector2(125f, 125f));
+            CreateMarketFontText(card, "PackTitle", currency,
+                new Vector2(0f, 122f), new Vector2(330f, 58f), 38f);
+            CreateMarketFontText(card, "PackAmount", amount.ToString("N0"),
+                new Vector2(0f, -68f), new Vector2(330f, 58f), 39f);
+            CreateMarketFontText(card, "PackPrice", prices[i],
+                new Vector2(0f, -130f), new Vector2(330f, 58f), 33f);
+        }
+        CreateMarketArtworkButton(screen.transform, "BackToExtras", "BACK",
+            new Vector2(0f, -885f), new Vector2(530f, 230f),
+            ReturnToMarketExtras, 55f);
+        return screen;
+    }
+
+    private void ShowCurrencyPacks(bool gems)
+    {
+        HideAllScreens();
+        SetActive(gameplayOverlay, false);
+        SetActive(gems ? gemPacksScreen : coinPacksScreen, true);
+    }
+
+    private void ReturnToMarketExtras()
+    {
+        HideAllScreens();
+        SetActive(gameplayOverlay, false);
+        SetActive(marketScreen, true);
+        ShowMarketTab(false);
+        RefreshPersistentViews();
     }
 
     private static Sprite GetCenteredStoreCardSprite(string path)
@@ -2879,6 +2976,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         SetActive(mainScreen, false);
         SetActive(marketScreen, false);
+        SetActive(coinPacksScreen, false);
+        SetActive(gemPacksScreen, false);
         SetActive(skinsScreen, false);
         SetActive(settingsScreen, false);
         SetActive(privacyScreen, false);
