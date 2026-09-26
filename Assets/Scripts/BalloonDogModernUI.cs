@@ -878,7 +878,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "CoinsOffer",
             "COINS",
             "₺29,99",
-            new Vector2(-255f, 300f),
+            new Vector2(-255f, 280f),
             "Card_Coins",
             "Icon_Coins");
         CreateStoreOfferCard(
@@ -886,7 +886,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "GemsOffer",
             "GEMS",
             "₺49,99",
-            new Vector2(255f, 300f),
+            new Vector2(255f, 280f),
             "Card_Gems",
             "Icon_Gems");
         CreateStoreOfferCard(
@@ -894,7 +894,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "NoAdsOffer",
             "ADS OFF",
             "₺79,99",
-            new Vector2(-255f, -310f),
+            new Vector2(-255f, -280f),
             "Card_AdsOff",
             "Icon_AdsOff");
         CreateStoreOfferCard(
@@ -902,7 +902,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "StarterOffer",
             "STARTER PACK",
             "₺99,99",
-            new Vector2(255f, -310f),
+            new Vector2(255f, -280f),
             "Card_StarterPack",
             "Icon_StarterPack");
     }
@@ -917,7 +917,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         string iconResource)
     {
         // Every product uses this single fixed size so all four remain identical.
-        Vector2 offerCardSize = new Vector2(500f, 570f);
+        Vector2 offerCardSize = new Vector2(500f, 500f);
         RectTransform card = CreateCard(
             parent,
             objectName,
@@ -951,8 +951,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "OfferIcon",
             "MarketUI/Extras/" + iconResource,
-            new Vector2(0f, 158f),
-            new Vector2(195f, 195f));
+            new Vector2(0f, 132f),
+            new Vector2(175f, 175f));
         icon.preserveAspect = true;
         icon.raycastTarget = false;
 
@@ -960,7 +960,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "OfferTitle",
             title,
-            new Vector2(0f, 22f),
+            new Vector2(0f, 12f),
             new Vector2(450f, 74f),
             41f,
             Color.white,
@@ -974,7 +974,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "OfferPrice",
             price,
-            new Vector2(0f, -172f),
+            new Vector2(0f, -145f),
             new Vector2(400f, 80f),
             37f,
             Color.white,
