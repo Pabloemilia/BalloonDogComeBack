@@ -889,7 +889,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "CoinsOffer",
             "COINS",
             "COIN PACKS",
-            new Vector2(-195f, 245f),
+            new Vector2(-210f, 245f),
             "Card_Coins",
             "Icon_Coins");
         CreateStoreOfferCard(
@@ -897,7 +897,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "GemsOffer",
             "GEMS",
             "PREMIUM CURRENCY",
-            new Vector2(195f, 245f),
+            new Vector2(210f, 245f),
             "Card_Gems",
             "Icon_Gems");
         CreateStoreOfferCard(
@@ -905,7 +905,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "NoAdsOffer",
             "ADS OFF",
             "NO ADS\nREMOVE INTERRUPTIONS",
-            new Vector2(-195f, -205f),
+            new Vector2(-210f, -225f),
             "Card_AdsOff",
             "Icon_AdsOff");
         CreateStoreOfferCard(
@@ -913,7 +913,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "StarterOffer",
             "STARTER PACK",
             "COINS • GEMS • SKIN",
-            new Vector2(195f, -205f),
+            new Vector2(210f, -225f),
             "Card_StarterPack",
             "Icon_StarterPack");
 
@@ -942,7 +942,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             parent,
             objectName,
             position,
-            new Vector2(360f, 420f),
+            new Vector2(395f, 455f),
             Color.white,
             Color.clear);
 
@@ -1021,6 +1021,20 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         marketSkinOffersPanel.SetActive(showSkins);
         marketExtrasPanel.SetActive(!showSkins);
+
+        // Keep the dark shelf behind the skins grid, but let Extras cards
+        // float directly over the market background.
+        Transform shelvesTransform = marketScreen != null
+            ? marketScreen.transform.Find("MarketShelvesCard")
+            : null;
+        if (shelvesTransform != null)
+        {
+            Image shelvesImage = shelvesTransform.GetComponent<Image>();
+            if (shelvesImage != null)
+            {
+                shelvesImage.enabled = showSkins;
+            }
+        }
 
         SetMarketTabAppearance(marketSkinsTabButton, showSkins);
         SetMarketTabAppearance(marketExtrasTabButton, !showSkins);
