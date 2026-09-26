@@ -1003,12 +1003,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             22f);
         RemoveButtonShadow(button);
         Image buttonImage = button.GetComponent<Image>();
-        Sprite buttonSprite = GetResourceSprite("MarketUI/Extras/Button_ComingSoonClean");
-        if (buttonSprite != null)
+        buttonImage.sprite = RoundedSprite;
+        buttonImage.type = Image.Type.Sliced;
+        buttonImage.color = new Color(0.18f, 0.57f, 1f, 1f);
+
+        Shadow[] buttonShadows = button.GetComponents<Shadow>();
+        foreach (Shadow buttonShadow in buttonShadows)
         {
-            buttonImage.sprite = buttonSprite;
-            buttonImage.type = Image.Type.Simple;
-            buttonImage.color = Color.white;
+            Destroy(buttonShadow);
         }
     }
 
