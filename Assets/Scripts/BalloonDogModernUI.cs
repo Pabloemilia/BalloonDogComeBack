@@ -1003,7 +1003,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             22f);
         RemoveButtonShadow(button);
         Image buttonImage = button.GetComponent<Image>();
-        buttonImage.sprite = RoundedSprite;
+        buttonImage.sprite = roundedSprite;
         buttonImage.type = Image.Type.Sliced;
         buttonImage.color = new Color(0.18f, 0.57f, 1f, 1f);
 
