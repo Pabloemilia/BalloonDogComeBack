@@ -890,7 +890,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreateStoreOfferCard(
             parent,
             "NoAdsOffer",
-            "ADS OFF",
+            "NO ADS",
             new Vector2(-270f, -280f),
             "Card_AdsOff",
             "Icon_AdsOff");
@@ -951,29 +951,38 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         cardButton.onClick.AddListener(
             () => ShowToast(title + " PURCHASE COMING SOON"));
 
+        string price = cardResource == "Card_AdsOff" ? "₺79,99"
+            : cardResource == "Card_StarterPack" ? "₺99,99" : null;
+        bool hasPrice = price != null;
+
         Image icon = CreateResourceImage(
             card,
             "OfferIcon",
             "MarketUI/Extras/" + iconResource,
-            new Vector2(0f, 57f),
+            new Vector2(0f, hasPrice ? 105f : 57f),
             new Vector2(155f, 155f));
         icon.preserveAspect = true;
         icon.raycastTarget = false;
 
-        TMP_Text titleText = CreateText(
-            card,
-            "OfferTitle",
-            title,
-            new Vector2(0f, -97f),
-            new Vector2(450f, 74f),
-            41f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-        titleText.raycastTarget = false;
-        AddTextShadow(titleText, new Color(0.03f, 0.12f, 0.28f, 0.72f),
+        Text titleText = CreateMarketFontText(
+            card, "OfferTitle", title,
+            new Vector2(0f, hasPrice ? -30f : -97f),
+            new Vector2(450f, 74f), 41f);
+        titleText.horizontalOverflow = HorizontalWrapMode.Overflow;
+        titleText.verticalOverflow = VerticalWrapMode.Overflow;
+        AddGraphicShadow(titleText, new Color(0.03f, 0.12f, 0.28f, 0.72f),
             new Vector2(0f, -3f));
 
+        if (hasPrice)
+        {
+            Text priceText = CreateMarketFontText(
+                card, "OfferPrice", price,
+                new Vector2(0f, -158f), new Vector2(400f, 80f), 37f);
+            priceText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            priceText.verticalOverflow = VerticalWrapMode.Overflow;
+            AddGraphicShadow(priceText, new Color(0.03f, 0.12f, 0.28f, 0.82f),
+                new Vector2(0f, -3f));
+        }
     }
 
     private static Sprite GetCenteredStoreCardSprite(string path)
@@ -1037,7 +1046,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             case "Card_Coins":
                 return new Color(0.93f, 0.56f, 0.05f, 1f);
             case "Card_Gems":
-                return new Color(0.025f, 0.12f, 0.42f, 1f);
+                return new Color(0.045f, 0.26f, 0.60f, 1f);
             case "Card_AdsOff":
                 return new Color(0.48f, 0.20f, 0.76f, 1f);
             case "Card_StarterPack":
