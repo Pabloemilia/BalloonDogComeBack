@@ -916,23 +916,32 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         string cardResource,
         string iconResource)
     {
-        // Every product uses this single fixed size so all four remain identical.
+        // The clickable and visible outer square is always generated from this
+        // exact rectangle. Source PNG transparency can no longer make one offer
+        // (especially the green Starter Pack) appear smaller than the others.
         Vector2 offerCardSize = new Vector2(530f, 530f);
-        RectTransform card = CreateCard(
-            parent,
-            objectName,
-            position,
-            offerCardSize,
-            Color.white,
-            Color.clear);
+        RectTransform card = CreateRect(objectName, parent);
+        SetRect(card, position, offerCardSize);
 
-        Image cardImage = card.GetComponent<Image>();
+        Image cardImage = card.gameObject.AddComponent<Image>();
+        cardImage.sprite = GetRoundedSprite();
+        cardImage.type = Image.Type.Sliced;
+        cardImage.color = GetStoreOfferCardColor(cardResource);
+        cardImage.raycastTarget = true;
+
+        // Keep the supplied artwork as an equal-size decorative overlay while
+        // the generated backing defines one identical 530 x 530 silhouette.
         Sprite cardSprite = GetResourceSprite("MarketUI/Extras/" + cardResource);
         if (cardSprite != null)
         {
-            cardImage.sprite = cardSprite;
-            cardImage.type = Image.Type.Simple;
-            cardImage.color = Color.white;
+            RectTransform artworkRect = CreateRect("CardArtwork", card);
+            SetRect(artworkRect, Vector2.zero, offerCardSize);
+            Image artwork = artworkRect.gameObject.AddComponent<Image>();
+            artwork.sprite = cardSprite;
+            artwork.type = Image.Type.Simple;
+            artwork.preserveAspect = false;
+            artwork.color = Color.white;
+            artwork.raycastTarget = false;
         }
 
         Button cardButton = card.gameObject.AddComponent<Button>();
@@ -983,6 +992,23 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         priceText.raycastTarget = false;
         AddTextShadow(priceText, new Color(0.03f, 0.12f, 0.28f, 0.82f),
             new Vector2(0f, -3f));
+    }
+
+    private static Color GetStoreOfferCardColor(string cardResource)
+    {
+        switch (cardResource)
+        {
+            case "Card_Coins":
+                return new Color(0.93f, 0.56f, 0.05f, 1f);
+            case "Card_Gems":
+                return new Color(0.04f, 0.63f, 0.85f, 1f);
+            case "Card_AdsOff":
+                return new Color(0.48f, 0.20f, 0.76f, 1f);
+            case "Card_StarterPack":
+                return new Color(0.16f, 0.63f, 0.34f, 1f);
+            default:
+                return Color.white;
+        }
     }
 
     private void ShowMarketTab(bool showSkins)
