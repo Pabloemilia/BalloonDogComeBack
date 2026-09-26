@@ -877,9 +877,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             parent,
             "MarketExtrasTitle",
             "CURRENCY & UPGRADES",
-            new Vector2(0f, 505f),
-            new Vector2(760f, 55f),
-            28f,
+            new Vector2(0f, 510f),
+            new Vector2(760f, 58f),
+            29f,
             Color.white,
             FontStyles.Bold,
             TextAlignmentOptions.Center);
@@ -889,39 +889,39 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "CoinsOffer",
             "COINS",
             "COIN PACKS",
-            new Vector2(-205f, 245f),
-            new Color(0.86f, 0.55f, 0.08f, 0.98f),
-            0);
+            new Vector2(-195f, 245f),
+            "Card_Coins",
+            "Icon_Coins");
         CreateStoreOfferCard(
             parent,
             "GemsOffer",
             "GEMS",
             "PREMIUM CURRENCY",
-            new Vector2(205f, 245f),
-            new Color(0.06f, 0.60f, 0.82f, 0.98f),
-            1);
+            new Vector2(195f, 245f),
+            "Card_Gems",
+            "Icon_Gems");
         CreateStoreOfferCard(
             parent,
             "NoAdsOffer",
-            "NO ADS",
-            "REMOVE INTERRUPTIONS",
-            new Vector2(-205f, -210f),
-            new Color(0.44f, 0.22f, 0.72f, 0.98f),
-            2);
+            "ADS OFF",
+            "NO ADS\nREMOVE INTERRUPTIONS",
+            new Vector2(-195f, -205f),
+            "Card_AdsOff",
+            "Icon_AdsOff");
         CreateStoreOfferCard(
             parent,
             "StarterOffer",
             "STARTER PACK",
-            "COINS + GEMS + SKIN",
-            new Vector2(205f, -210f),
-            new Color(0.18f, 0.60f, 0.35f, 0.98f),
-            3);
+            "COINS • GEMS • SKIN",
+            new Vector2(195f, -205f),
+            "Card_StarterPack",
+            "Icon_StarterPack");
 
         CreateText(
             parent,
             "StoreIntegrationNote",
             "STORE CONNECTION WILL BE ADDED WITH IAP",
-            new Vector2(0f, -485f),
+            new Vector2(0f, -505f),
             new Vector2(760f, 40f),
             18f,
             new Color(0.72f, 0.86f, 0.94f, 1f),
@@ -935,80 +935,80 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         string title,
         string subtitle,
         Vector2 position,
-        Color fill,
-        int iconStyle)
+        string cardResource,
+        string iconResource)
     {
         RectTransform card = CreateCard(
             parent,
             objectName,
             position,
-            new Vector2(370f, 390f),
-            fill,
-            new Color(1f, 1f, 1f, 0.30f));
+            new Vector2(360f, 420f),
+            Color.white,
+            Color.clear);
 
-        CreateStoreOfferIcon(card, iconStyle);
+        Image cardImage = card.GetComponent<Image>();
+        Sprite cardSprite = GetResourceSprite("MarketUI/Extras/" + cardResource);
+        if (cardSprite != null)
+        {
+            cardImage.sprite = cardSprite;
+            cardImage.type = Image.Type.Simple;
+            cardImage.color = Color.white;
+        }
 
-        CreateText(
+        Image icon = CreateResourceImage(
+            card,
+            "OfferIcon",
+            "MarketUI/Extras/" + iconResource,
+            new Vector2(0f, 118f),
+            new Vector2(145f, 145f));
+        icon.preserveAspect = true;
+        icon.raycastTarget = false;
+
+        TMP_Text titleText = CreateText(
             card,
             "OfferTitle",
             title,
-            new Vector2(0f, 48f),
-            new Vector2(330f, 58f),
-            31f,
+            new Vector2(0f, 20f),
+            new Vector2(320f, 58f),
+            33f,
             Color.white,
             FontStyles.Bold,
             TextAlignmentOptions.Center);
-        CreateText(
+        AddTextShadow(titleText, new Color(0.03f, 0.12f, 0.28f, 0.72f),
+            new Vector2(0f, -3f));
+
+        TMP_Text subtitleText = CreateText(
             card,
             "OfferSubtitle",
             subtitle,
-            new Vector2(0f, -8f),
-            new Vector2(330f, 44f),
+            new Vector2(0f, -39f),
+            new Vector2(318f, 68f),
             18f,
-            new Color(0.91f, 0.96f, 1f, 1f),
+            new Color(0.96f, 0.99f, 1f, 1f),
             FontStyles.Bold,
             TextAlignmentOptions.Center);
+        subtitleText.enableAutoSizing = true;
+        subtitleText.fontSizeMin = 14f;
+        subtitleText.fontSizeMax = 18f;
 
-        CreateButton(
+        Button button = CreateButton(
             card,
             "StoreOfferButton",
             "COMING SOON",
-            new Vector2(0f, -132f),
-            new Vector2(300f, 82f),
-            MenuBlue,
+            new Vector2(0f, -145f),
+            new Vector2(292f, 82f),
+            Color.white,
             Color.white,
             () => ShowToast(title + " COMING SOON"),
             22f);
-    }
-
-    private static void CreateStoreOfferIcon(Transform parent, int style)
-    {
-        Color white = new Color(1f, 1f, 1f, 0.92f);
-        switch (style)
+        RemoveButtonShadow(button);
+        Image buttonImage = button.GetComponent<Image>();
+        Sprite buttonSprite = GetResourceSprite("MarketUI/Extras/Button_ComingSoon");
+        if (buttonSprite != null)
         {
-            case 0:
-                CreateImage(parent, "CoinOuter", new Vector2(0f, 132f), new Vector2(106f, 106f), white, true);
-                CreateImage(parent, "CoinInner", new Vector2(0f, 132f), new Vector2(72f, 72f), new Color(1f, 0.72f, 0.10f, 1f), true);
-                break;
-            case 1:
-                Image gem = CreateImage(parent, "GemIcon", new Vector2(0f, 132f), new Vector2(88f, 88f), white, false);
-                gem.rectTransform.localEulerAngles = new Vector3(0f, 0f, 45f);
-                break;
-            case 2:
-                CreateText(
-                    parent,
-                    "NoAdsIcon",
-                    "ADS OFF",
-                    new Vector2(0f, 132f),
-                    new Vector2(240f, 88f),
-                    30f,
-                    white,
-                    FontStyles.Bold,
-                    TextAlignmentOptions.Center);
-                break;
-            default:
-                CreateBalloonDogSilhouette(parent, new Vector2(0f, 132f), white, 0.82f);
-                break;
+            buttonImage.sprite = buttonSprite;
+            buttonImage.type = Image.Type.Simple;
+            buttonImage.color = Color.white;
         }
     }
 
