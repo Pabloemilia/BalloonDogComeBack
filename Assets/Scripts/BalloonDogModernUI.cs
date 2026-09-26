@@ -929,17 +929,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         cardImage.color = GetStoreOfferCardColor(cardResource);
         cardImage.raycastTarget = true;
 
-        // Keep the supplied artwork as an equal-size decorative overlay while
-        // the generated backing defines one identical 530 x 530 silhouette.
-        Sprite cardSprite = GetResourceSprite("MarketUI/Extras/" + cardResource);
+        // Trim transparent source padding, then give every visible card the
+        // same centered 494 x 494 area inside its 530 x 530 backing.
+        Sprite cardSprite = GetCenteredStoreCardSprite("MarketUI/Extras/" + cardResource);
         if (cardSprite != null)
         {
             RectTransform artworkRect = CreateRect("CardArtwork", card);
-            // The Starter Pack source has slightly heavier right-side artwork
-            // and shadow padding. Shift only that decorative layer left so its
-            // visible square is optically centered inside the fixed 530 box.
-            float artworkOffsetX = cardResource == "Card_StarterPack" ? -6f : 0f;
-            SetRect(artworkRect, new Vector2(artworkOffsetX, 0f), offerCardSize);
+            SetRect(artworkRect, Vector2.zero, offerCardSize - Vector2.one * 36f);
             Image artwork = artworkRect.gameObject.AddComponent<Image>();
             artwork.sprite = cardSprite;
             artwork.type = Image.Type.Simple;
@@ -996,6 +992,60 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         priceText.raycastTarget = false;
         AddTextShadow(priceText, new Color(0.03f, 0.12f, 0.28f, 0.82f),
             new Vector2(0f, -3f));
+    }
+
+    private static Sprite GetCenteredStoreCardSprite(string path)
+    {
+        string key = path + "#CenteredVisibleBounds";
+        if (ResourceSprites.TryGetValue(key, out Sprite cached) && cached != null)
+            return cached;
+
+        Texture2D source = Resources.Load<Texture2D>(path);
+        if (source == null) return null;
+
+        // Imported textures need not have Read/Write enabled. A temporary GPU
+        // copy lets us measure alpha without changing any importer settings.
+        RenderTexture previous = RenderTexture.active;
+        RenderTexture temporary = RenderTexture.GetTemporary(
+            source.width, source.height, 0, RenderTextureFormat.ARGB32);
+        Texture2D readable = null;
+        try
+        {
+            Graphics.Blit(source, temporary);
+            RenderTexture.active = temporary;
+            readable = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
+            readable.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
+            readable.Apply();
+
+            Color32[] pixels = readable.GetPixels32();
+            int minX = source.width, minY = source.height, maxX = -1, maxY = -1;
+            for (int y = 0; y < source.height; y++)
+            {
+                for (int x = 0; x < source.width; x++)
+                {
+                    // Ignore faint drop-shadow fringes when measuring the face.
+                    if (pixels[y * source.width + x].a < 128) continue;
+                    minX = Mathf.Min(minX, x);
+                    minY = Mathf.Min(minY, y);
+                    maxX = Mathf.Max(maxX, x);
+                    maxY = Mathf.Max(maxY, y);
+                }
+            }
+            if (maxX < minX || maxY < minY) return GetResourceSprite(path);
+
+            Sprite sprite = Sprite.Create(source,
+                new Rect(minX, minY, maxX - minX + 1, maxY - minY + 1),
+                new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
+            sprite.name = path.Replace('/', '_') + "_Centered";
+            ResourceSprites[key] = sprite;
+            return sprite;
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(temporary);
+            if (readable != null) Object.Destroy(readable);
+        }
     }
 
     private static Color GetStoreOfferCardColor(string cardResource)
