@@ -888,32 +888,32 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             parent,
             "CoinsOffer",
             "COINS",
-            "COIN PACKS",
-            new Vector2(-210f, 245f),
+            "₺29,99",
+            new Vector2(-220f, 245f),
             "Card_Coins",
             "Icon_Coins");
         CreateStoreOfferCard(
             parent,
             "GemsOffer",
             "GEMS",
-            "PREMIUM CURRENCY",
-            new Vector2(210f, 245f),
+            "₺49,99",
+            new Vector2(220f, 245f),
             "Card_Gems",
             "Icon_Gems");
         CreateStoreOfferCard(
             parent,
             "NoAdsOffer",
             "ADS OFF",
-            "NO ADS\nREMOVE INTERRUPTIONS",
-            new Vector2(-210f, -225f),
+            "₺79,99",
+            new Vector2(-220f, -250f),
             "Card_AdsOff",
             "Icon_AdsOff");
         CreateStoreOfferCard(
             parent,
             "StarterOffer",
             "STARTER PACK",
-            "COINS • GEMS • SKIN",
-            new Vector2(210f, -225f),
+            "₺99,99",
+            new Vector2(220f, -250f),
             "Card_StarterPack",
             "Icon_StarterPack");
 
@@ -921,7 +921,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             parent,
             "StoreIntegrationNote",
             "STORE CONNECTION WILL BE ADDED WITH IAP",
-            new Vector2(0f, -505f),
+            new Vector2(0f, -530f),
             new Vector2(760f, 40f),
             18f,
             new Color(0.72f, 0.86f, 0.94f, 1f),
@@ -933,7 +933,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Transform parent,
         string objectName,
         string title,
-        string subtitle,
+        string price,
         Vector2 position,
         string cardResource,
         string iconResource)
@@ -942,7 +942,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             parent,
             objectName,
             position,
-            new Vector2(395f, 455f),
+            new Vector2(420f, 485f),
             Color.white,
             Color.clear);
 
@@ -955,12 +955,24 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             cardImage.color = Color.white;
         }
 
+        Button cardButton = card.gameObject.AddComponent<Button>();
+        cardButton.targetGraphic = cardImage;
+        ColorBlock cardColors = cardButton.colors;
+        cardColors.normalColor = Color.white;
+        cardColors.highlightedColor = new Color(1f, 1f, 1f, 1f);
+        cardColors.pressedColor = new Color(0.82f, 0.88f, 1f, 1f);
+        cardColors.selectedColor = Color.white;
+        cardColors.fadeDuration = 0.08f;
+        cardButton.colors = cardColors;
+        cardButton.onClick.AddListener(
+            () => ShowToast(title + " PURCHASE COMING SOON"));
+
         Image icon = CreateResourceImage(
             card,
             "OfferIcon",
             "MarketUI/Extras/" + iconResource,
-            new Vector2(0f, 118f),
-            new Vector2(145f, 145f));
+            new Vector2(0f, 125f),
+            new Vector2(165f, 165f));
         icon.preserveAspect = true;
         icon.raycastTarget = false;
 
@@ -968,50 +980,29 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             card,
             "OfferTitle",
             title,
-            new Vector2(0f, 20f),
-            new Vector2(320f, 58f),
-            33f,
+            new Vector2(0f, 18f),
+            new Vector2(370f, 64f),
+            35f,
             Color.white,
             FontStyles.Bold,
             TextAlignmentOptions.Center);
+        titleText.raycastTarget = false;
         AddTextShadow(titleText, new Color(0.03f, 0.12f, 0.28f, 0.72f),
             new Vector2(0f, -3f));
 
-        TMP_Text subtitleText = CreateText(
+        TMP_Text priceText = CreateText(
             card,
-            "OfferSubtitle",
-            subtitle,
-            new Vector2(0f, -39f),
-            new Vector2(318f, 68f),
-            18f,
-            new Color(0.96f, 0.99f, 1f, 1f),
+            "OfferPrice",
+            price,
+            new Vector2(0f, -135f),
+            new Vector2(330f, 70f),
+            31f,
+            Color.white,
             FontStyles.Bold,
             TextAlignmentOptions.Center);
-        subtitleText.enableAutoSizing = true;
-        subtitleText.fontSizeMin = 14f;
-        subtitleText.fontSizeMax = 18f;
-
-        Button button = CreateButton(
-            card,
-            "StoreOfferButton",
-            "COMING SOON",
-            new Vector2(0f, -145f),
-            new Vector2(328f, 104f),
-            Color.white,
-            Color.white,
-            () => ShowToast(title + " COMING SOON"),
-            22f);
-        RemoveButtonShadow(button);
-        Image buttonImage = button.GetComponent<Image>();
-        buttonImage.sprite = roundedSprite;
-        buttonImage.type = Image.Type.Sliced;
-        buttonImage.color = new Color(0.18f, 0.57f, 1f, 1f);
-
-        Shadow[] buttonShadows = button.GetComponents<Shadow>();
-        foreach (Shadow buttonShadow in buttonShadows)
-        {
-            Destroy(buttonShadow);
-        }
+        priceText.raycastTarget = false;
+        AddTextShadow(priceText, new Color(0.03f, 0.12f, 0.28f, 0.82f),
+            new Vector2(0f, -3f));
     }
 
     private void ShowMarketTab(bool showSkins)
