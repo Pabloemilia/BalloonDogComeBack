@@ -985,17 +985,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         if (isStarterPack)
         {
-            Text includesHeader = CreateMarketFontText(
-                card, "IncludesHeader", "INCLUDES",
-                new Vector2(0f, 18f), new Vector2(420f, 48f), 27f);
-            includesHeader.alignment = TextAnchor.MiddleCenter;
-            AddGraphicShadow(includesHeader,
-                new Color(0.03f, 0.12f, 0.28f, 0.68f), new Vector2(0f, -2f));
-
             Text includesText = CreateMarketFontText(
                 card, "IncludesText",
                 "NO ADS\n50 GEMS\n1 RANDOM LEGENDARY SKIN",
-                new Vector2(0f, -82f), new Vector2(450f, 145f), 25f);
+                new Vector2(0f, -42f), new Vector2(450f, 145f), 25f);
             includesText.alignment = TextAnchor.MiddleCenter;
             includesText.horizontalOverflow = HorizontalWrapMode.Wrap;
             includesText.verticalOverflow = VerticalWrapMode.Overflow;
@@ -1008,7 +1001,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         {
             Text priceText = CreateMarketFontText(
                 card, "OfferPrice", price,
-                new Vector2(0f, isStarterPack ? -205f : -158f),
+                new Vector2(0f, isStarterPack ? -170f : -158f),
                 new Vector2(400f, 70f), isStarterPack ? 34f : 37f);
             priceText.horizontalOverflow = HorizontalWrapMode.Overflow;
             priceText.verticalOverflow = VerticalWrapMode.Overflow;
