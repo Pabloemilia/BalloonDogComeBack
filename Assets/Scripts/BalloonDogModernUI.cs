@@ -1002,7 +1002,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.13f, 0.44f, 0.96f, 1f),
             new Color(0.27f, 0.84f, 0.53f, 1f));
 
-        // Fit the design to every safe area; the list can also scroll.
+        // Fit the complete five-row design to every safe area without clipping.
         RectTransform layout = CreateRect("CurrencyLayout", screen.transform);
         SetRect(layout, Vector2.zero, new Vector2(1080f, 1920f));
         layout.gameObject.AddComponent<BalloonDogSettingsFit>();
@@ -1010,15 +1010,23 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(0f, 820f), new Vector2(800f, 160f), 100f);
         CreatePauseTitleAccents(layout, 820f);
 
+        const int packCount = 5;
+        const float listHeight = 1450f;
+        const float edgePadding = 20f;
+        const float rowGap = 15f;
+        const float rowWidth = 1000f;
+        const float rowHeight = (listHeight - 2f * edgePadding
+            - (packCount - 1) * rowGap) / packCount; // 270 for every row
         RectTransform viewport = CreateRect("PackViewport", layout);
-        SetRect(viewport, new Vector2(0f, -5f), new Vector2(1040f, 1450f));
+        SetRect(viewport, new Vector2(0f, -5f), new Vector2(1040f, listHeight));
         Image hitArea = viewport.gameObject.AddComponent<Image>();
         hitArea.color = Color.clear;
         viewport.gameObject.AddComponent<RectMask2D>();
         ScrollRect scroll = viewport.gameObject.AddComponent<ScrollRect>();
         scroll.viewport = viewport;
         scroll.horizontal = false;
-        scroll.vertical = true;
+        scroll.vertical = false;
+        scroll.inertia = false;
         scroll.movementType = ScrollRect.MovementType.Clamped;
         scroll.scrollSensitivity = 35f;
 
@@ -1026,19 +1034,20 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         content.anchorMin = new Vector2(0f, 1f);
         content.anchorMax = new Vector2(1f, 1f);
         content.pivot = new Vector2(0.5f, 1f);
-        content.sizeDelta = new Vector2(0f, 1510f);
+        content.sizeDelta = new Vector2(0f, listHeight);
         content.anchoredPosition = Vector2.zero;
         scroll.content = content;
 
         int[] amounts = gems ? new[] { 50, 150, 350, 750, 1600 }
             : new[] { 500, 1500, 3500, 7500, 16000 };
         string[] prices = { "₺19,99", "₺49,99", "₺99,99", "₺199,99", "₺399,99" };
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < packCount; i++)
         {
             RectTransform row = CreateRect(currency + "Pack" + (i + 1), content);
-            SetRect(row, Vector2.zero, new Vector2(1000f, 285f));
+            SetRect(row, Vector2.zero, new Vector2(rowWidth, rowHeight));
             row.anchorMin = row.anchorMax = new Vector2(0.5f, 1f);
-            row.anchoredPosition = new Vector2(0f, -150f - i * 300f);
+            row.anchoredPosition = new Vector2(0f,
+                -(edgePadding + rowHeight * 0.5f + i * (rowHeight + rowGap)));
             Image background = row.gameObject.AddComponent<Image>();
             background.sprite = GetCenteredStoreCardSprite(
                 "MarketUI/Extras/" + (gems ? "CurrencyRow_Gems" : "CurrencyRow_Coins"));
