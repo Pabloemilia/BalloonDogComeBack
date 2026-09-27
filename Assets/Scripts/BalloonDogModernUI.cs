@@ -902,11 +902,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "Icon_AdsOff");
         CreateStoreOfferCard(
             parent,
-            "StarterOffer",
-            "STARTER PACK",
+            "WatchAdOffer",
+            "WATCH AD",
             new Vector2(270f, -280f),
-            "Card_StarterPack",
-            "Icon_StarterPack");
+            "Card_WatchAd",
+            "Icon_WatchAdGems");
     }
 
     private void CreateStoreOfferCard(
@@ -917,9 +917,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         string cardResource,
         string iconResource)
     {
-        // The clickable and visible outer square is always generated from this
-        // exact rectangle. Source PNG transparency can no longer make one offer
-        // (especially the green Starter Pack) appear smaller than the others.
+        // Every offer uses the same clickable and visible 530 x 530 square,
+        // regardless of the source art's transparent padding.
         Vector2 offerCardSize = new Vector2(530f, 530f);
         RectTransform card = CreateRect(objectName, parent);
         SetRect(card, position, offerCardSize);
@@ -932,7 +931,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         // Trim transparent source padding, then give every visible card the
         // same centered 494 x 494 area inside its 530 x 530 backing.
-        Sprite cardSprite = GetCenteredStoreCardSprite("MarketUI/Extras/" + cardResource);
+        bool isWatchAd = cardResource == "Card_WatchAd";
+        // Reuse the existing green card backing; the Starter Pack offer itself is gone.
+        string artworkResource = isWatchAd ? "Card_StarterPack" : cardResource;
+        Sprite cardSprite = GetCenteredStoreCardSprite("MarketUI/Extras/" + artworkResource);
         if (cardSprite != null)
         {
             RectTransform artworkRect = CreateRect("CardArtwork", card);
@@ -956,53 +958,49 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         cardButton.colors = cardColors;
         if (cardResource == "Card_Coins" || cardResource == "Card_Gems")
             cardButton.onClick.AddListener(() => ShowCurrencyPacks(cardResource == "Card_Gems"));
+        else if (isWatchAd)
+            cardButton.onClick.AddListener(() => ShowToast("REWARDED AD NOT AVAILABLE YET"));
         else
             cardButton.onClick.AddListener(
                 () => ShowToast(title + " PURCHASE COMING SOON"));
 
-        string price = cardResource == "Card_AdsOff" ? "₺79,99"
-            : cardResource == "Card_StarterPack" ? "₺99,99" : null;
+        string price = cardResource == "Card_AdsOff" ? "₺79,99" : null;
         bool hasPrice = price != null;
-        bool isStarterPack = cardResource == "Card_StarterPack";
 
         Image icon = CreateResourceImage(
             card,
             "OfferIcon",
             "MarketUI/Extras/" + iconResource,
-            new Vector2(0f, isStarterPack ? 158f : hasPrice ? 105f : 57f),
-            isStarterPack ? new Vector2(120f, 120f) : new Vector2(155f, 155f));
+            new Vector2(0f, isWatchAd ? 6f : hasPrice ? 105f : 57f),
+            isWatchAd ? new Vector2(265f, 265f) : new Vector2(155f, 155f));
         icon.preserveAspect = true;
         icon.raycastTarget = false;
 
         Text titleText = CreateMarketFontText(
             card, "OfferTitle", title,
-            new Vector2(0f, isStarterPack ? 72f : hasPrice ? -30f : -97f),
-            new Vector2(450f, 74f), isStarterPack ? 37f : 41f);
+            new Vector2(0f, isWatchAd ? 174f : hasPrice ? -30f : -97f),
+            new Vector2(450f, 74f), isWatchAd ? 46f : 41f);
         titleText.horizontalOverflow = HorizontalWrapMode.Overflow;
         titleText.verticalOverflow = VerticalWrapMode.Overflow;
         AddGraphicShadow(titleText, new Color(0.03f, 0.12f, 0.28f, 0.72f),
             new Vector2(0f, -3f));
 
-        if (isStarterPack)
+        if (isWatchAd)
         {
-            Text includesText = CreateMarketFontText(
-                card, "IncludesText",
-                "NO ADS\n50 GEMS\n1 RANDOM LEGENDARY SKIN",
-                new Vector2(0f, -42f), new Vector2(450f, 145f), 25f);
-            includesText.alignment = TextAnchor.MiddleCenter;
-            includesText.horizontalOverflow = HorizontalWrapMode.Wrap;
-            includesText.verticalOverflow = VerticalWrapMode.Overflow;
-            includesText.lineSpacing = 1.08f;
-            AddGraphicShadow(includesText,
-                new Color(0.03f, 0.12f, 0.28f, 0.68f), new Vector2(0f, -2f));
+            Text rewardText = CreateMarketFontText(
+                card, "RewardText", "+5 GEMS",
+                new Vector2(0f, -178f), new Vector2(450f, 80f), 48f);
+            rewardText.alignment = TextAnchor.MiddleCenter;
+            AddGraphicShadow(rewardText,
+                new Color(0.03f, 0.12f, 0.28f, 0.72f), new Vector2(0f, -3f));
         }
 
         if (hasPrice)
         {
             Text priceText = CreateMarketFontText(
                 card, "OfferPrice", price,
-                new Vector2(0f, isStarterPack ? -170f : -158f),
-                new Vector2(400f, 70f), isStarterPack ? 34f : 37f);
+                new Vector2(0f, -158f),
+                new Vector2(400f, 70f), 37f);
             priceText.horizontalOverflow = HorizontalWrapMode.Overflow;
             priceText.verticalOverflow = VerticalWrapMode.Overflow;
             AddGraphicShadow(priceText, new Color(0.03f, 0.12f, 0.28f, 0.82f),
@@ -1200,7 +1198,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 return new Color(0.045f, 0.26f, 0.60f, 1f);
             case "Card_AdsOff":
                 return new Color(0.48f, 0.20f, 0.76f, 1f);
-            case "Card_StarterPack":
+            case "Card_WatchAd":
                 return new Color(0.16f, 0.63f, 0.34f, 1f);
             default:
                 return Color.white;
