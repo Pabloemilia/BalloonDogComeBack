@@ -963,30 +963,53 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         string price = cardResource == "Card_AdsOff" ? "₺79,99"
             : cardResource == "Card_StarterPack" ? "₺99,99" : null;
         bool hasPrice = price != null;
+        bool isStarterPack = cardResource == "Card_StarterPack";
 
         Image icon = CreateResourceImage(
             card,
             "OfferIcon",
             "MarketUI/Extras/" + iconResource,
-            new Vector2(0f, hasPrice ? 105f : 57f),
-            new Vector2(155f, 155f));
+            new Vector2(0f, isStarterPack ? 158f : hasPrice ? 105f : 57f),
+            isStarterPack ? new Vector2(120f, 120f) : new Vector2(155f, 155f));
         icon.preserveAspect = true;
         icon.raycastTarget = false;
 
         Text titleText = CreateMarketFontText(
             card, "OfferTitle", title,
-            new Vector2(0f, hasPrice ? -30f : -97f),
-            new Vector2(450f, 74f), 41f);
+            new Vector2(0f, isStarterPack ? 72f : hasPrice ? -30f : -97f),
+            new Vector2(450f, 74f), isStarterPack ? 37f : 41f);
         titleText.horizontalOverflow = HorizontalWrapMode.Overflow;
         titleText.verticalOverflow = VerticalWrapMode.Overflow;
         AddGraphicShadow(titleText, new Color(0.03f, 0.12f, 0.28f, 0.72f),
             new Vector2(0f, -3f));
 
+        if (isStarterPack)
+        {
+            Text includesHeader = CreateMarketFontText(
+                card, "IncludesHeader", "INCLUDES",
+                new Vector2(0f, 18f), new Vector2(420f, 48f), 27f);
+            includesHeader.alignment = TextAnchor.MiddleCenter;
+            AddGraphicShadow(includesHeader,
+                new Color(0.03f, 0.12f, 0.28f, 0.68f), new Vector2(0f, -2f));
+
+            Text includesText = CreateMarketFontText(
+                card, "IncludesText",
+                "NO ADS\n50 GEMS\n1 RANDOM LEGENDARY SKIN",
+                new Vector2(0f, -82f), new Vector2(450f, 145f), 25f);
+            includesText.alignment = TextAnchor.MiddleCenter;
+            includesText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            includesText.verticalOverflow = VerticalWrapMode.Overflow;
+            includesText.lineSpacing = 1.08f;
+            AddGraphicShadow(includesText,
+                new Color(0.03f, 0.12f, 0.28f, 0.68f), new Vector2(0f, -2f));
+        }
+
         if (hasPrice)
         {
             Text priceText = CreateMarketFontText(
                 card, "OfferPrice", price,
-                new Vector2(0f, -158f), new Vector2(400f, 80f), 37f);
+                new Vector2(0f, isStarterPack ? -205f : -158f),
+                new Vector2(400f, 70f), isStarterPack ? 34f : 37f);
             priceText.horizontalOverflow = HorizontalWrapMode.Overflow;
             priceText.verticalOverflow = VerticalWrapMode.Overflow;
             AddGraphicShadow(priceText, new Color(0.03f, 0.12f, 0.28f, 0.82f),
