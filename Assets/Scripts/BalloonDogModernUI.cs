@@ -1040,10 +1040,26 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             row.anchorMin = row.anchorMax = new Vector2(0.5f, 1f);
             row.anchoredPosition = new Vector2(0f, -145f - i * 275f);
             Image background = row.gameObject.AddComponent<Image>();
-            background.sprite = GetCenteredStoreCardSprite(
-                "MarketUI/Extras/" + (gems ? "Card_Gems" : "Card_Coins"));
+            background.sprite = GetResourceSprite(
+                "MarketUI/Extras/" + (gems ? "CurrencyRow_Gems" : "CurrencyRow_Coins"));
             background.type = Image.Type.Simple;
-            background.raycastTarget = false;
+            background.preserveAspect = false;
+            background.raycastTarget = true;
+
+            int quantity = amounts[i];
+            Button rowButton = row.gameObject.AddComponent<Button>();
+            rowButton.targetGraphic = background;
+            rowButton.navigation = new Navigation { mode = Navigation.Mode.None };
+            ColorBlock rowColors = rowButton.colors;
+            rowColors.normalColor = Color.white;
+            rowColors.highlightedColor = new Color(1f, 1f, 1f, 0.96f);
+            rowColors.pressedColor = new Color(0.78f, 0.84f, 0.92f, 1f);
+            rowColors.selectedColor = Color.white;
+            rowColors.fadeDuration = 0.08f;
+            rowButton.colors = rowColors;
+            rowButton.onClick.AddListener(
+                () => ShowToast(quantity + " " + currency + " - PURCHASE COMING SOON"));
+            row.gameObject.AddComponent<MenuPressScale>();
 
             Image icon = CreateResourceImage(row, "PackLogo",
                 "MarketUI/Extras/" + (gems ? "GemPack_" : "CoinPack_") + (i + 1).ToString("00"),
@@ -1058,14 +1074,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             amount.resizeTextMaxSize = 62;
             AddGraphicShadow(amount, new Color(0.02f, 0.12f, 0.4f, 1f), new Vector2(0f, -4f));
 
-            int quantity = amounts[i];
-            Button priceButton = CreateMarketArtworkButton(row, "PriceButton", prices[i],
-                new Vector2(305f, 0f), new Vector2(300f, 150f),
-                () => ShowToast(quantity + " " + currency + " - PURCHASE COMING SOON"), 43f);
-            Image priceImage = priceButton.GetComponent<Image>();
-            ApplyPauseButtonBackground(priceImage, "SettingsUI/Mint");
-            priceButton.transition = Selectable.Transition.ColorTint;
-            priceButton.gameObject.AddComponent<MenuPressScale>();
+            Text priceText = CreateMarketFontText(row, "PackPrice", prices[i],
+                new Vector2(315f, 0f), new Vector2(280f, 100f), 46f);
+            priceText.resizeTextForBestFit = true;
+            priceText.resizeTextMinSize = 34;
+            priceText.resizeTextMaxSize = 46;
+            AddGraphicShadow(priceText, new Color(0.02f, 0.12f, 0.4f, 0.82f),
+                new Vector2(0f, -3f));
         }
         CreateMarketArtworkButton(layout, "BackToExtras", "BACK",
             new Vector2(0f, -820f), new Vector2(530f, 190f), ReturnToMarketExtras, 60f);
