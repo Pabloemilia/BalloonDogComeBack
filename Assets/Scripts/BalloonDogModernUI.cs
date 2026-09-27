@@ -997,72 +997,78 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private GameObject BuildCurrencyPacksScreen(bool gems)
     {
         string currency = gems ? "GEMS" : "COINS";
-        string resource = gems ? "Card_Gems" : "Card_Coins";
         GameObject screen = CreateScreen(
             gems ? "ModernGemPacksScreen" : "ModernCoinPacksScreen",
             new Color(0.13f, 0.44f, 0.96f, 1f),
             new Color(0.27f, 0.84f, 0.53f, 1f));
-        CreatePauseDogDecoration(screen.transform, "PackDogLeft",
-            new Vector2(-445f, 760f), new Vector2(175f, 160f), -9f,
-            0.10f, 8f, 9f, 19f, 0.21f, 1f);
-        CreatePauseDogDecoration(screen.transform, "PackDogRight",
-            new Vector2(450f, -580f), new Vector2(175f, 160f), 12f,
-            0.10f, 8f, 9f, 20f, 0.65f, 1f);
-        CreateMarketFontText(screen.transform, "CurrencyTitle", currency,
-            new Vector2(0f, 825f), new Vector2(800f, 170f), 100f);
-        CreatePauseTitleAccents(screen.transform, 825f);
 
-        int[] amounts = gems
-            ? new[] { 50, 150, 350, 750, 1600 }
+        // Fit the design to every safe area; the list can also scroll.
+        RectTransform layout = CreateRect("CurrencyLayout", screen.transform);
+        SetRect(layout, Vector2.zero, new Vector2(1080f, 1920f));
+        layout.gameObject.AddComponent<BalloonDogSettingsFit>();
+        CreateMarketFontText(layout, "CurrencyTitle", currency,
+            new Vector2(0f, 820f), new Vector2(800f, 160f), 100f);
+        CreatePauseTitleAccents(layout, 820f);
+
+        RectTransform viewport = CreateRect("PackViewport", layout);
+        SetRect(viewport, new Vector2(0f, -10f), new Vector2(1020f, 1390f));
+        Image hitArea = viewport.gameObject.AddComponent<Image>();
+        hitArea.color = Color.clear;
+        viewport.gameObject.AddComponent<RectMask2D>();
+        ScrollRect scroll = viewport.gameObject.AddComponent<ScrollRect>();
+        scroll.viewport = viewport;
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 35f;
+
+        RectTransform content = CreateRect("PackRows", viewport);
+        content.anchorMin = new Vector2(0f, 1f);
+        content.anchorMax = new Vector2(1f, 1f);
+        content.pivot = new Vector2(0.5f, 1f);
+        content.sizeDelta = new Vector2(0f, 1390f);
+        content.anchoredPosition = Vector2.zero;
+        scroll.content = content;
+
+        int[] amounts = gems ? new[] { 50, 150, 350, 750, 1600 }
             : new[] { 500, 1500, 3500, 7500, 16000 };
-        // Display-only sample prices; no payment or currency grant is performed.
         string[] prices = { "₺19,99", "₺49,99", "₺99,99", "₺199,99", "₺399,99" };
-        Vector2[] positions =
+        for (int i = 0; i < 5; i++)
         {
-            new Vector2(-215f, 430f), new Vector2(215f, 430f),
-            new Vector2(-215f, 10f), new Vector2(215f, 10f),
-            new Vector2(0f, -410f)
-        };
-        for (int i = 0; i < amounts.Length; i++)
-        {
-            RectTransform card = CreateRect(currency + "Pack" + (i + 1), screen.transform);
-            SetRect(card, positions[i], new Vector2(390f, 390f));
-            Image backing = card.gameObject.AddComponent<Image>();
-            backing.sprite = GetRoundedSprite();
-            backing.type = Image.Type.Sliced;
-            backing.color = GetStoreOfferCardColor(resource);
+            RectTransform row = CreateRect(currency + "Pack" + (i + 1), content);
+            SetRect(row, Vector2.zero, new Vector2(970f, 242f));
+            row.anchorMin = row.anchorMax = new Vector2(0.5f, 1f);
+            row.anchoredPosition = new Vector2(0f, -145f - i * 275f);
+            Image background = row.gameObject.AddComponent<Image>();
+            background.sprite = GetCenteredStoreCardSprite(
+                "MarketUI/Extras/" + (gems ? "Card_Gems" : "Card_Coins"));
+            background.type = Image.Type.Simple;
+            background.raycastTarget = false;
 
-            Sprite sprite = GetCenteredStoreCardSprite("MarketUI/Extras/" + resource);
-            if (sprite != null)
-            {
-                RectTransform artRect = CreateRect("CardArtwork", card);
-                SetRect(artRect, Vector2.zero, new Vector2(364f, 364f));
-                Image art = artRect.gameObject.AddComponent<Image>();
-                art.sprite = sprite;
-                art.preserveAspect = false;
-                art.raycastTarget = false;
-            }
+            Image icon = CreateResourceImage(row, "PackLogo",
+                "MarketUI/Extras/" + (gems ? "GemPack_" : "CoinPack_") + (i + 1).ToString("00"),
+                new Vector2(-325f, 0f), new Vector2(260f, 250f));
+            icon.preserveAspect = true;
+            icon.raycastTarget = false;
+            Text amount = CreateMarketFontText(row, "PackAmount",
+                amounts[i].ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")),
+                new Vector2(-25f, 0f), new Vector2(300f, 100f), 62f);
+            amount.resizeTextForBestFit = true;
+            amount.resizeTextMinSize = 42;
+            amount.resizeTextMaxSize = 62;
+            AddGraphicShadow(amount, new Color(0.02f, 0.12f, 0.4f, 1f), new Vector2(0f, -4f));
 
-            Button button = card.gameObject.AddComponent<Button>();
-            button.targetGraphic = backing;
-            button.navigation = new Navigation { mode = Navigation.Mode.None };
-            int amount = amounts[i];
-            button.onClick.AddListener(
-                () => ShowToast(amount + " " + currency + " PURCHASE COMING SOON"));
-
-            // Keep a blank, centered slot for the future unique pack logo.
-            RectTransform logoSlot = CreateRect("FuturePackLogo", card);
-            SetRect(logoSlot, new Vector2(0f, 18f), new Vector2(125f, 125f));
-            CreateMarketFontText(card, "PackTitle", currency,
-                new Vector2(0f, 122f), new Vector2(330f, 58f), 38f);
-            CreateMarketFontText(card, "PackAmount", amount.ToString("N0"),
-                new Vector2(0f, -68f), new Vector2(330f, 58f), 39f);
-            CreateMarketFontText(card, "PackPrice", prices[i],
-                new Vector2(0f, -130f), new Vector2(330f, 58f), 33f);
+            int quantity = amounts[i];
+            Button priceButton = CreateMarketArtworkButton(row, "PriceButton", prices[i],
+                new Vector2(305f, 0f), new Vector2(300f, 150f),
+                () => ShowToast(quantity + " " + currency + " - PURCHASE COMING SOON"), 43f);
+            Image priceImage = priceButton.GetComponent<Image>();
+            ApplyPauseButtonBackground(priceImage, "SettingsUI/Mint");
+            priceButton.transition = Selectable.Transition.ColorTint;
+            priceButton.gameObject.AddComponent<MenuPressScale>();
         }
-        CreateMarketArtworkButton(screen.transform, "BackToExtras", "BACK",
-            new Vector2(0f, -885f), new Vector2(530f, 230f),
-            ReturnToMarketExtras, 55f);
+        CreateMarketArtworkButton(layout, "BackToExtras", "BACK",
+            new Vector2(0f, -820f), new Vector2(530f, 190f), ReturnToMarketExtras, 60f);
         return screen;
     }
 
