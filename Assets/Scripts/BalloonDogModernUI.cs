@@ -634,7 +634,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         collectionLabel.alignment = TextAnchor.MiddleLeft;
         collectionLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
         collectionLabel.verticalOverflow = VerticalWrapMode.Overflow;
-        collectionLabel.rectTransform.anchoredPosition = new Vector2(75f, 4f);
+        collectionLabel.rectTransform.anchoredPosition = new Vector2(69f, 4f);
         collectionLabel.rectTransform.sizeDelta = new Vector2(340f, 150f);
 
         ShowMarketTab(true);
@@ -926,11 +926,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Image cardImage = card.gameObject.AddComponent<Image>();
         cardImage.sprite = GetRoundedSprite();
         cardImage.type = Image.Type.Sliced;
-        cardImage.color = GetStoreOfferCardColor(cardResource);
+        // Keep the shared 530 x 530 hit area but hide the flat square backing.
+        // Only the identically sized rounded artwork remains visible.
+        cardImage.color = Color.clear;
         cardImage.raycastTarget = true;
 
         // Trim transparent source padding, then give every visible card the
-        // same centered 494 x 494 area inside its 530 x 530 backing.
+        // same centered 494 x 494 area inside its 530 x 530 hit area.
         bool isWatchAd = cardResource == "Card_WatchAd";
         // Reuse the existing green card backing; the Starter Pack offer itself is gone.
         string artworkResource = isWatchAd ? "Card_StarterPack" : cardResource;
@@ -972,7 +974,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "OfferIcon",
             "MarketUI/Extras/" + iconResource,
             new Vector2(0f, isWatchAd ? 6f : hasPrice ? 105f : 57f),
-            isWatchAd ? new Vector2(265f, 265f) : new Vector2(155f, 155f));
+            isWatchAd ? new Vector2(300f, 300f)
+                : cardResource == "Card_Coins" || cardResource == "Card_Gems"
+                    ? new Vector2(180f, 180f) : new Vector2(155f, 155f));
         icon.preserveAspect = true;
         icon.raycastTarget = false;
 
@@ -989,7 +993,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         {
             Text rewardText = CreateMarketFontText(
                 card, "RewardText", "+5 GEMS",
-                new Vector2(0f, -178f), new Vector2(450f, 80f), 48f);
+                new Vector2(0f, -165f), new Vector2(450f, 80f), 48f);
             rewardText.alignment = TextAnchor.MiddleCenter;
             AddGraphicShadow(rewardText,
                 new Color(0.03f, 0.12f, 0.28f, 0.72f), new Vector2(0f, -3f));
