@@ -1040,7 +1040,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             row.anchorMin = row.anchorMax = new Vector2(0.5f, 1f);
             row.anchoredPosition = new Vector2(0f, -150f - i * 300f);
             Image background = row.gameObject.AddComponent<Image>();
-            background.sprite = GetResourceSprite(
+            background.sprite = GetCenteredStoreCardSprite(
                 "MarketUI/Extras/" + (gems ? "CurrencyRow_Gems" : "CurrencyRow_Coins"));
             background.type = Image.Type.Simple;
             background.preserveAspect = false;
@@ -1061,17 +1061,20 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 () => ShowToast(quantity + " " + currency + " - PURCHASE COMING SOON"));
             row.gameObject.AddComponent<MenuPressScale>();
 
-            // All three visual columns share the same vertical center line.
-            // The logo stays inside a 220 x 210 safe box, leaving at least
-            // 37 px above and below inside the enlarged 285 px row.
+            // Center visible artwork, not the transparent source canvas.
+            // Crop both row and logo to their alpha bounds before alignment.
             Image icon = CreateResourceImage(row, "PackLogo",
                 "MarketUI/Extras/" + (gems ? "GemPack_" : "CoinPack_") + (i + 1).ToString("00"),
                 new Vector2(-350f, 0f), new Vector2(220f, 210f));
+            icon.sprite = GetCenteredStoreCardSprite(
+                "MarketUI/Extras/" + (gems ? "GemPack_" : "CoinPack_") + (i + 1).ToString("00"));
             icon.preserveAspect = true;
             icon.raycastTarget = false;
             Text amount = CreateMarketFontText(row, "PackAmount",
                 amounts[i].ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")),
                 new Vector2(-25f, 0f), new Vector2(300f, 110f), 62f);
+            amount.alignByGeometry = true;
+            amount.alignment = TextAnchor.MiddleCenter;
             amount.resizeTextForBestFit = true;
             amount.resizeTextMinSize = 42;
             amount.resizeTextMaxSize = 62;
@@ -1079,6 +1082,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
             Text priceText = CreateMarketFontText(row, "PackPrice", prices[i],
                 new Vector2(320f, 0f), new Vector2(285f, 110f), 46f);
+            priceText.alignByGeometry = true;
+            priceText.alignment = TextAnchor.MiddleCenter;
             priceText.resizeTextForBestFit = true;
             priceText.resizeTextMinSize = 34;
             priceText.resizeTextMaxSize = 46;
