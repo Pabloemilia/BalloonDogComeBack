@@ -1011,7 +1011,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreatePauseTitleAccents(layout, 820f);
 
         RectTransform viewport = CreateRect("PackViewport", layout);
-        SetRect(viewport, new Vector2(0f, -10f), new Vector2(1020f, 1390f));
+        SetRect(viewport, new Vector2(0f, -5f), new Vector2(1040f, 1450f));
         Image hitArea = viewport.gameObject.AddComponent<Image>();
         hitArea.color = Color.clear;
         viewport.gameObject.AddComponent<RectMask2D>();
@@ -1026,7 +1026,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         content.anchorMin = new Vector2(0f, 1f);
         content.anchorMax = new Vector2(1f, 1f);
         content.pivot = new Vector2(0.5f, 1f);
-        content.sizeDelta = new Vector2(0f, 1390f);
+        content.sizeDelta = new Vector2(0f, 1510f);
         content.anchoredPosition = Vector2.zero;
         scroll.content = content;
 
@@ -1036,9 +1036,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         for (int i = 0; i < 5; i++)
         {
             RectTransform row = CreateRect(currency + "Pack" + (i + 1), content);
-            SetRect(row, Vector2.zero, new Vector2(970f, 242f));
+            SetRect(row, Vector2.zero, new Vector2(1000f, 285f));
             row.anchorMin = row.anchorMax = new Vector2(0.5f, 1f);
-            row.anchoredPosition = new Vector2(0f, -145f - i * 275f);
+            row.anchoredPosition = new Vector2(0f, -150f - i * 300f);
             Image background = row.gameObject.AddComponent<Image>();
             background.sprite = GetResourceSprite(
                 "MarketUI/Extras/" + (gems ? "CurrencyRow_Gems" : "CurrencyRow_Coins"));
@@ -1061,21 +1061,24 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 () => ShowToast(quantity + " " + currency + " - PURCHASE COMING SOON"));
             row.gameObject.AddComponent<MenuPressScale>();
 
+            // All three visual columns share the same vertical center line.
+            // The logo stays inside a 220 x 210 safe box, leaving at least
+            // 37 px above and below inside the enlarged 285 px row.
             Image icon = CreateResourceImage(row, "PackLogo",
                 "MarketUI/Extras/" + (gems ? "GemPack_" : "CoinPack_") + (i + 1).ToString("00"),
-                new Vector2(-325f, 0f), new Vector2(260f, 250f));
+                new Vector2(-350f, 0f), new Vector2(220f, 210f));
             icon.preserveAspect = true;
             icon.raycastTarget = false;
             Text amount = CreateMarketFontText(row, "PackAmount",
                 amounts[i].ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")),
-                new Vector2(-25f, 0f), new Vector2(300f, 100f), 62f);
+                new Vector2(-25f, 0f), new Vector2(300f, 110f), 62f);
             amount.resizeTextForBestFit = true;
             amount.resizeTextMinSize = 42;
             amount.resizeTextMaxSize = 62;
             AddGraphicShadow(amount, new Color(0.02f, 0.12f, 0.4f, 1f), new Vector2(0f, -4f));
 
             Text priceText = CreateMarketFontText(row, "PackPrice", prices[i],
-                new Vector2(315f, 0f), new Vector2(280f, 100f), 46f);
+                new Vector2(320f, 0f), new Vector2(285f, 110f), 46f);
             priceText.resizeTextForBestFit = true;
             priceText.resizeTextMinSize = 34;
             priceText.resizeTextMaxSize = 46;
