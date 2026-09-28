@@ -662,9 +662,17 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         Button button = rect.gameObject.AddComponent<Button>();
         button.targetGraphic = artwork;
-        button.transition = Selectable.Transition.None;
+        button.transition = Selectable.Transition.ColorTint;
+        ColorBlock colors = button.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = Color.white;
+        colors.pressedColor = new Color(0.78f, 0.84f, 0.92f, 1f);
+        colors.selectedColor = Color.white;
+        colors.fadeDuration = 0.08f;
+        button.colors = colors;
         button.navigation = new Navigation { mode = Navigation.Mode.None };
         if (action != null) button.onClick.AddListener(action);
+        rect.gameObject.AddComponent<MenuPressScale>();
 
         CreateMarketFontText(rect, "Label", label,
             Vector2.zero, size - new Vector2(40f, 20f), fontSize);
