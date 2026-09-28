@@ -182,3 +182,6 @@ Assets/Resources/PauseMenu/Buttons/*.png                       -filter -diff -me
 Assets/Resources/GameOver/*.png -filter -diff -merge -text
 # Market Extras runtime artwork uses regular Git blobs.
 Assets/Resources/MarketUI/Extras/*.png -filter -diff -merge -text
+
+# Skin case UI artwork uses regular Git blobs.
+Assets/Resources/MarketUI/SkinCase/*.png -filter -diff -merge -text
