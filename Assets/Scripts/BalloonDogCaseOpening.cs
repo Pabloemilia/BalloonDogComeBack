@@ -61,6 +61,10 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         open.colors = colors;
         open.onClick.AddListener(OpenCase);
         buttonArt.gameObject.AddComponent<MenuPressScale>();
+        TMP_Text openLabel = Label(buttonArt.transform, "OPEN CASE", new Vector2(0f, -20f),
+            new Vector2(650f, 150f), 70f);
+        openLabel.outlineColor = new Color32(91, 35, 62, 255);
+        openLabel.outlineWidth = 0.18f;
         status = Label(machine, "", new Vector2(0f, -549f), new Vector2(780f, 59f), 25f);
         ShowIdle();
         Refresh();
