@@ -7,7 +7,7 @@ using UnityEngine;
 /// </summary>
 public static class BalloonDogCampaign
 {
-    public const int LevelCount = 12;
+    public const int LevelCount = 1;
 
     private const string SelectedLevelKey = "BalloonDog.Campaign.SelectedLevel";
     private const string UnlockedLevelKey = "BalloonDog.Campaign.UnlockedLevel";
@@ -81,13 +81,7 @@ public static class BalloonDogCampaign
 
     public static string GetLevelName(int level)
     {
-        string[] names =
-        {
-            "FIRST FLIGHT", "PURPLE PARK", "WINDY ROAD", "BALLOON BRIDGE",
-            "ORANGE RUSH", "CLOUD LANE", "TWISTY TOWN", "AIR GARDEN",
-            "NEON TRACK", "SKY SPRINT", "MASTER RUN", "BALLOON CROWN"
-        };
-        return names[Mathf.Clamp(level, 1, LevelCount) - 1];
+        return "OBSTACLE RUN";
     }
 
     private static void EnsureInitialized()

@@ -164,8 +164,7 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
             : 0f;
         progressFill.fillAmount = progress;
         progressLabel.text =
-            "LEVEL " + BalloonDogCampaign.CurrentLevel +
-            "  •  " + Mathf.RoundToInt(progress * 100f) + "%";
+            "OBSTACLE RUN  •  " + Mathf.RoundToInt(progress * 100f) + "%";
     }
 
     private void SelectPrevious()
@@ -210,9 +209,7 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
         if (selectorLabel != null)
         {
             int level = BalloonDogCampaign.CurrentLevel;
-            selectorLabel.text =
-                "LEVEL " + level + " / " + BalloonDogCampaign.LevelCount +
-                "\n" + BalloonDogCampaign.GetLevelName(level);
+            selectorLabel.text = "OBSTACLE RUN\nONE COURSE";
         }
 
         if (nextLevelLabel != null)
@@ -249,9 +246,7 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
         selector = CreateRect("CampaignLevelSelector", safeRoot).gameObject;
         SetRect(selector.GetComponent<RectTransform>(), new Vector2(0f, 495f), new Vector2(850f, 116f));
         CreatePanel(selector.transform, new Vector2(0f, 0f), new Vector2(600f, 116f), DeepPurple);
-        selectorLabel = CreateText(selector.transform, "LevelLabel", "LEVEL 1", Vector2.zero, new Vector2(550f, 104f), 27f, Color.white);
-        CreateButton(selector.transform, "PreviousLevel", "", new Vector2(-370f, 0f), new Vector2(104f, 104f), DeepPurple, Color.white, SelectPrevious);
-        CreateButton(selector.transform, "NextLevel", "", new Vector2(370f, 0f), new Vector2(104f, 104f), Orange, new Color(0.15f, 0.05f, 0.01f), SelectNext);
+        selectorLabel = CreateText(selector.transform, "LevelLabel", "OBSTACLE RUN\nONE COURSE", Vector2.zero, new Vector2(760f, 104f), 27f, Color.white);
 
         gameplayProgress = CreateRect("CampaignGameplayProgress", safeRoot).gameObject;
         SetRect(gameplayProgress.GetComponent<RectTransform>(), new Vector2(0f, 955f), new Vector2(430f, 104f));
@@ -584,3 +579,4 @@ public sealed class BalloonDogCampaignFinish : MonoBehaviour
         manager?.TriggerLevelComplete(score.CurrentScore);
     }
 }
+
