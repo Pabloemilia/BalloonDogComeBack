@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 1735deaef57d58c4d8b2c92698d7e090
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 225593
+  packageName: LOW POLY ASSETS - Animated Traps & Obstacles + VFX
+  packageVersion: 1.0
+  assetPath: Assets/Downtown Game Studio/LOW POLY ASSETS - Animated Traps & Obstacles
+    + VFX/Scripts/SmokeControl.cs
+  uploadId: 512112
