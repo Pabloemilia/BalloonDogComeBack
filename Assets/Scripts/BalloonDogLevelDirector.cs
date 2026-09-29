@@ -10,12 +10,12 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
 {
     private const string RuntimeName = "__BalloonDogLevelDirector";
     private const string RuntimeLevelName = "BalloonDog_Level";
-    private const string ModelRoot = "Models/ObstaclePack/";
+    private const string ModelRoot = "GeneratedObstacles/";
     private const float RoadHalfWidth = 4.65f;
     private static readonly float[] Lanes = { -2.65f, 0f, 2.65f };
     private static readonly Dictionary<string, Material> Materials = new Dictionary<string, Material>();
 
-    private enum PackObstacle { Bomb, Cylinder, Gear, SpikeTrap, Spiral }
+    private enum PackObstacle { Obstacle01, Obstacle06, Obstacle11, Obstacle16, Obstacle21 }
 
     private readonly struct CourseRow
     {
@@ -31,16 +31,16 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
 
     private static readonly CourseRow[] Course =
     {
-        new CourseRow(30f, 1, PackObstacle.Bomb,      PackObstacle.Cylinder),
-        new CourseRow(45f, 2, PackObstacle.SpikeTrap, PackObstacle.Gear),
-        new CourseRow(60f, 0, PackObstacle.Spiral,    PackObstacle.Bomb),
-        new CourseRow(75f, 1, PackObstacle.Cylinder,  PackObstacle.SpikeTrap),
-        new CourseRow(91f, 2, PackObstacle.Gear,      PackObstacle.Spiral),
-        new CourseRow(107f,0, PackObstacle.Bomb,      PackObstacle.Cylinder),
-        new CourseRow(123f,1, PackObstacle.SpikeTrap, PackObstacle.Gear),
-        new CourseRow(139f,2, PackObstacle.Spiral,    PackObstacle.Bomb),
-        new CourseRow(155f,0, PackObstacle.Cylinder,  PackObstacle.SpikeTrap),
-        new CourseRow(171f,1, PackObstacle.Gear,      PackObstacle.Spiral)
+        new CourseRow(30f, 1, PackObstacle.Obstacle01, PackObstacle.Obstacle06),
+        new CourseRow(45f, 2, PackObstacle.Obstacle11, PackObstacle.Obstacle16),
+        new CourseRow(60f, 0, PackObstacle.Obstacle21, PackObstacle.Obstacle01),
+        new CourseRow(75f, 1, PackObstacle.Obstacle06, PackObstacle.Obstacle11),
+        new CourseRow(91f, 2, PackObstacle.Obstacle16, PackObstacle.Obstacle21),
+        new CourseRow(107f,0, PackObstacle.Obstacle01, PackObstacle.Obstacle06),
+        new CourseRow(123f,1, PackObstacle.Obstacle11, PackObstacle.Obstacle16),
+        new CourseRow(139f,2, PackObstacle.Obstacle21, PackObstacle.Obstacle01),
+        new CourseRow(155f,0, PackObstacle.Obstacle06, PackObstacle.Obstacle11),
+        new CourseRow(171f,1, PackObstacle.Obstacle16, PackObstacle.Obstacle21)
     };
 
     public static int CurrentLevel => 1;
@@ -100,7 +100,7 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
         root.transform.SetParent(parent, false);
         root.transform.position = new Vector3(Lanes[lane], 0f, z);
 
-        bool spikes = type == PackObstacle.SpikeTrap;
+        bool spikes = type == PackObstacle.Obstacle11;
         BoxCollider hitbox = root.AddComponent<BoxCollider>();
         hitbox.isTrigger = spikes;
         hitbox.center = spikes ? new Vector3(0f, 0.32f, 0f) : new Vector3(0f, 0.9f, 0f);
@@ -112,12 +112,12 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
         GameObject visual = LoadVisual(type, root.transform);
         FitVisualToLane(visual, type);
 
-        if (type == PackObstacle.Gear || type == PackObstacle.Spiral)
+        if (type == PackObstacle.Obstacle16 || type == PackObstacle.Obstacle21)
             root.AddComponent<RotatingObstacle>().Configure(Vector3.up, 48f + variant * 3f, true);
-        else if (type == PackObstacle.Bomb && variant % 2 == 1)
+        else if (type == PackObstacle.Obstacle01 && variant % 2 == 1)
             root.AddComponent<MovingObstacle>().Configure(
                 MovingObstacle.MotionMode.Vertical, 0.35f, 0.28f, variant * 0.13f, RoadHalfWidth);
-        else if (type == PackObstacle.Cylinder && variant % 3 == 0)
+        else if (type == PackObstacle.Obstacle06 && variant % 3 == 0)
             root.AddComponent<MovingObstacle>().Configure(
                 MovingObstacle.MotionMode.ForwardBackward, 0.65f, 0.22f, variant * 0.11f, RoadHalfWidth);
     }
@@ -125,7 +125,7 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
     private static GameObject LoadVisual(PackObstacle type, Transform parent)
     {
         string name = type.ToString();
-        GameObject source = Resources.Load<GameObject>(ModelRoot + name + "/" + name);
+        GameObject source = Resources.Load<GameObject>(ModelRoot + name);
         GameObject visual;
         if (source != null)
         {
@@ -136,8 +136,8 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
         }
         else
         {
-            Debug.LogError("Obstacle model missing from Resources: " + ModelRoot + name + "/" + name);
-            visual = GameObject.CreatePrimitive(type == PackObstacle.Cylinder ? PrimitiveType.Cylinder : PrimitiveType.Cube);
+            Debug.LogError("Obstacle model missing from Resources: " + ModelRoot + name);
+            visual = GameObject.CreatePrimitive(type == PackObstacle.Obstacle06 ? PrimitiveType.Cylinder : PrimitiveType.Cube);
             visual.name = name + "Fallback";
             visual.transform.SetParent(parent, false);
             Destroy(visual.GetComponent<Collider>());
@@ -159,8 +159,8 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
         Bounds bounds = renderers[0].bounds;
         for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
 
-        float targetWidth = type == PackObstacle.SpikeTrap ? 1.85f : 1.55f;
-        float targetHeight = type == PackObstacle.SpikeTrap ? 0.55f : type == PackObstacle.Gear ? 1.55f : 1.75f;
+        float targetWidth = type == PackObstacle.Obstacle11 ? 1.85f : 1.55f;
+        float targetHeight = type == PackObstacle.Obstacle11 ? 0.55f : type == PackObstacle.Obstacle16 ? 1.55f : 1.75f;
         float width = Mathf.Max(bounds.size.x, bounds.size.z);
         float scale = Mathf.Min(targetWidth / Mathf.Max(0.01f, width), targetHeight / Mathf.Max(0.01f, bounds.size.y));
         visual.transform.localScale = Vector3.one * scale;
@@ -331,4 +331,3 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
         return material;
     }
 }
-
