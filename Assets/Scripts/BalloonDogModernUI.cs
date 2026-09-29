@@ -733,93 +733,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildLockedSkinMarketGrid(Transform parent)
     {
-        RectTransform machine = CreateCard(
-            parent, "MysteryCaseMachine", new Vector2(0f, -5f),
-            new Vector2(820f, 1050f), new Color(0.025f, 0.16f, 0.34f, 0.97f),
-            new Color(0.15f, 0.78f, 1f, 0.82f));
-
-        CreateMarketFontText(machine, "CaseTitle", "MYSTERY SKIN CASE",
-            new Vector2(0f, 455f), new Vector2(720f, 70f), 42f);
-        CreateMarketFontText(machine, "CaseSubtitle", "ONE OPENING, ONE RANDOM SKIN",
-            new Vector2(0f, 402f), new Vector2(720f, 44f), 22f);
-
-        RectTransform viewport = CreateRect("CaseReelViewport", machine);
-        SetRect(viewport, new Vector2(0f, 165f), new Vector2(780f, 350f));
-        Image viewportImage = viewport.gameObject.AddComponent<Image>();
-        viewportImage.sprite = GetRoundedSprite();
-        viewportImage.type = Image.Type.Sliced;
-        viewportImage.color = new Color(0.015f, 0.09f, 0.23f, 0.98f);
-        viewport.gameObject.AddComponent<RectMask2D>();
-        Outline viewportOutline = viewport.gameObject.AddComponent<Outline>();
-        viewportOutline.effectColor = new Color(0.12f, 0.72f, 1f, 0.95f);
-        viewportOutline.effectDistance = new Vector2(3f, -3f);
-
-        wheelTransform = CreateRect("CaseReel", viewport);
-        SetRect(wheelTransform, Vector2.zero, new Vector2(1925f, 310f));
-        int[] rarityOrder = { 0, 3, 6, 9, 12, 3, 6 };
-        for (int index = 0; index < rarityOrder.Length; index++)
-        {
-            int rarityIndex = rarityOrder[index];
-            GetMarketRarity(rarityIndex, out string rarity, out Color fill, out Color outline);
-            CreateLockedSkinSlot(
-                wheelTransform, rarityIndex, rarity, fill, outline,
-                new Vector2((index - 3) * 275f, 0f));
-        }
-
-        caseSelectionFrame = CreateRect("CaseSelectionFrame", viewport);
-        SetRect(caseSelectionFrame, Vector2.zero, new Vector2(270f, 220f));
-        Image selection = caseSelectionFrame.gameObject.AddComponent<Image>();
-        selection.sprite = GetRoundedSprite();
-        selection.type = Image.Type.Sliced;
-        selection.color = new Color(1f, 0.72f, 0.08f, 0.12f);
-        selection.raycastTarget = false;
-        Outline selectionOutline = caseSelectionFrame.gameObject.AddComponent<Outline>();
-        selectionOutline.effectColor = new Color(1f, 0.86f, 0.28f, 1f);
-        selectionOutline.effectDistance = new Vector2(6f, -6f);
-        CreateImage(caseSelectionFrame, "TopPointer", new Vector2(0f, 135f),
-            new Vector2(42f, 42f), new Color(1f, 0.82f, 0.22f, 1f), true);
-        CreateImage(caseSelectionFrame, "BottomPointer", new Vector2(0f, -135f),
-            new Vector2(42f, 42f), new Color(1f, 0.82f, 0.22f, 1f), true);
-
-        string[] rarityNames = { "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY" };
-        Color[] rarityColors = { MarketCommon, MarketUncommon, MarketRare, MarketEpic, MarketLegendary };
-        for (int index = 0; index < rarityNames.Length; index++)
-        {
-            float x = (index - 2) * 150f;
-            CreateImage(machine, "RarityDot_" + rarityNames[index],
-                new Vector2(x, -62f), new Vector2(42f, 42f), rarityColors[index], true);
-            CreateMarketFontText(machine, "RarityLabel_" + rarityNames[index], rarityNames[index],
-                new Vector2(x, -105f), new Vector2(145f, 34f), 15f);
-        }
-
-        RectTransform openRect = CreateRect("OpenCaseButton", machine);
-        SetRect(openRect, new Vector2(0f, -310f), new Vector2(730f, 315f));
-        Image openArtwork = openRect.gameObject.AddComponent<Image>();
-        openArtwork.sprite = GetResourceSprite("MarketUI/SkinCase/OpenCaseButton");
-        openArtwork.type = Image.Type.Simple;
-        openArtwork.preserveAspect = true;
-        openArtwork.color = Color.white;
-        wheelButton = openRect.gameObject.AddComponent<Button>();
-        wheelButton.targetGraphic = openArtwork;
-        wheelButton.transition = Selectable.Transition.ColorTint;
-        ColorBlock openColors = wheelButton.colors;
-        openColors.normalColor = Color.white;
-        openColors.highlightedColor = Color.white;
-        openColors.pressedColor = new Color(0.76f, 0.82f, 0.92f, 1f);
-        openColors.selectedColor = Color.white;
-        openColors.disabledColor = new Color(0.45f, 0.50f, 0.58f, 0.70f);
-        openColors.fadeDuration = 0.07f;
-        wheelButton.colors = openColors;
-        wheelButton.navigation = new Navigation { mode = Navigation.Mode.None };
-        wheelButton.onClick.AddListener(StartWheelUnlock);
-        openRect.gameObject.AddComponent<MenuPressScale>();
-
-        wheelNextText = CreateText(machine, "CaseStatus", "ONE OPENING  •  300 COINS",
-            new Vector2(0f, -485f), new Vector2(720f, 48f), 24f,
-            new Color(0.76f, 0.94f, 1f, 1f), FontStyles.Bold,
-            TextAlignmentOptions.Center);
-        BalloonDogTitanFont.Apply(wheelNextText);
-        wheelButtonLabel = wheelNextText;
+        parent.gameObject.AddComponent<BalloonDogCaseOpening>().Build();
     }
 
     private static void GetMarketRarity(
@@ -1309,7 +1223,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             Image shelvesImage = shelvesTransform.GetComponent<Image>();
             if (shelvesImage != null)
             {
-                shelvesImage.enabled = showSkins;
+                shelvesImage.enabled = false; // The case provides its own glossy artwork.
             }
         }
 
@@ -4074,3 +3988,4 @@ public sealed class BalloonDogSettingsFit : MonoBehaviour
         transform.localScale = new Vector3(scale, scale, 1f);
     }
 }
+
