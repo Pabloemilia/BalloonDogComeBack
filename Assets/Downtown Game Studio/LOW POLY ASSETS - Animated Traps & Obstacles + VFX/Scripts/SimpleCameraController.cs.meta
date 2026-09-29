@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: be76e5f14cfee674cb30b491fb72b09b
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 225593
+  packageName: LOW POLY ASSETS - Animated Traps & Obstacles + VFX
+  packageVersion: 1.0
+  assetPath: Assets/Downtown Game Studio/LOW POLY ASSETS - Animated Traps & Obstacles
+    + VFX/Scripts/SimpleCameraController.cs
+  uploadId: 512112

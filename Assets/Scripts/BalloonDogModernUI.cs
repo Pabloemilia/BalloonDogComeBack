@@ -122,6 +122,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private int lastRunReward;
     private RectTransform wheelTransform;
     private Button wheelButton;
+    private RectTransform caseSelectionFrame;
     private bool wheelSpinning;
     private bool pauseActionInProgress;
     private BalloonDogPauseScreenAnimator pauseAnimator;
@@ -265,6 +266,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         wheelButtonLabel = null;
         wheelTransform = null;
         wheelButton = null;
+        caseSelectionFrame = null;
         musicToggle = null;
         soundToggle = null;
         vibrationToggle = null;
@@ -731,21 +733,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildLockedSkinMarketGrid(Transform parent)
     {
-        CreateMarketFontText(parent, "MarketSkinGridTitle",
-            "15 MYSTERY SKINS", new Vector2(0f, 535f),
-            new Vector2(720f, 52f), 30f);
-
-        for (int index = 0; index < 15; index++)
-        {
-            int column = index % 3;
-            int row = index / 3;
-            Vector2 position = new Vector2(
-                (column - 1) * 275f,
-                420f - row * 215f);
-
-            GetMarketRarity(index, out string rarity, out Color fill, out Color outline);
-            CreateLockedSkinSlot(parent, index, rarity, fill, outline, position);
-        }
+        parent.gameObject.AddComponent<BalloonDogCaseOpening>().Build();
     }
 
     private static void GetMarketRarity(
@@ -1235,7 +1223,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             Image shelvesImage = shelvesTransform.GetComponent<Image>();
             if (shelvesImage != null)
             {
-                shelvesImage.enabled = showSkins;
+                shelvesImage.enabled = false; // The case provides its own glossy artwork.
             }
         }
 
@@ -3163,37 +3151,42 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
         if (wheelButtonLabel != null)
         {
-            wheelButtonLabel.text = "UNLOCKING...";
+            wheelButtonLabel.text = "OPENING...";
         }
 
-        BalloonDogSkinDefinition reward = BalloonDogEconomy.PeekNextLockedSkin();
-        int rewardIndex = 0;
-        BalloonDogSkinDefinition[] skins = BalloonDogEconomy.Skins;
-        for (int index = 0; index < skins.Length; index++)
+        const float cardStep = 275f;
+        const int steps = 15;
+        for (int step = 0; step < steps && wheelTransform != null; step++)
         {
-            if (skins[index].Id == reward.Id)
+            Vector2 from = Vector2.zero;
+            Vector2 to = new Vector2(-cardStep, 0f);
+            float duration = Mathf.Lerp(0.07f, 0.25f, step / (float)(steps - 1));
+            float elapsed = 0f;
+            while (elapsed < duration)
             {
-                rewardIndex = index;
-                break;
+                elapsed += Time.unscaledDeltaTime;
+                float normalized = Mathf.Clamp01(elapsed / duration);
+                float eased = normalized * normalized * (3f - 2f * normalized);
+                wheelTransform.anchoredPosition = Vector2.LerpUnclamped(from, to, eased);
+                yield return null;
             }
+            wheelTransform.anchoredPosition = Vector2.zero;
         }
 
-        float startAngle = wheelTransform != null
-            ? wheelTransform.localEulerAngles.z
-            : 0f;
-        float targetAngle = startAngle - 1440f + rewardIndex * 60f;
-        const float duration = 1.8f;
-        float elapsed = 0f;
-        while (elapsed < duration && wheelTransform != null)
+        if (caseSelectionFrame != null)
         {
-            elapsed += Time.unscaledDeltaTime;
-            float normalized = Mathf.Clamp01(elapsed / duration);
-            float eased = 1f - Mathf.Pow(1f - normalized, 3f);
-            wheelTransform.localEulerAngles = new Vector3(
-                0f,
-                0f,
-                Mathf.LerpUnclamped(startAngle, targetAngle, eased));
-            yield return null;
+            for (int pulse = 0; pulse < 2; pulse++)
+            {
+                float elapsed = 0f;
+                while (elapsed < 0.18f)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    float scale = 1f + Mathf.Sin(elapsed / 0.18f * Mathf.PI) * 0.10f;
+                    caseSelectionFrame.localScale = Vector3.one * scale;
+                    yield return null;
+                }
+            }
+            caseSelectionFrame.localScale = Vector3.one;
         }
 
         if (BalloonDogEconomy.TryUnlockNextSkin(WheelTokenCost, out BalloonDogSkinDefinition unlocked))
@@ -3203,7 +3196,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
         else
         {
-            ShowToast("UNLOCK COULD NOT BE COMPLETED");
+            ShowToast("CASE COULD NOT BE OPENED");
         }
 
         wheelSpinning = false;
@@ -3325,33 +3318,30 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         {
             wheelNextText.text = "COLLECTION COMPLETE";
             wheelNextText.color = Lime;
-            if (wheelButtonLabel != null)
-            {
-                wheelButtonLabel.text = "ALL SKINS OWNED";
-            }
             wheelButton.interactable = false;
             if (buttonImage != null)
             {
-                buttonImage.color = Lime;
+                buttonImage.color = new Color(0.72f, 0.82f, 0.76f, 0.78f);
             }
             return;
         }
 
-        BalloonDogSkinDefinition next = BalloonDogEconomy.PeekNextLockedSkin();
-        wheelNextText.text = "NEXT REWARD  •  " + next.DisplayName;
-        wheelNextText.color = next.AccentColor;
-        if (wheelButtonLabel != null && !wheelSpinning)
+        bool canOpen = BalloonDogEconomy.Coins >= WheelTokenCost;
+        if (!wheelSpinning)
         {
-            wheelButtonLabel.text = BalloonDogEconomy.Coins >= WheelTokenCost
-                ? "UNLOCK NEXT  •  " + WheelTokenCost + " TOKENS"
-                : "NEED " + WheelTokenCost + " TOKENS";
+            wheelNextText.text = canOpen
+                ? "ONE OPENING  •  " + WheelTokenCost + " COINS"
+                : "NEED " + WheelTokenCost + " COINS";
         }
-        wheelButton.interactable = !wheelSpinning;
+        wheelNextText.color = canOpen
+            ? new Color(0.76f, 0.94f, 1f, 1f)
+            : new Color(1f, 0.64f, 0.50f, 1f);
+        wheelButton.interactable = !wheelSpinning && canOpen;
         if (buttonImage != null)
         {
-            buttonImage.color = BalloonDogEconomy.Coins >= WheelTokenCost
-                ? Orange
-                : InkSoft;
+            buttonImage.color = canOpen
+                ? Color.white
+                : new Color(0.55f, 0.60f, 0.68f, 0.76f);
         }
     }
 
@@ -3998,3 +3988,4 @@ public sealed class BalloonDogSettingsFit : MonoBehaviour
         transform.localScale = new Vector3(scale, scale, 1f);
     }
 }
+
