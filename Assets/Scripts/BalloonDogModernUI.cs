@@ -97,6 +97,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private TMP_Text resultScoreText;
     private TMP_Text resultBestText;
     private TMP_Text resultRewardText;
+    private Button resultReviveButton;
+    private GameObject resultReviveHint;
     private TMP_Text gameplaySkinText;
     private TMP_Text pauseScoreText;
     private TMP_Text pauseTokenText;
@@ -259,6 +261,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultScoreText = null;
         resultBestText = null;
         resultRewardText = null;
+        resultReviveButton = null;
+        resultReviveHint = null;
         gameplaySkinText = null;
         pauseScoreText = null;
         pauseTokenText = null;
@@ -1629,39 +1633,30 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             content,
             "ResultScoreCard",
             "•  SCORE  •",
-            new Vector2(0f, 330f),
+            new Vector2(0f, 315f),
             "PauseMenu/Icons/Crown",
             false,
             new Color(0.77f, 0.97f, 1f, 1f),
             new Color(0.23f, 0.94f, 1f, 1f));
-        resultRewardText = CreateResultStatCard(
-            content,
-            "ResultTokenCard",
-            "•  TOKENS  •",
-            new Vector2(0f, -80f),
-            "CustomCoin",
-            true,
-            new Color(0.32f, 0.84f, 1f, 1f),
-            new Color(0.02f, 0.80f, 1f, 1f));
         resultBestText = CreateResultStatCard(
             content,
             "ResultBestCard",
             "•  BEST  •",
-            new Vector2(0f, -475f),
+            new Vector2(0f, -105f),
             "PauseMenu/Icons/Crown",
             false,
             new Color(0.77f, 0.97f, 1f, 1f),
             new Color(0.23f, 0.94f, 1f, 1f));
 
-        CreateResultBonusButton(
+        CreateResultReviveButton(
             content,
-            new Vector2(0f, -805f));
+            new Vector2(0f, -575f));
 
         Button noThanks = CreateButton(
             content,
             "ModernResultMenuButton",
             "NO THANKS",
-            new Vector2(0f, -1110f),
+            new Vector2(0f, -1010f),
             new Vector2(580f, 76f),
             new Color(1f, 1f, 1f, 0.001f),
             new Color(0.81f, 1f, 0.96f, 1f),
@@ -1847,30 +1842,38 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         return resultSoftLightSprite;
     }
 
-    private static void CreateResultBonusButton(Transform parent, Vector2 position)
+    private void CreateResultReviveButton(Transform parent, Vector2 position)
     {
         Button button = CreateButton(
-            parent, "ResultDoubleRewardButton", string.Empty, position,
-            new Vector2(940f, 382f), Color.white, Color.white, null, 1f);
+            parent, "ResultReviveButton", "REVIVE", position,
+            new Vector2(820f, 238f), Color.white, Color.white,
+            ReviveFromRewardedAd, 76f);
         RemoveButtonShadow(button);
-        button.GetComponentInChildren<TMP_Text>(true).gameObject.SetActive(false);
         Image background = button.GetComponent<Image>();
-        background.sprite = GetResourceSprite("GameOver/DoubleBonus");
+        background.sprite = GetResourceSprite("PauseMenu/Buttons/PauseButtonMintClean");
         background.type = Image.Type.Simple;
         background.preserveAspect = true;
-        button.transition = Selectable.Transition.None;
-        button.gameObject.AddComponent<BalloonDogBonusPressFeedback>();
-        // The bonus button stays free of decorative stars.
-        // Keep the hint below the visible button and independent of its press scale.
-        TMP_Text hint = CreatePauseText(parent, "BonusHint",
-            "Watch an ad to claim 2x reward",
-            position + new Vector2(0f, -205f),
-            new Vector2(780f, 48f), 30f,
+        background.color = Color.white;
+
+        TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+        BalloonDogTitanFont.Apply(label);
+        label.color = Color.white;
+        label.outlineColor = new Color(0.04f, 0.28f, 0.17f, 1f);
+        label.outlineWidth = 0.18f;
+        label.fontSize = 76f;
+        label.enableAutoSizing = true;
+        label.fontSizeMin = 56f;
+        label.fontSizeMax = 76f;
+
+        resultReviveButton = button;
+        TMP_Text hint = CreatePauseText(parent, "ReviveHint",
+            "WATCH AN AD TO REVIVE",
+            position + new Vector2(0f, -155f),
+            new Vector2(780f, 52f), 30f,
             new Color(0.02f, 0.29f, 0.35f, 1f),
             TextAlignmentOptions.Center);
         BalloonDogTitanFont.Apply(hint);
-        // Existing visual-only bonus: connect an ad completion callback before
-        // granting any additional reward. NO THANKS returns to the main menu.
+        resultReviveHint = hint.gameObject;
     }
 
     private static void CreateResultGlint(
@@ -1937,32 +1940,19 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(390f, -980f), new Vector2(520f, 340f), -5f, 0.17f,
             8f, 9f, 21f, 0.87f);
 
-        // Replace the old static white cross shapes with drifting glints.
+        // Keep six quiet drifting glints around the outer margins.
         CreateResultGlint(layer, "ResultStarTopLeft",
             new Vector2(-455f, 655f), 42f, 0.4f, false);
         CreateResultGlint(layer, "ResultStarTopRight",
             new Vector2(450f, 690f), 48f, 1.6f, false);
-        CreateResultGlint(layer, "ResultStarBottomLeft",
-            new Vector2(-480f, -740f), 30f, 2.4f, false);
-        CreateResultGlint(layer, "ResultStarBottomRight",
-            new Vector2(470f, -680f), 32f, 3.1f, false);
-        // Scattered small stars fill the side margins without covering scores.
-        CreateResultGlint(layer, "ResultStarUpperLeft",
-            new Vector2(-315f, 430f), 45f, 0.8f, false);
-        CreateResultGlint(layer, "ResultStarUpperRight",
-            new Vector2(465f, 535f), 43f, 2.8f, false);
         CreateResultGlint(layer, "ResultStarScoreLeft",
-            new Vector2(-425f, 255f), 41f, 1.3f, false);
+            new Vector2(-425f, 255f), 38f, 1.3f, false);
         CreateResultGlint(layer, "ResultStarScoreRight",
-            new Vector2(425f, 170f), 46f, 3.8f, false);
-        CreateResultGlint(layer, "ResultStarMiddleLeft",
-            new Vector2(-390f, -115f), 39f, 4.4f, false);
-        CreateResultGlint(layer, "ResultStarMiddleRight",
-            new Vector2(420f, -420f), 44f, 5.1f, false);
-        CreateResultGlint(layer, "ResultStarLowerLeft",
-            new Vector2(-430f, -610f), 43f, 5.7f, false);
-        CreateResultGlint(layer, "ResultStarLowerRight",
-            new Vector2(440f, -530f), 40f, 6.4f, false);
+            new Vector2(425f, 170f), 42f, 3.8f, false);
+        CreateResultGlint(layer, "ResultStarBottomLeft",
+            new Vector2(-450f, -690f), 30f, 2.4f, false);
+        CreateResultGlint(layer, "ResultStarBottomRight",
+            new Vector2(450f, -640f), 32f, 3.1f, false);
     }
 
     private void BuildPauseScreen()
@@ -3081,7 +3071,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
         resultScoreText.text = gameManager.LastScore.ToString("N0");
         resultBestText.text = GameManager.BestScore.ToString("N0");
-        resultRewardText.text = "+" + lastRunReward.ToString("N0");
+        if (resultRewardText != null) resultRewardText.text = "+" + lastRunReward.ToString("N0");
+        if (resultReviveButton != null) resultReviveButton.gameObject.SetActive(!completed && !gameManager.ReviveUsed);
+        if (resultReviveHint != null) resultReviveHint.SetActive(!completed && !gameManager.ReviveUsed);
 
         HideAllScreens();
         gameplayOverlay.SetActive(false);
@@ -3089,6 +3081,19 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultScreen.transform.SetAsLastSibling();
         Time.timeScale = 0f;
         RefreshPersistentViews();
+    }
+
+    private void ReviveFromRewardedAd()
+    {
+        gameManager ??= GameManager.Instance ?? FindAnyObjectByType<GameManager>();
+        if (gameManager == null || !gameManager.TryRevive()) return;
+
+        HideAllScreens();
+        gameplayOverlay.SetActive(true);
+        menuController ??= FindAnyObjectByType<MainMenuController>();
+        menuController?.SetGameplayPaused(false);
+        GameAudioController.SetPaused(false);
+        Time.timeScale = 1f;
     }
 
     private void HandleSkinAction(string skinId, bool marketMode)
@@ -3988,4 +3993,5 @@ public sealed class BalloonDogSettingsFit : MonoBehaviour
         transform.localScale = new Vector3(scale, scale, 1f);
     }
 }
+
 

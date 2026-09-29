@@ -13,10 +13,12 @@ public sealed class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text endSummaryText;
 
     private bool isGameOver;
+    private bool reviveUsed;
 
     public static GameManager Instance { get; private set; }
     public static int BestScore => PlayerPrefs.GetInt(BestScorePreferenceKey, 0);
     public bool IsGameOver => isGameOver;
+    public bool ReviveUsed => reviveUsed;
     public bool LastRunCompleted { get; private set; }
     public int LastScore { get; private set; }
     public string LastEndReason { get; private set; } = string.Empty;
@@ -110,6 +112,20 @@ public sealed class GameManager : MonoBehaviour
         TriggerLevelComplete(score, 0f, 1, score);
     }
 
+    public bool TryRevive()
+    {
+        if (!isGameOver || LastRunCompleted || reviveUsed) return false;
+        AirController air = FindAnyObjectByType<AirController>();
+        if (air == null) return false;
+
+        reviveUsed = true;
+        isGameOver = false;
+        if (endPanel != null) endPanel.SetActive(false);
+        air.ResetToFull();
+        Time.timeScale = 1f;
+        return true;
+    }
+
     public void RestartGame()
     {
         MainMenuController.StartImmediatelyOnNextSceneLoad = true;
@@ -189,3 +205,4 @@ public sealed class GameManager : MonoBehaviour
         }
     }
 }
+
