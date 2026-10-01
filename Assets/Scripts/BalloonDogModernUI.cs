@@ -138,6 +138,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private static Sprite roundedSprite;
     private static Sprite circleSprite;
+    private static Sprite collectionSwatchSprite;
     private static Sprite resultSoftLightSprite;
     private static Sprite patternSprite;
     private static readonly Dictionary<string, Sprite> ResourceSprites =
@@ -1357,16 +1358,20 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 "CollectionUI/SkinCard", position, new Vector2(420f, 405f));
             background.preserveAspect = false;
             RectTransform card = background.rectTransform;
-            Image swatch = CreateImage(card, "SkinSwatch", new Vector2(0f, 100f),
-                new Vector2(145f, 145f), skin.PrimaryColor, true);
+            // 145 * 0.8 = 116. Use one shared high-resolution circle for every skin.
+            Image swatch = CreateImage(card, "SkinSwatch", new Vector2(0f, 82f),
+                new Vector2(116f, 116f), skin.PrimaryColor, true);
+            swatch.sprite = GetCollectionSwatchSprite();
+            // Equal 16-unit gaps: circle bottom 24, name top 8;
+            // name bottom -32, status top -48.
             CreatePauseText(card, "SkinName", skin.DisplayName,
-                new Vector2(0f, 0f), new Vector2(380f, 55f), 31f,
+                new Vector2(0f, -12f), new Vector2(380f, 40f), 31f,
                 Color.white, TextAlignmentOptions.Center);
             TMP_Text status = CreatePauseText(card, "SkinStatus", string.Empty,
-                new Vector2(0f, -48f), new Vector2(380f, 42f), 23f,
+                new Vector2(0f, -64f), new Vector2(380f, 32f), 23f,
                 MenuGreen, TextAlignmentOptions.Center);
             Button action = CreatePauseActionButton(card, "SkinAction", "EQUIP", null,
-                "SettingsUI/Blue", new Vector2(0f, -128f), new Vector2(350f, 100f),
+                "SettingsUI/Blue", new Vector2(0f, -138f), new Vector2(350f, 100f),
                 Cyan, MenuBlue, null, 31f, 0f);
             TMP_Text actionLabel = action.GetComponentInChildren<TMP_Text>(true);
             // The generic pause helper reserves more horizontal room for long labels.
@@ -3746,6 +3751,18 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             circleSprite = CreateRoundedSprite(64, 31f, false);
         }
         return circleSprite;
+    }
+
+    private static Sprite GetCollectionSwatchSprite()
+    {
+        if (collectionSwatchSprite == null)
+        {
+            // A true circle with a one-source-pixel antialiased edge.
+            // 512 px is downsampled into the 116-unit UI swatch, never enlarged.
+            collectionSwatchSprite = CreateRoundedSprite(512, 255.5f, false);
+            collectionSwatchSprite.name = "CollectionSwatch512";
+        }
+        return collectionSwatchSprite;
     }
 
     private static Sprite GetResourceSprite(string path)
