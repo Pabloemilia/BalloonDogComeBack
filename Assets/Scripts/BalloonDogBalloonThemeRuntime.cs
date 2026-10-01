@@ -968,6 +968,14 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             return;
         }
 
+        // Case labels are created with Titan One, including cards spawned while spinning.
+        // The recurring legacy theme pass must not replace their font or material.
+        if (text.GetComponentInParent<BalloonDogCaseOpening>(true) != null)
+        {
+            BalloonDogTitanFont.Apply(text);
+            return;
+        }
+
         TMP_FontAsset uiFont = ResolveUiFont();
         if (uiFont != null)
         {
