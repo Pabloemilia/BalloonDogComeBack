@@ -58,6 +58,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         public TMP_Text Status;
         public TMP_Text ActionLabel;
         public Button ActionButton;
+        public RectTransform Card;
+        public int CollectionIndex;
     }
 
     private sealed class ToggleRowView
@@ -115,6 +117,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private Button marketExtrasTabButton;
 
     private readonly List<SkinCardView> skinCards = new List<SkinCardView>();
+    private const int CollectionPageSize = 6;
+    private int collectionPage;
+    private TMP_Text collectionPageLabel;
+    private Button collectionPreviousButton;
+    private Button collectionNextButton;
     private readonly List<Image> menuPreviewParts = new List<Image>();
     private int lastKnownCoins = -1;
     private string lastKnownSkin = string.Empty;
@@ -238,6 +245,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         mainScreen = null;
         marketScreen = null;
         skinsScreen = null;
+        collectionPage = 0;
+        collectionPageLabel = null;
+        collectionPreviousButton = null;
+        collectionNextButton = null;
         settingsScreen = null;
         privacyScreen = null;
         resultScreen = null;
@@ -1258,50 +1269,79 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildSkinsScreen()
     {
-        skinsScreen = CreateScreen(
-            "ModernSkinsScreen",
-            MenuSkyTop,
-            MenuSkyBottom);
+        skinsScreen = CreateScreen("ModernSkinsScreen", MenuSkyTop, MenuSkyBottom);
+        RectTransform content = CreateRect("CollectionContent", skinsScreen.transform);
+        SetRect(content, Vector2.zero, new Vector2(1080f, 1920f));
+        content.gameObject.AddComponent<BalloonDogSettingsFit>();
 
-        CreateImage(
-            skinsScreen.transform,
-            "SkinsTreeBubbleLeft",
-            new Vector2(-500f, 260f),
-            new Vector2(250f, 250f),
-            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.28f),
-            true);
-        CreateImage(
-            skinsScreen.transform,
-            "SkinsTreeBubbleRight",
-            new Vector2(500f, 570f),
-            new Vector2(210f, 210f),
-            new Color(MenuGreen.r, MenuGreen.g, MenuGreen.b, 0.30f),
-            true);
+        // This screen deliberately has no balance pill; other top bars are unchanged.
+        CreateButton(content, "SkinsTopButton", string.Empty,
+            new Vector2(465f, 885f), new Vector2(95f, 95f), MenuBlue,
+            Color.white, () => ShowSettingsScreen(SettingsReturnTarget.Main), 40f);
+        CreatePauseText(content, "CollectionTitle", "COLLECTION",
+            new Vector2(0f, 780f), new Vector2(850f, 140f), 96f,
+            Color.white, TextAlignmentOptions.Center);
+        CreatePauseTitleAccents(content, 780f);
+        CreatePauseText(content, "CollectionSubtitle", "YOUR COLLECTION",
+            new Vector2(0f, 625f), new Vector2(900f, 60f), 34f,
+            Color.white, TextAlignmentOptions.Center);
+        BuildSkinGrid(content, false);
 
-        CreateTopBar(skinsScreen.transform, "Skins", () => ShowSettingsScreen(SettingsReturnTarget.Main));
-        CreateRibbon(skinsScreen.transform, "SKINS", new Vector2(0f, 800f));
+        collectionPreviousButton = CreateCollectionPageButton(content,
+            "PreviousPage", new Vector2(-165f, -745f), true,
+            () => SetCollectionPage(collectionPage - 1));
+        collectionNextButton = CreateCollectionPageButton(content,
+            "NextPage", new Vector2(165f, -745f), false,
+            () => SetCollectionPage(collectionPage + 1));
+        collectionPageLabel = CreatePauseText(content, "CollectionPage", string.Empty,
+            new Vector2(0f, -745f), new Vector2(140f, 65f), 36f,
+            Color.white, TextAlignmentOptions.Center);
+        CreatePauseActionButton(content, "CollectionMarket", "MARKET", null,
+            "SettingsUI/Blue", new Vector2(-225f, -890f), new Vector2(425f, 120f),
+            Cyan, MenuBlue, ShowMarketScreen, 44f, 0f);
+        CreatePauseActionButton(content, "CollectionHome", "HOME", null,
+            "SettingsUI/Blue", new Vector2(225f, -890f), new Vector2(425f, 120f),
+            Cyan, MenuBlue, ShowMainScreen, 44f, 0f);
+        SetCollectionPage(0);
+    }
 
-        RectTransform collection = CreateCard(
-            skinsScreen.transform,
-            "SkinCollectionCard",
-            new Vector2(0f, -45f),
-            new Vector2(910f, 1390f),
-            MenuBlueDark,
-            new Color(0.43f, 0.76f, 1f, 0.58f));
-        CreateText(
-            collection,
-            "SkinsSubtitle",
-            "YOUR COLLECTION",
-            new Vector2(0f, 610f),
-            new Vector2(760f, 64f),
-            31f,
-            Color.white,
-            FontStyles.Bold,
-            TextAlignmentOptions.Center);
-        BuildSkinGrid(collection, false);
+    private static Button CreateCollectionPageButton(Transform parent, string name,
+        Vector2 position, bool previous, UnityAction action)
+    {
+        Image artwork = CreateResourceImage(parent, name, "CollectionUI/PageArrow",
+            position, new Vector2(215f, 130f));
+        artwork.raycastTarget = true;
+        if (previous) artwork.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
+        Button button = artwork.gameObject.AddComponent<Button>();
+        button.targetGraphic = artwork;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        ColorBlock colors = button.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = Color.white;
+        colors.selectedColor = Color.white;
+        colors.pressedColor = new Color(0.75f, 0.82f, 0.92f, 1f);
+        colors.disabledColor = new Color(1f, 1f, 1f, 0.45f);
+        button.colors = colors;
+        button.onClick.AddListener(action);
+        return button;
+    }
 
-        CreateRoundNavButton(skinsScreen.transform, "SkinsMarket", "MARKET", new Vector2(-90f, -1035f), ShowMarketScreen);
-        CreateRoundNavButton(skinsScreen.transform, "SkinsClose", "HOME", new Vector2(90f, -1035f), ShowMainScreen);
+    private void SetCollectionPage(int page)
+    {
+        int pageCount = Mathf.Max(1,
+            Mathf.CeilToInt(BalloonDogEconomy.Skins.Length / (float)CollectionPageSize));
+        collectionPage = Mathf.Clamp(page, 0, pageCount - 1);
+        foreach (SkinCardView view in skinCards)
+        {
+            if (!view.MarketMode && view.Card != null)
+                view.Card.gameObject.SetActive(view.CollectionIndex / CollectionPageSize == collectionPage);
+        }
+        if (collectionPageLabel != null)
+            collectionPageLabel.text = (collectionPage + 1) + " / " + pageCount;
+        if (collectionPreviousButton != null)
+            collectionPreviousButton.interactable = collectionPage > 0;
+        if (collectionNextButton != null)
+            collectionNextButton.interactable = collectionPage < pageCount - 1;
     }
 
     private void BuildSkinGrid(Transform parent, bool marketMode)
@@ -1310,74 +1350,33 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         for (int index = 0; index < skins.Length; index++)
         {
             BalloonDogSkinDefinition skin = skins[index];
-            int column = index % 2;
-            int row = index / 2;
-            Vector2 position = new Vector2(
-                column == 0 ? -215f : 215f,
-                415f - row * 370f);
-
-            RectTransform card = CreateCard(
-                parent,
-                (marketMode ? "Market_" : "Skins_") + skin.Id,
-                position,
-                new Vector2(390f, 320f),
-                MenuBlueCard,
-                new Color(skin.AccentColor.r, skin.AccentColor.g, skin.AccentColor.b, 0.72f));
-
-            Image swatch = CreateImage(
-                card,
-                "SkinSwatch",
-                new Vector2(0f, 78f),
-                new Vector2(130f, 130f),
-                skin.PrimaryColor,
-                true);
-            AddGraphicShadow(swatch, new Color(0f, 0f, 0f, 0.34f), new Vector2(5f, -7f));
-
-            CreateText(
-                card,
-                "SkinName",
-                skin.DisplayName,
-                new Vector2(0f, -12f),
-                new Vector2(360f, 50f),
-                29f,
-                Color.white,
-                FontStyles.Bold,
-                TextAlignmentOptions.Center);
-
-            TMP_Text status = CreateText(
-                card,
-                "SkinStatus",
-                string.Empty,
-                new Vector2(0f, -58f),
-                new Vector2(350f, 42f),
-                21f,
-                new Color(0.78f, 0.90f, 0.98f, 1f),
-                FontStyles.Bold,
-                TextAlignmentOptions.Center);
-
-            Button action = CreateButton(
-                card,
-                "SkinAction",
-                "BUY",
-                new Vector2(0f, -118f),
-                new Vector2(310f, 76f),
-                MenuGreen,
-                Color.white,
-                null,
-                25f);
-
+            int slot = index % CollectionPageSize;
+            Vector2 position = new Vector2(slot % 2 == 0 ? -225f : 225f,
+                385f - (slot / 2) * 415f);
+            Image background = CreateResourceImage(parent, "Collection_" + skin.Id,
+                "CollectionUI/SkinCard", position, new Vector2(420f, 405f));
+            background.preserveAspect = false;
+            RectTransform card = background.rectTransform;
+            Image swatch = CreateImage(card, "SkinSwatch", new Vector2(0f, 100f),
+                new Vector2(145f, 145f), skin.PrimaryColor, true);
+            CreatePauseText(card, "SkinName", skin.DisplayName,
+                new Vector2(0f, 0f), new Vector2(380f, 55f), 31f,
+                Color.white, TextAlignmentOptions.Center);
+            TMP_Text status = CreatePauseText(card, "SkinStatus", string.Empty,
+                new Vector2(0f, -48f), new Vector2(380f, 42f), 23f,
+                MenuGreen, TextAlignmentOptions.Center);
+            Button action = CreatePauseActionButton(card, "SkinAction", "EQUIP", null,
+                "SettingsUI/Blue", new Vector2(0f, -128f), new Vector2(350f, 100f),
+                Cyan, MenuBlue, null, 31f, 0f);
             TMP_Text actionLabel = action.GetComponentInChildren<TMP_Text>(true);
-            SkinCardView view = new SkinCardView
+            // The generic pause helper reserves more horizontal room for long labels.
+            SetRect(actionLabel.rectTransform, Vector2.zero, new Vector2(320f, 74f));
+            skinCards.Add(new SkinCardView
             {
-                Skin = skin,
-                MarketMode = marketMode,
-                Swatch = swatch,
-                Status = status,
-                ActionLabel = actionLabel,
-                ActionButton = action
-            };
-            skinCards.Add(view);
-
+                Skin = skin, MarketMode = marketMode, Swatch = swatch,
+                Status = status, ActionLabel = actionLabel, ActionButton = action,
+                Card = card, CollectionIndex = index
+            });
             string capturedSkinId = skin.Id;
             action.onClick.AddListener(() => HandleSkinAction(capturedSkinId, marketMode));
         }
@@ -3387,6 +3386,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             view.ActionLabel.text = "MARKET";
             buttonImage.color = MenuBlueDark;
             view.ActionButton.interactable = true;
+        }
+        if (!view.MarketMode)
+        {
+            ApplyPauseButtonBackground(buttonImage,
+                equipped ? "SettingsUI/Mint" : "SettingsUI/Blue");
+            buttonImage.color = Color.white;
         }
     }
 

@@ -185,3 +185,6 @@ Assets/Resources/MarketUI/Extras/*.png -filter -diff -merge -text
 
 # Skin case UI artwork uses regular Git blobs.
 Assets/Resources/MarketUI/SkinCase/*.png -filter -diff -merge -text
+
+# Collection runtime artwork uses regular Git blobs.
+Assets/Resources/CollectionUI/*.png -filter -diff -merge -text
