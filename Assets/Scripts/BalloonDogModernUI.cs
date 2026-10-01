@@ -1289,20 +1289,28 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         BuildSkinGrid(content, false);
 
         collectionPreviousButton = CreateCollectionPageButton(content,
-            "PreviousPage", new Vector2(-165f, -745f), true,
+            "PreviousPage", new Vector2(-165f, -710f), true,
             () => SetCollectionPage(collectionPage - 1));
         collectionNextButton = CreateCollectionPageButton(content,
-            "NextPage", new Vector2(165f, -745f), false,
+            "NextPage", new Vector2(165f, -710f), false,
             () => SetCollectionPage(collectionPage + 1));
         collectionPageLabel = CreatePauseText(content, "CollectionPage", string.Empty,
-            new Vector2(0f, -745f), new Vector2(140f, 65f), 36f,
+            new Vector2(0f, -710f), new Vector2(140f, 65f), 36f,
             Color.white, TextAlignmentOptions.Center);
-        CreatePauseActionButton(content, "CollectionMarket", "MARKET", null,
-            "SettingsUI/Blue", new Vector2(-225f, -890f), new Vector2(425f, 120f),
-            Cyan, MenuBlue, ShowMarketScreen, 44f, 0f);
-        CreatePauseActionButton(content, "CollectionHome", "HOME", null,
-            "SettingsUI/Blue", new Vector2(225f, -890f), new Vector2(425f, 120f),
-            Cyan, MenuBlue, ShowMainScreen, 44f, 0f);
+        Button marketNav = CreatePauseActionButton(content, "CollectionMarket", "MARKET", null,
+            "SettingsUI/Blue", new Vector2(-245f, -865f), new Vector2(475f, 155f),
+            Cyan, MenuBlue, ShowMarketScreen, 48f, 0f);
+        TMP_Text marketLabel = marketNav.GetComponentInChildren<TMP_Text>(true);
+        SetRect(marketLabel.rectTransform, new Vector2(0f, 5f), new Vector2(420f, 125f));
+        Button homeNav = CreatePauseActionButton(content, "CollectionHome", "HOME", null,
+            "SettingsUI/Blue", new Vector2(245f, -865f), new Vector2(475f, 155f),
+            Cyan, MenuBlue, ShowMainScreen, 48f, 0f);
+        Image homeIcon = CreateResourceImage(homeNav.transform, "HomeIcon", "Market/HomeIcon",
+            new Vector2(-115f, 5f), new Vector2(56f, 56f));
+        homeIcon.sprite = GetMarketHomeIconSprite();
+        TMP_Text homeLabel = homeNav.GetComponentInChildren<TMP_Text>(true);
+        // Center the icon and HOME together within the enlarged button.
+        SetRect(homeLabel.rectTransform, new Vector2(32f, 5f), new Vector2(230f, 125f));
         SetCollectionPage(0);
     }
 
@@ -1370,12 +1378,22 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             TMP_Text status = CreatePauseText(card, "SkinStatus", string.Empty,
                 new Vector2(0f, -64f), new Vector2(380f, 32f), 23f,
                 MenuGreen, TextAlignmentOptions.Center);
-            Button action = CreatePauseActionButton(card, "SkinAction", "EQUIP", null,
-                "SettingsUI/Blue", new Vector2(0f, -138f), new Vector2(350f, 100f),
-                Cyan, MenuBlue, null, 31f, 0f);
-            TMP_Text actionLabel = action.GetComponentInChildren<TMP_Text>(true);
-            // The generic pause helper reserves more horizontal room for long labels.
-            SetRect(actionLabel.rectTransform, Vector2.zero, new Vector2(320f, 74f));
+            // The entire card is the hit target; EQUIP is now only a text label.
+            background.raycastTarget = true;
+            Button action = card.gameObject.AddComponent<Button>();
+            action.targetGraphic = background;
+            action.navigation = new Navigation { mode = Navigation.Mode.None };
+            ColorBlock colors = action.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = Color.white;
+            colors.selectedColor = Color.white;
+            colors.pressedColor = new Color(0.72f, 0.78f, 0.86f, 1f);
+            colors.disabledColor = new Color(0.78f, 0.82f, 0.88f, 1f);
+            colors.fadeDuration = 0.08f;
+            action.colors = colors;
+            TMP_Text actionLabel = CreatePauseText(card, "SkinActionLabel", "EQUIP",
+                new Vector2(0f, -138f), new Vector2(350f, 60f), 31f,
+                Color.white, TextAlignmentOptions.Center);
             skinCards.Add(new SkinCardView
             {
                 Skin = skin, MarketMode = marketMode, Swatch = swatch,
@@ -3394,9 +3412,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
         if (!view.MarketMode)
         {
-            ApplyPauseButtonBackground(buttonImage,
-                equipped ? "SettingsUI/Mint" : "SettingsUI/Blue");
+            // Do not replace the card artwork with the old blue/mint action pill.
             buttonImage.color = Color.white;
+            if (view.Card != null)
+                view.Card.localScale = Vector3.one * (equipped ? 0.96f : 1f);
         }
     }
 
