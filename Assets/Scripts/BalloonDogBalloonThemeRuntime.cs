@@ -376,7 +376,9 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         StyleSecondaryBackground("ModernPrivacyScreen");
 
         if (!ownsSettings) StyleSecondaryTypography("ModernSettingsScreen");
-        StyleSecondaryTypography("ModernSkinsScreen");
+        GameObject collection = FindSceneObject("ModernSkinsScreen");
+        bool ownsCollection = collection != null && collection.transform.Find("CollectionContent") != null;
+        if (!ownsCollection) StyleSecondaryTypography("ModernSkinsScreen");
         StyleSecondaryTypography("ModernMarketScreen");
         StyleSecondaryTypography("ModernPrivacyScreen");
 
@@ -389,7 +391,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         StyleSecondaryTopButton("MarketTopButton", false);
 
         if (!ownsSettings) StyleSettingsControls();
-        StyleSkinControls();
+        if (!ownsCollection) StyleSkinControls();
         // Market builds its own artwork buttons and Titan One labels.
         // Styling them here recreates legacy TMP labels over the new text.
         StyleMarketExtras();
