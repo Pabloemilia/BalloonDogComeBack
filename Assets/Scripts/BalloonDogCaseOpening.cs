@@ -31,7 +31,6 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         silhouette = Resources.Load<Sprite>("Market/MysteryDog");
         RectTransform machine = CreateRect("CaseMachine", transform, Vector2.zero, new Vector2(910f, 1240f));
         Artwork(machine, "Backplate", Load("CaseMachine"), Vector2.zero, new Vector2(910f, 1240f));
-        Artwork(machine, "ReelHousing", Load("CaseMachine"), new Vector2(0f, 225f), new Vector2(870f, 475f));
 
         RectTransform viewport = CreateRect("ReelViewport", machine, new Vector2(0f, 215f), new Vector2(800f, 334f));
         viewport.gameObject.AddComponent<RectMask2D>();
