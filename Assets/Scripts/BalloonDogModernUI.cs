@@ -1301,7 +1301,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "SettingsUI/Blue", new Vector2(-245f, -865f), new Vector2(475f, 155f),
             Cyan, MenuBlue, ShowMarketScreen, 48f, 0f);
         TMP_Text marketLabel = marketNav.GetComponentInChildren<TMP_Text>(true);
-        SetRect(marketLabel.rectTransform, new Vector2(0f, 5f), new Vector2(420f, 125f));
+        SetRect(marketLabel.rectTransform, new Vector2(38f, 5f), new Vector2(300f, 125f));
+        CreateResourceImage(marketNav.transform, "MarketIcon", "CollectionUI/MarketStorefront",
+            new Vector2(-145f, 5f), new Vector2(74f, 74f));
         Button homeNav = CreatePauseActionButton(content, "CollectionHome", "HOME", null,
             "SettingsUI/Blue", new Vector2(245f, -865f), new Vector2(475f, 155f),
             Cyan, MenuBlue, ShowMainScreen, 48f, 0f);

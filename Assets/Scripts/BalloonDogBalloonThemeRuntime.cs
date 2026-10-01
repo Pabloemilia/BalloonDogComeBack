@@ -305,7 +305,23 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             market.sizeDelta = new Vector2(460f, 164f);
             StyleButton(market, new Color(0.18f, 0.54f, 0.96f, 1f), "MARKET", 60f);
             SetButtonLabelTuning(market, 6f, new Vector4(10f, 4f, 10f, 6f));
-            SetButtonIcon(market, GetMarketIconSprite());
+            SetButtonIcon(market, GetMarketIconSprite(), 74f);
+            RectTransform marketIcon = market.Find("ThemeIcon") as RectTransform;
+            if (marketIcon != null)
+            {
+                marketIcon.anchorMin = marketIcon.anchorMax = new Vector2(0.5f, 0.5f);
+                marketIcon.anchoredPosition = new Vector2(-140f, 6f);
+            }
+            TMP_Text marketLabel = market.GetComponentInChildren<TMP_Text>(true);
+            if (marketLabel != null)
+            {
+                marketLabel.margin = Vector4.zero;
+                marketLabel.fontSize = 54f;
+                marketLabel.rectTransform.anchorMin = marketLabel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                marketLabel.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                marketLabel.rectTransform.anchoredPosition = new Vector2(40f, 6f);
+                marketLabel.rectTransform.sizeDelta = new Vector2(310f, 140f);
+            }
         }
 
         RectTransform skins = FindRect("SkinsNavButton");
@@ -1492,31 +1508,8 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
     private static Sprite GetMarketIconSprite()
     {
-        if (marketIconSprite != null)
-        {
-            return marketIconSprite;
-        }
-
-        const int size = 64;
-        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        texture.name = "BalloonDogMarketIcon";
-        texture.wrapMode = TextureWrapMode.Clamp;
-        texture.filterMode = FilterMode.Bilinear;
-        texture.hideFlags = HideFlags.HideAndDontSave;
-        Color clear = new Color(0f,0f,0f,0f);
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                texture.SetPixel(x, y, clear);
-            }
-        }
-        void DrawRect(int x0, int y0, int x1, int y1) { for(int y=y0;y<=y1;y++) for(int x=x0;x<=x1;x++) if(x>=0&&x<size&&y>=0&&y<size) texture.SetPixel(x,y,Color.white); }
-        void DrawCircle(int cx,int cy,int r){ for(int y=cy-r;y<=cy+r;y++) for(int x=cx-r;x<=cx+r;x++) if(x>=0&&x<size&&y>=0&&y<size && (x-cx)*(x-cx)+(y-cy)*(y-cy)<=r*r) texture.SetPixel(x,y,Color.white);}
-        DrawRect(16, 26, 40, 30); DrawRect(20, 22, 36, 34); DrawRect(14, 34, 18, 38); DrawRect(36, 34, 40, 38); DrawRect(12, 18, 18, 22); DrawRect(18, 18, 20, 20); DrawCircle(20, 18, 5); DrawCircle(36, 18, 5);
-        texture.Apply();
-        marketIconSprite = Sprite.Create(texture, new Rect(0,0,size,size), new Vector2(0.5f,0.5f), 100f);
-        marketIconSprite.name = "BalloonDogMarketIconSprite";
+        if (marketIconSprite == null)
+            marketIconSprite = Resources.Load<Sprite>("CollectionUI/MarketStorefront");
         return marketIconSprite;
     }
 
