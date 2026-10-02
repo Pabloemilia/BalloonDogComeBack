@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[ExecuteAlways]
 public sealed class RunnerCameraFollow : MonoBehaviour
 {
     [Header("Target")]
@@ -29,6 +30,7 @@ public sealed class RunnerCameraFollow : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (!Application.isPlaying) { SnapToTarget(); return; }
         if (target == null)
         {
             return;
