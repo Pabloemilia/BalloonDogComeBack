@@ -6,7 +6,7 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
 {
     private const string RuntimeName = "__BalloonDogLevelDirector";
     public static int CurrentLevel => BalloonDogCampaign.CurrentLevel;
-    public static float FinishZ { get; private set; } = 145f;
+    public static float FinishZ { get; private set; } = BalloonDogMapFinale.FinishZ;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateRuntimeDirector()
@@ -30,7 +30,7 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
 
     private void ConfigureMainMap()
     {
-        FinishZ = 145f;
+        FinishZ = BalloonDogMapFinale.FinishZ;
         foreach (FinishLine finish in FindObjectsByType<FinishLine>(FindObjectsSortMode.None))
             FinishZ = Mathf.Max(FinishZ, finish.transform.position.z);
         foreach (BalloonDogCampaignFinish finish in
