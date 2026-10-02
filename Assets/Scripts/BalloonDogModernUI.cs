@@ -1534,66 +1534,101 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void BuildPrivacyScreen()
     {
-        privacyScreen = CreateScreen(
-            "ModernPrivacyScreen",
-            new Color(0.39f, 0.07f, 0.98f, 1f),
-            new Color(0.32f, 0.05f, 0.91f, 1f));
-        CreateTopBar(privacyScreen.transform, "Privacy", ShowSettingsFromPrivacy);
-        CreateRibbon(privacyScreen.transform, "PRIVACY", new Vector2(0f, 800f));
+        privacyScreen = CreateScreen("ModernPrivacyScreen",
+            new Color(0.12f, 0.43f, 0.96f, 1f),
+            new Color(0.22f, 0.88f, 0.67f, 1f));
+        privacyScreen.transform.Find("FigmaPattern").gameObject.SetActive(false);
 
-        RectTransform card = CreateCard(
-            privacyScreen.transform,
-            "PrivacyCard",
-            new Vector2(0f, -70f),
-            new Vector2(910f, 1420f),
-            new Color(0.13f, 0.015f, 0.43f, 0.98f),
-            new Color(0.34f, 0.05f, 0.75f, 0.92f));
+        // Own the entire layout so the legacy theme cannot replace its font,
+        // background or outlines after the first frame.
+        RectTransform content = CreateRect("PrivacyContent", privacyScreen.transform);
+        SetRect(content, Vector2.zero, new Vector2(1080f, 1920f));
+        content.gameObject.AddComponent<BalloonDogSettingsFit>();
+        CreatePauseDogDecoration(content, "PrivacyDogLeft", new Vector2(-430f, 790f),
+            new Vector2(245f, 225f), -15f, 0.13f, 6f, 8f, 21f, 0.2f, 1f);
+        CreatePauseDogDecoration(content, "PrivacyDogRight", new Vector2(450f, 610f),
+            new Vector2(230f, 210f), 12f, 0.11f, 7f, 6f, 24f, 0.5f, 1f);
+        CreatePauseDogDecoration(content, "PrivacyDogBottomLeft", new Vector2(-430f, -860f),
+            new Vector2(235f, 215f), 10f, 0.10f, 6f, 8f, 23f, 0.7f, 1f);
+        CreatePauseDogDecoration(content, "PrivacyDogBottomRight", new Vector2(450f, -840f),
+            new Vector2(245f, 225f), -12f, 0.12f, 7f, 6f, 26f, 0.9f, 1f);
 
-        CreateText(
-            card,
-            "PrivacyHeading",
-            "YOUR DATA STAYS ON THIS DEVICE",
-            new Vector2(0f, 575f),
-            new Vector2(760f, 100f),
-            34f,
-            Gold,
-            FontStyles.Bold,
+        TMP_Text title = CreatePauseText(content, "PrivacyTitle", "PRIVACY",
+            new Vector2(0f, 820f), new Vector2(750f, 135f), 100f,
+            Color.white, TextAlignmentOptions.Center);
+        AddTextShadow(title, new Color(0.02f, 0.22f, 0.57f, 0.55f), new Vector2(0f, -6f));
+        CreatePauseActionButton(content, "PrivacyTopButton", "X", null, "SettingsUI/Blue",
+            new Vector2(445f, 825f), new Vector2(115f, 115f), MenuBlue, Cyan,
+            ShowSettingsFromPrivacy, 56f, 0f);
+
+        RectTransform card = CreateCard(content, "PrivacyCard",
+            new Vector2(0f, -90f), new Vector2(920f, 1580f),
+            Color.white, new Color(0.48f, 0.89f, 1f, 0.85f));
+        card.GetComponent<Outline>().effectDistance = new Vector2(4f, -4f);
+        // Outline inherits Shadow, so configure only the actual shadow here.
+        foreach (Shadow shadow in card.GetComponents<Shadow>())
+        {
+            if (shadow is Outline) continue;
+            shadow.effectColor = new Color(0.015f, 0.24f, 0.53f, 0.28f);
+            shadow.effectDistance = new Vector2(0f, -7f);
+        }
+        card.gameObject.AddComponent<UiVerticalGradient>().Configure(
+            new Color(0.15f, 0.58f, 0.98f, 1f),
+            new Color(0.06f, 0.43f, 0.89f, 1f));
+
+        Image shield = CreateResourceImage(card, "PrivacyShield", "PrivacyUI/DogShield",
+            new Vector2(0f, 600f), new Vector2(230f, 230f));
+        shield.preserveAspect = true;
+        shield.raycastTarget = false;
+        TMP_Text heading = CreatePauseText(card, "PrivacyHeading",
+            "YOUR DATA STAYS\nON THIS DEVICE", new Vector2(0f, 425f),
+            new Vector2(820f, 145f), 52f, new Color(1f, 0.98f, 0.82f, 1f),
             TextAlignmentOptions.Center);
+        AddTextShadow(heading, new Color(0.02f, 0.24f, 0.55f, 0.45f), new Vector2(0f, -4f));
 
-        string privacyCopy =
-            "Balloon Dog stores your high score, token balance, owned skins, " +
-            "selected skin and settings locally on your device.\n\n" +
-            "This prototype does not create an account and does not send " +
-            "personal information to a server. Deleting the app or clearing " +
-            "its local data may remove your progress.\n\n" +
-            "If analytics, advertising, cloud saves or online services are " +
-            "added before release, this notice must be updated and a public " +
-            "privacy-policy link must be provided in the store listing.\n\n" +
-            "Prototype notice • Updated August 7, 2026";
+        CreatePrivacyParagraph(card, "PrivacyLocalData",
+            "Balloon Dog stores campaign progress, high score, tokens, owned skins, " +
+            "the selected skin and settings only on this device.",
+            new Vector2(0f, 225f), new Vector2(800f, 200f));
+        CreatePrivacyDivider(card, 105f);
+        CreatePrivacyParagraph(card, "PrivacyServices",
+            "The game does not require an account and this release contains no " +
+            "advertising, analytics, cloud save, location, microphone, camera or " +
+            "in-app purchase service.",
+            new Vector2(0f, -40f), new Vector2(800f, 250f));
+        CreatePrivacyDivider(card, -185f);
+        CreatePrivacyParagraph(card, "PrivacyDeletion",
+            "Deleting the app or clearing its local data may remove progress. " +
+            "If online services are added later, this notice and the public " +
+            "privacy policy must be updated before release.",
+            new Vector2(0f, -340f), new Vector2(800f, 270f));
+        CreatePauseText(card, "PrivacyNoticeDate",
+            "Privacy notice • Updated August 7, 2026", new Vector2(0f, -515f),
+            new Vector2(820f, 55f), 25f, Color.white, TextAlignmentOptions.Center);
+        // Keep this name for the Android back-button handler.
+        CreatePauseActionButton(card, "PrivacyBackButton", "GOT IT", null, "SettingsUI/Mint",
+            new Vector2(0f, -650f), new Vector2(800f, 155f), MenuGreen, Cyan,
+            ShowSettingsFromPrivacy, 57f, 0f);
+    }
 
-        TMP_Text copy = CreateText(
-            card,
-            "PrivacyCopy",
-            privacyCopy,
-            new Vector2(0f, 70f),
-            new Vector2(750f, 890f),
-            27f,
-            new Color(0.91f, 0.89f, 0.96f, 1f),
-            FontStyles.Normal,
-            TextAlignmentOptions.TopLeft);
-        copy.enableWordWrapping = true;
-        copy.lineSpacing = 8f;
+    private static void CreatePrivacyParagraph(Transform parent, string name,
+        string copy, Vector2 position, Vector2 size)
+    {
+        TMP_Text text = CreatePauseText(parent, name, copy, position, size,
+            36f, Color.white, TextAlignmentOptions.TopLeft);
+        text.enableWordWrapping = true;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 34f;
+        text.fontSizeMax = 36f;
+        text.lineSpacing = 8f;
+        text.overflowMode = TextOverflowModes.Overflow;
+    }
 
-        CreateButton(
-            card,
-            "PrivacyBackButton",
-            "GOT IT",
-            new Vector2(0f, -560f),
-            new Vector2(560f, 105f),
-            Lime,
-            new Color(0.10f, 0.28f, 0.02f, 1f),
-            ShowSettingsFromPrivacy,
-            31f);
+    private static void CreatePrivacyDivider(Transform parent, float y)
+    {
+        Image divider = CreateImage(parent, "PrivacyDivider", new Vector2(0f, y),
+            new Vector2(800f, 3f), new Color(0.62f, 0.91f, 1f, 0.55f), false);
+        divider.raycastTarget = false;
     }
 
     private void BuildResultScreen()
