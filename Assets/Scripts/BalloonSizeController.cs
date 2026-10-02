@@ -211,24 +211,10 @@ public sealed class BalloonSizeController : MonoBehaviour
     {
         CameraShakeController.ShakeGlobal(0.055f, 0.016f);
 
-        RuntimeVfx.SpawnBurst(
-            transform.position + Vector3.up * 0.9f,
-            new Color(0.2f, 0.9f, 1f, 1f),
-            11,
-            2.2f,
-            0.08f,
-            0.34f);
     }
 
     private void PlayGrowFeedback()
     {
-        RuntimeVfx.SpawnBurst(
-            transform.position + Vector3.up * 0.9f,
-            new Color(1f, 0.72f, 0.18f, 1f),
-            8,
-            1.8f,
-            0.07f,
-            0.25f);
     }
 
     private float GetAirDrivenTargetSize()
