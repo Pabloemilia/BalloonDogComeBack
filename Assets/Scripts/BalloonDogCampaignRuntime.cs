@@ -128,16 +128,13 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
     private void RefreshVisibility()
     {
         bool mainVisible = IsActive("ModernMainScreen");
-        bool gameplayVisible = IsActive("ModernGameplayOverlay") &&
-                               gameManager != null &&
-                               !gameManager.IsGameOver;
         bool resultVisible = IsActive("ModernResultScreen") &&
                              gameManager != null &&
                              gameManager.IsGameOver &&
                              completedResult;
 
         selector.SetActive(mainVisible);
-        gameplayProgress.SetActive(gameplayVisible);
+        gameplayProgress.SetActive(false);
         nextLevelButton.SetActive(resultVisible);
 
         GameObject restartButton = GameObject.Find("ModernRestartButton");
@@ -254,16 +251,8 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
         CreateButton(selector.transform, "NextLevel", "", new Vector2(370f, 0f), new Vector2(104f, 104f), Orange, new Color(0.15f, 0.05f, 0.01f), SelectNext);
 
         gameplayProgress = CreateRect("CampaignGameplayProgress", safeRoot).gameObject;
-        SetRect(gameplayProgress.GetComponent<RectTransform>(), new Vector2(0f, 955f), new Vector2(430f, 104f));
-        CreatePanel(gameplayProgress.transform, Vector2.zero, new Vector2(430f, 104f), new Color(0.035f, 0.02f, 0.10f, 0.84f));
-        CreatePanel(gameplayProgress.transform, new Vector2(0f, -26f), new Vector2(350f, 18f), new Color(1f, 1f, 1f, 0.24f));
-        progressFill = CreatePanel(gameplayProgress.transform, new Vector2(-175f, -26f), new Vector2(350f, 18f), Orange);
-        progressFill.type = Image.Type.Filled;
-        progressFill.fillMethod = Image.FillMethod.Horizontal;
-        progressFill.fillOrigin = 0;
-        progressFill.fillAmount = 0f;
-        progressFill.rectTransform.pivot = new Vector2(0f, 0.5f);
-        progressLabel = CreateText(gameplayProgress.transform, "ProgressLabel", "LEVEL 1  •  0%", new Vector2(0f, 17f), new Vector2(380f, 48f), 23f, Gold);
+        // Keep a hidden state object; no gameplay level/progress HUD is built.
+        gameplayProgress.SetActive(false);
 
         Button resultButton = CreateButton(
             safeRoot,

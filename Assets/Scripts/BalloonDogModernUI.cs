@@ -2579,26 +2579,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         gameplayOverlay.transform.SetParent(safeRoot, false);
         Stretch(gameplayOverlay.GetComponent<RectTransform>());
 
-        CreateButton(
-            gameplayOverlay.transform,
-            "ModernPauseButton",
-            "II",
-            new Vector2(430f, 1030f),
-            new Vector2(105f, 105f),
-            InkSoft,
-            Color.white,
-            PauseGame,
-            38f);
+        // Gameplay intentionally contains only the existing ShrinkButton.
+        // Keep this empty overlay as the gameplay visibility/state marker.
 
-        gameplaySkinText = CreatePillText(
-            gameplayOverlay.transform,
-            "GameplaySkin",
-            "CLASSIC",
-            new Vector2(-350f, 1030f),
-            new Vector2(310f, 74f),
-            new Color(0.04f, 0.03f, 0.10f, 0.80f),
-            Color.white);
-        gameplaySkinText.fontSizeMax = 24f;
     }
 
     private void BuildToast()
