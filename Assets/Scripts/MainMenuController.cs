@@ -39,22 +39,8 @@ public sealed class MainMenuController : MonoBehaviour
     {
         Time.timeScale = 0f;
         ResolveReferences();
-        ApplyBalloonMenuTheme();
         BindButtons();
         LoadPreferences();
-        StartCoroutine(RefreshThemeAfterSceneSetup());
-    }
-
-    private IEnumerator RefreshThemeAfterSceneSetup()
-    {
-        // Bootstrap bazı UI nesnelerini Start sonrasında üretebildiği için
-        // iki kare bekleyip temayı ve yerleşimi yeniden uygula.
-        yield return null;
-        yield return null;
-
-        ResolveReferences();
-        ApplyBalloonMenuTheme();
-        BindButtons();
     }
 
     private void Start()
