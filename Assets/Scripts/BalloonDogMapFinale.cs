@@ -52,17 +52,17 @@ public sealed class BalloonDogMapFinale : MonoBehaviour
             camera.backgroundColor = new Color(0.72f, 0.65f, 0.87f);
         }
         // Only the finish uses a frame; the obstacle road stays white and uncluttered.
-        Block("Finish_Left", new Vector3(-4.1f, 2.3f, FinishZ), new Vector3(.45f, 4.6f, .55f), 0);
-        Block("Finish_Right", new Vector3(4.1f, 2.3f, FinishZ), new Vector3(.45f, 4.6f, .55f), 0);
-        Block("Finish_Top", new Vector3(0f, 4.6f, FinishZ), new Vector3(8.65f, .6f, .55f), 1);
-        Label("FINISH", new Vector3(0f, 4.6f, FinishZ - .32f), Quaternion.identity, 6f, 2.4f);
+        Block("Finish_Left", new Vector3(-2.8f, 2.3f, FinishZ), new Vector3(.45f, 4.6f, .55f), 0);
+        Block("Finish_Right", new Vector3(2.8f, 2.3f, FinishZ), new Vector3(.45f, 4.6f, .55f), 0);
+        Block("Finish_Top", new Vector3(0f, 4.6f, FinishZ), new Vector3(6.05f, .6f, .55f), 1);
+        Label("FINISH", new Vector3(0f, 4.6f, FinishZ - .32f), Quaternion.identity, 5.4f, 2.4f);
         for (int i = 0; i < 10; i++)
         {
             float centerZ = BonusStartZ + (i + .5f) * ZoneLength;
             Block("Bonus_x" + (i + 1), new Vector3(0f, .035f, centerZ),
-                new Vector3(8.6f, .07f, ZoneLength - .15f), i % palette.Length);
+                new Vector3(5.8f, .07f, ZoneLength - .15f), i % palette.Length);
             Label("x" + (i + 1), new Vector3(0f, .085f, centerZ),
-                Quaternion.Euler(90f, 0f, 0f), 7f, 4.8f,
+                Quaternion.Euler(90f, 0f, 0f), 5.4f, 4.8f,
                 i % palette.Length == 2 || i % palette.Length == 3);
         }
     }
