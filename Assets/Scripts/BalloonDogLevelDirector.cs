@@ -390,10 +390,21 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
 
     private static void DisableBakedWorld()
     {
+        // Disable the obsolete minigame before its Start callback can create
+        // multiplier pads at the player's starting position.
+        foreach (LaunchMinigameController launch in
+            FindObjectsByType<LaunchMinigameController>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            launch.StopAllCoroutines();
+            launch.enabled = false;
+        }
+
         string[] roots =
         {
             "BalloonDog_Level", "BalloonDog_V4_Polish", "BalloonDog_V5_MegaPolish",
-            "BalloonDog_V6_Polish", RuntimeLevelName
+            "BalloonDog_V6_Polish", RuntimeLevelName,
+            "LaunchMultiplierTrackV10", "LaunchMultiplierZones"
         };
 
         foreach (Transform candidate in Resources.FindObjectsOfTypeAll<Transform>())

@@ -44,6 +44,13 @@ public sealed class LaunchMinigameController : MonoBehaviour
 
     private void Start()
     {
+        // Campaign levels finish directly; the retired launch track must never
+        // be generated over the road when the first menu opens.
+        if (FindAnyObjectByType<BalloonDogLevelDirector>() != null)
+        {
+            return;
+        }
+
         ResolveReferences();
         EnsureFinalMultiplierTrack(ResolveLaunchStartPosition());
     }
@@ -81,6 +88,11 @@ public sealed class LaunchMinigameController : MonoBehaviour
 
     public void BeginLaunchSequence()
     {
+        if (FindAnyObjectByType<BalloonDogLevelDirector>() != null)
+        {
+            return;
+        }
+
         ResolveReferences();
 
         if (sequenceStarted)
