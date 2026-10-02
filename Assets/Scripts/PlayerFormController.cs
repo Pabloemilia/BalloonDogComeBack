@@ -228,15 +228,6 @@ public sealed class PlayerFormController : MonoBehaviour
         {
             GameAudioController.PlayTransform();
 
-            RuntimeVfx.SpawnBurst(
-                transform.position + Vector3.up * 1.1f,
-                active
-                    ? new Color(0.12f, 0.86f, 1f, 1f)
-                    : new Color(1f, 0.72f, 0.16f, 1f),
-                14,
-                2.6f,
-                0.12f,
-                0.5f);
         }
 
         IsHelicopterActive = active;
