@@ -1098,6 +1098,94 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         }
     }
 
+    /// <summary>Reuses the actual menu surface styling for authored, noninteractive artwork.</summary>
+    public static void StyleAuthoredMenu(Transform root)
+    {
+        foreach (string name in new[] { "Market", "Skins", "Play", "Best", "Settings", "Coins" })
+        {
+            RectTransform rect = root.Find(name) as RectTransform;
+            if (rect == null) continue;
+            Image image = rect.GetComponent<Image>();
+            image.sprite = GetRoundedUiSprite();
+            image.type = Image.Type.Sliced;
+            image.preserveAspect = false;
+            image.raycastTarget = false;
+            image.color = name == "Play" ? new Color(.35f, .84f, .23f, 1f) :
+                name == "Coins" ? new Color(.91f, .86f, .63f, .96f) :
+                new Color(.18f, .54f, .96f, 1f);
+            if (name == "Market" || name == "Skins" || name == "Play")
+            {
+                EnsureSurfaceChrome(rect);
+                if (name == "Play")
+                {
+                    rect.anchoredPosition = new Vector2(0f, -920f);
+                    rect.sizeDelta = new Vector2(890f, 190f);
+                }
+                Transform child = rect.Find(name + "_Label");
+                if (child != null)
+                {
+                    Text label = child.GetComponent<Text>();
+                    label.fontSize = name == "Play" ? 88 : name == "Market" ? 54 : 60;
+                    RectTransform textRect = label.rectTransform;
+                    textRect.sizeDelta = rect.sizeDelta;
+                    if (name == "Market")
+                    {
+                        textRect.anchoredPosition = new Vector2(40f, 6f);
+                        textRect.sizeDelta = new Vector2(310f, 140f);
+                    }
+                    child.SetAsLastSibling();
+                }
+            }
+        }
+        RectTransform coins = root.Find("Coins") as RectTransform;
+        if (coins != null)
+        {
+            coins.anchorMin = coins.anchorMax = new Vector2(0f, 1f);
+            coins.pivot = new Vector2(0f, 1f);
+            coins.anchoredPosition = new Vector2(18f, -14f);
+            coins.sizeDelta = new Vector2(258f, 86f);
+            RectTransform label = root.Find("CoinsLabel") as RectTransform;
+            RectTransform icon = root.Find("CoinIcon") as RectTransform;
+            // Also find the elements after a previous, idempotent styling pass.
+            if (label == null) label = coins.Find("CoinsLabel") as RectTransform;
+            if (icon == null) icon = coins.Find("CoinIcon") as RectTransform;
+            if (label != null)
+            {
+                label.SetParent(coins, false);
+                label.anchorMin = label.anchorMax = new Vector2(.5f, .5f);
+                label.anchoredPosition = new Vector2(22f, 0f);
+                label.sizeDelta = new Vector2(170f, 70f);
+                label.GetComponent<Text>().fontSize = 38;
+            }
+            if (icon != null)
+            {
+                icon.SetParent(coins, false);
+                icon.anchorMin = icon.anchorMax = new Vector2(0f, .5f);
+                icon.anchoredPosition = new Vector2(42f, 0f);
+                icon.sizeDelta = new Vector2(44f, 44f);
+            }
+        }
+        RectTransform settings = root.Find("Settings") as RectTransform;
+        RectTransform settingsIcon = root.Find("SettingsIcon") as RectTransform;
+        if (settings != null)
+        {
+            settings.anchorMin = settings.anchorMax = Vector2.one;
+            settings.pivot = Vector2.one;
+            settings.anchoredPosition = new Vector2(-14f, -14f);
+        }
+        if (settingsIcon != null)
+        {
+            settingsIcon.anchorMin = settingsIcon.anchorMax = Vector2.one;
+            settingsIcon.anchoredPosition = new Vector2(-67f, -67f);
+        }
+        RectTransform level = root.Find("Level") as RectTransform;
+        if (level != null)
+        {
+            level.anchorMin = level.anchorMax = new Vector2(.5f, 1f);
+            level.anchoredPosition = new Vector2(0f, -42f);
+        }
+    }
+
     private static void StyleButton(RectTransform rect, Color fill, string labelValue, float fontSize)
     {
         if (rect == null)

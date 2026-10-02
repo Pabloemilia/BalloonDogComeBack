@@ -19,6 +19,7 @@ public sealed class AuthoredMenuView : MonoBehaviour
 
     private void RefreshEditingView()
     {
+        BalloonDogBalloonThemeRuntime.StyleAuthoredMenu(transform);
         foreach (Text label in GetComponentsInChildren<Text>())
         {
             if (label.name == "CoinsLabel") label.text = BalloonDogEconomy.Coins.ToString("N0");
