@@ -80,6 +80,21 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         RefreshNow();
     }
 
+#if UNITY_EDITOR
+    public void ApplyEditorMainPreview()
+    {
+        LoadLetterSprites();
+        GameObject main = FindSceneObject("ModernMainScreen");
+        if (main == null) return;
+        StyleBackground(main);
+        BuildOrRefreshTitle();
+        FixMenuButtons();
+        FixCoinAndSettings();
+        FixBestPill();
+        FixLevelSelector();
+    }
+#endif
+
     private void RefreshNow()
     {
         GameObject mainScreen = FindSceneObject("ModernMainScreen");
@@ -201,7 +216,8 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
     {
         for (int i = root.childCount - 1; i >= 0; i--)
         {
-            Destroy(root.GetChild(i).gameObject);
+            if (Application.isPlaying) Destroy(root.GetChild(i).gameObject);
+            else DestroyImmediate(root.GetChild(i).gameObject);
         }
 
         float targetHeight = Mathf.Max(1f, root.rect.height * heightFill);
@@ -1069,7 +1085,8 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             GameObject old = GameObject.Find(oldName);
             if (old != null)
             {
-                Destroy(old);
+                if (Application.isPlaying) Destroy(old);
+                else DestroyImmediate(old);
             }
         }
     }

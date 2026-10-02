@@ -376,7 +376,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         eventSystem.transform.SetAsLastSibling();
     }
 
-    private void BuildInterface()
+    private void BuildInterface(bool mainOnly = false)
     {
         GameObject canvasObject = new GameObject(
             "BalloonDogModernCanvas",
@@ -401,6 +401,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         safeRoot.gameObject.AddComponent<BalloonDogSafeArea>();
 
         BuildMainScreen();
+        if (mainOnly) return;
         BuildMarketScreen();
         coinPacksScreen = BuildCurrencyPacksScreen(false);
         gemPacksScreen = BuildCurrencyPacksScreen(true);
@@ -414,6 +415,18 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         HideAllScreens();
     }
+
+#if UNITY_EDITOR
+    public void BuildEditorMainPreview()
+    {
+        BuildInterface(true);
+        mainScreen.SetActive(true);
+        coinText.text = BalloonDogEconomy.Coins.ToString();
+        mainBestText.text = "BEST  " + GameManager.BestScore;
+        foreach (Button button in mainScreen.GetComponentsInChildren<Button>(true))
+            button.interactable = false;
+    }
+#endif
 
     private void BuildMainScreen()
     {
@@ -2408,7 +2421,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         // Button state tinting remain unchanged.
         foreach (Shadow shadow in button.GetComponents<Shadow>())
         {
-            Destroy(shadow);
+            if (Application.isPlaying) Destroy(shadow);
+            else DestroyImmediate(shadow);
         }
 
         TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
@@ -3770,7 +3784,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         foreach (Shadow shadow in button.GetComponents<Shadow>())
         {
-            Destroy(shadow);
+            if (Application.isPlaying) Destroy(shadow);
+            else DestroyImmediate(shadow);
         }
     }
 
