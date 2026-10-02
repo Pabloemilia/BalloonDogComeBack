@@ -7,7 +7,6 @@ public sealed class FinishLine : MonoBehaviour
 
     private bool completed;
     private ScoreController playerScore;
-    private LaunchMinigameController launcher;
 
     private void Reset()
     {
@@ -108,12 +107,6 @@ public sealed class FinishLine : MonoBehaviour
 
         ResolveReferences();
 
-        if (launcher != null)
-        {
-            launcher.BeginLaunchSequence();
-            return;
-        }
-
         GameManager manager = GameManager.Instance ?? FindAnyObjectByType<GameManager>();
         if (manager != null)
         {
@@ -128,9 +121,5 @@ public sealed class FinishLine : MonoBehaviour
             playerScore = FindAnyObjectByType<ScoreController>();
         }
 
-        if (launcher == null)
-        {
-            launcher = FindAnyObjectByType<LaunchMinigameController>();
-        }
     }
 }

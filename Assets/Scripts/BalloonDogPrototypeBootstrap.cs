@@ -23,43 +23,8 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
     private static Material whiteMaterial;
     private static Material roadMaterial;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void CreateBootstrap()
-    {
-        PlayerRunner runner = FindAnyObjectByType<PlayerRunner>();
-        GameObject playerByName = GameObject.Find("player") ?? GameObject.Find("Player");
-
-        if (runner == null && playerByName == null)
-        {
-            return;
-        }
-
-        // Sahne editörde bake edildiyse runtime'da yeniden üretme.
-        if (GameObject.Find(GeneratedLevelName) != null)
-        {
-            return;
-        }
-
-        if (FindAnyObjectByType<BalloonDogPrototypeBootstrap>() != null)
-        {
-            return;
-        }
-
-        GameObject bootstrapObject = new GameObject("__BalloonDogPrototypeBootstrapV2");
-        bootstrapObject.AddComponent<BalloonDogPrototypeBootstrap>();
-    }
-
-    private IEnumerator Start()
-    {
-        if (!Application.isPlaying)
-        {
-            yield break;
-        }
-
-        // Unity'nin sahneyi ve Resources modellerini tamamen hazırlamasını bekler.
-        yield return null;
-        SetupPrototype();
-    }
+    // Legacy editor baking remains available explicitly. It is never run on
+    // scene load, so it cannot replace the authored main map at startup.
 
     /// <summary>
     /// Editör aracının sahnedeki bütün runtime nesnelerini kalıcı GameObject olarak
@@ -700,18 +665,6 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
             new Vector2(0f, 70f), new Vector2(360f, 150f));
         GetOrAdd<HoldShrinkButton>(shrinkButton).Configure(sizeController);
 
-        TMP_Text launchText = CreateText(
-            canvas.transform,
-            "LaunchResultText",
-            "",
-            74f);
-        SetRect(launchText.rectTransform,
-            new Vector2(0.5f, 0.65f), new Vector2(0.5f, 0.65f), new Vector2(0.5f, 0.5f),
-            Vector2.zero, new Vector2(900f, 260f));
-        launchText.alignment = TextAlignmentOptions.Center;
-        launchText.raycastTarget = false;
-        launchText.gameObject.SetActive(false);
-
         GameObject endPanel = CreateEndPanel(
             canvas.transform,
             gameManager,
@@ -720,20 +673,7 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
         gameManager.ConfigureEndPanel(endPanel, titleText, summaryText);
         endPanel.SetActive(false);
 
-        LaunchMinigameController launcher =
-            GetOrAdd<LaunchMinigameController>(gameManager.gameObject);
-        launcher.Configure(
-            player,
-            body,
-            runner,
-            horizontalController,
-            formController,
-            sizeController,
-            airController,
-            scoreController,
-            cameraFollow,
-            gameManager,
-            launchText);
+
     }
 
     private static void DisableLegacyInterface(Transform canvas)

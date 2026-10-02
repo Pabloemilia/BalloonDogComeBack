@@ -78,8 +78,6 @@ public static class BalloonDogRevisionV4Installer
             BuildInterfacePolish(player);
             ConfigureGameplayFeedback(player);
 
-            EditorUtility.DisplayProgressBar("BalloonDog V4", "Bitiş pistine çarpan bölgeleri ekleniyor...", 0.9f);
-            BuildLaunchMultiplierZones(polishRoot.transform);
 
             MarkSceneDirty(scene);
             AssetDatabase.SaveAssets();
@@ -577,48 +575,6 @@ public static class BalloonDogRevisionV4Installer
         Transform visual = FindChildRecursive(player.transform, "BalloonDogModel") ??
                            FindChildRecursive(player.transform, "Bubble");
         leakFeedback.Configure(visual);
-    }
-
-    private static void BuildLaunchMultiplierZones(Transform polishRoot)
-    {
-        Transform zones = CreateGroup(polishRoot, "LaunchMultiplierZones");
-
-        for (int i = 0; i < 8; i++)
-        {
-            int multiplier = i + 2;
-            float z = FinishZ + 10f + i * 9f;
-            Color zoneColor = Color.Lerp(
-                new Color(0.2f, 0.75f, 1f),
-                new Color(1f, 0.2f, 0.12f),
-                i / 7f);
-            Material material = GetOrCreateMaterial(
-                $"BDV4_LaunchZone_{multiplier}",
-                zoneColor,
-                0.25f,
-                true);
-
-            CreateCube(
-                zones,
-                $"MultiplierZone_x{multiplier}",
-                new Vector3(0f, 0.035f, z),
-                new Vector3(RoadHalfWidth * 2f - 0.35f, 0.025f, 7.6f),
-                material,
-                false);
-
-            GameObject labelObject = new GameObject(
-                $"MultiplierLabel_x{multiplier}",
-                typeof(RectTransform),
-                typeof(TextMeshPro));
-            labelObject.transform.SetParent(zones, false);
-            labelObject.transform.position = new Vector3(0f, 0.08f, z);
-            labelObject.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-            TextMeshPro label = labelObject.GetComponent<TextMeshPro>();
-            label.text = $"x{multiplier}";
-            label.fontSize = 8f;
-            label.alignment = TextAlignmentOptions.Center;
-            label.color = Color.white;
-            label.rectTransform.sizeDelta = new Vector2(6f, 2f);
-        }
     }
 
     private static Slider CreateProgressSlider(Transform parent)
