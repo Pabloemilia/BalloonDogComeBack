@@ -10,12 +10,6 @@ public static class PurchasedRoadObstacles
         {
             if (!root.name.StartsWith("PackObstacle_") || root.parent == null ||
                 !root.parent.name.StartsWith("RoadTrapAnchor_")) continue;
-            ConfigureObstacle(root);
-        }
-    }
-
-    public static void ConfigureObstacle(Transform root)
-    {
             Transform anchor = root.parent;
             Transform visual = new GameObject("FittedVisual").transform;
             visual.SetParent(anchor, false);
@@ -26,7 +20,7 @@ public static class PurchasedRoadObstacles
             foreach (ParticleSystem particles in root.GetComponentsInChildren<ParticleSystem>())
                 particles.gameObject.SetActive(false);
             MeshRenderer[] renderers = root.GetComponentsInChildren<MeshRenderer>();
-            if (renderers.Length == 0) return;
+            if (renderers.Length == 0) continue;
             Animator[] animators = root.GetComponentsInChildren<Animator>();
             Bounds envelope = BoundsOf(renderers);
             // Include movement over the whole cycle, not only the first animation pose.
@@ -63,6 +57,7 @@ public static class PurchasedRoadObstacles
             hitbox.isTrigger = true;
             anchor.gameObject.AddComponent<Obstacle>().ConfigureNormal();
             anchor.gameObject.AddComponent<PurchasedRoadObstacleBounds>().Configure(renderers, hitbox);
+        }
     }
 
     internal static Bounds BoundsOf(MeshRenderer[] renderers)
