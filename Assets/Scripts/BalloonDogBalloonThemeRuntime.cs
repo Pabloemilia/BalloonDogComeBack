@@ -389,14 +389,16 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         if (!ownsSettings) StyleSecondaryBackground("ModernSettingsScreen");
         StyleSecondaryBackground("ModernSkinsScreen");
         StyleSecondaryBackground("ModernMarketScreen");
-        StyleSecondaryBackground("ModernPrivacyScreen");
+        GameObject privacy = FindSceneObject("ModernPrivacyScreen");
+        bool ownsPrivacy = privacy != null && privacy.transform.Find("PrivacyContent") != null;
+        if (!ownsPrivacy) StyleSecondaryBackground("ModernPrivacyScreen");
 
         if (!ownsSettings) StyleSecondaryTypography("ModernSettingsScreen");
         GameObject collection = FindSceneObject("ModernSkinsScreen");
         bool ownsCollection = collection != null && collection.transform.Find("CollectionContent") != null;
         if (!ownsCollection) StyleSecondaryTypography("ModernSkinsScreen");
         StyleSecondaryTypography("ModernMarketScreen");
-        StyleSecondaryTypography("ModernPrivacyScreen");
+        if (!ownsPrivacy) StyleSecondaryTypography("ModernPrivacyScreen");
 
         StyleSecondaryCoin("SettingsTokens");
         StyleSecondaryCoin("SkinsTokens");
@@ -419,7 +421,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         if (!ownsSettings) RemoveSecondaryOutlines("ModernSettingsScreen");
         RemoveSecondaryOutlines("ModernSkinsScreen");
         RemoveSecondaryOutlines("ModernMarketScreen");
-        RemoveSecondaryOutlines("ModernPrivacyScreen");
+        if (!ownsPrivacy) RemoveSecondaryOutlines("ModernPrivacyScreen");
     }
 
     private static void StyleSecondaryBackground(string screenName)

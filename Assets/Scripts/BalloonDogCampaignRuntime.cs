@@ -333,6 +333,15 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
             return;
         }
 
+        // Modern privacy owns its separate Titan One paragraphs and footer.
+        // Do not inject the old monolithic copy over that layout.
+        GameObject privacy = GameObject.Find("ModernPrivacyScreen");
+        if (privacy != null && privacy.transform.Find("PrivacyContent") != null)
+        {
+            privacyNoticeUpdated = true;
+            return;
+        }
+
         GameObject privacyCopy = GameObject.Find("PrivacyCopy");
         TMP_Text text = privacyCopy != null
             ? privacyCopy.GetComponent<TMP_Text>()
