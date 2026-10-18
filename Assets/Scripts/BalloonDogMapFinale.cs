@@ -5,8 +5,11 @@ using UnityEngine;
 /// <summary>The authored obstacle course ends with an air-powered x1–x10 bonus flight.</summary>
 public sealed class BalloonDogMapFinale : MonoBehaviour
 {
-    public const float FinishZ = 65f;
-    private const float BonusStartZ = 68f;
+    public static float FinishZ { get; private set; } = 65f;
+    public static float BonusStartZ { get; private set; } = 68f;
+    public static float RoadWidth { get; private set; } = 6f;
+    private static float roadCenterX;
+    private static float roadTop;
     private const float ZoneLength = 6f;
     private PlayerRunner runner;
     private bool finishing;
@@ -18,12 +21,34 @@ public sealed class BalloonDogMapFinale : MonoBehaviour
     {
         if (FindAnyObjectByType<PlayerRunner>() == null ||
             FindAnyObjectByType<BalloonDogMapFinale>() != null) return;
+        RefreshCourseLayout();
         new GameObject("BalloonDog_MapFinale").AddComponent<BalloonDogMapFinale>();
+    }
+
+    public static void RefreshCourseLayout()
+    {
+        // Read the actual scene road; do not change its Transform in Play mode.
+        Renderer road = GameObject.Find("Road")?.GetComponent<Renderer>();
+        if (road == null)
+        {
+            FinishZ = 65f;
+            BonusStartZ = 68f;
+            RoadWidth = 6f;
+            roadCenterX = roadTop = 0f;
+            return;
+        }
+        Bounds bounds = road.bounds;
+        BonusStartZ = bounds.max.z;
+        FinishZ = BonusStartZ - 3f;
+        RoadWidth = bounds.size.x;
+        roadCenterX = bounds.center.x;
+        roadTop = bounds.max.y;
     }
 
     private void Start()
     {
         runner = FindAnyObjectByType<PlayerRunner>();
+        RefreshCourseLayout();
         // This course has a single finish owner; legacy finish triggers cannot cut the bonus short.
         foreach (FinishLine finish in FindObjectsByType<FinishLine>(FindObjectsSortMode.None))
             finish.enabled = false;
@@ -50,22 +75,27 @@ public sealed class BalloonDogMapFinale : MonoBehaviour
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.72f, 0.65f, 0.87f);
         }
-        // Pastel course with a clearly separated, capped bonus runway.
-        Block("Finish_Left", new Vector3(-2.8f, 2.3f, FinishZ), new Vector3(.45f, 4.6f, .55f), 0);
-        Block("Finish_Right", new Vector3(2.8f, 2.3f, FinishZ), new Vector3(.45f, 4.6f, .55f), 0);
-        Block("Finish_Top", new Vector3(0f, 4.6f, FinishZ), new Vector3(6.05f, .6f, .55f), 1);
-        Label("FINISH", new Vector3(0f, 4.6f, FinishZ - .32f), Quaternion.identity, 5.4f, 2.4f);
+        // Match the authored road width, elevation and far edge exactly.
+        float postOffset = Mathf.Max(.5f, RoadWidth * .5f - .2f);
+        Block("Finish_Left", new Vector3(roadCenterX - postOffset, roadTop + 2.3f, FinishZ),
+            new Vector3(.45f, 4.6f, .55f), 0);
+        Block("Finish_Right", new Vector3(roadCenterX + postOffset, roadTop + 2.3f, FinishZ),
+            new Vector3(.45f, 4.6f, .55f), 0);
+        Block("Finish_Top", new Vector3(roadCenterX, roadTop + 4.6f, FinishZ),
+            new Vector3(RoadWidth + .05f, .6f, .55f), 1);
+        Label("FINISH", new Vector3(roadCenterX, roadTop + 4.6f, FinishZ - .32f),
+            Quaternion.identity, RoadWidth * .9f, 2.4f);
         for (int i = 0; i < 10; i++)
         {
             float centerZ = BonusStartZ + (i + .5f) * ZoneLength;
-            Block("Bonus_x" + (i + 1), new Vector3(0f, .035f, centerZ),
-                new Vector3(5.8f, .07f, ZoneLength - .15f), i % palette.Length);
-            Label((i + 1) + "x", new Vector3(0f, .085f, centerZ),
-                Quaternion.Euler(90f, 0f, 0f), 5.4f, 4.8f,
+            Block("Bonus_x" + (i + 1), new Vector3(roadCenterX, roadTop - .05f, centerZ),
+                new Vector3(RoadWidth, .1f, ZoneLength), i % palette.Length);
+            Label((i + 1) + "x", new Vector3(roadCenterX, roadTop + .02f, centerZ),
+                Quaternion.Euler(90f, 0f, 0f), RoadWidth * .9f, 4.8f,
                 i % palette.Length == 2 || i % palette.Length == 3);
         }
-        Block("Bonus_EndCap", new Vector3(0f, .18f, BonusStartZ + 10f * ZoneLength),
-            new Vector3(6f, .36f, .35f), 0);
+        Block("Bonus_EndCap", new Vector3(roadCenterX, roadTop + .18f, BonusStartZ + 10f * ZoneLength),
+            new Vector3(RoadWidth, .36f, .35f), 0);
     }
 
     private void Update()
@@ -135,7 +165,7 @@ public sealed class BalloonDogMapFinale : MonoBehaviour
         balloon.localScale = balloonScale;
         foreach (RunnerCameraFollow follow in FindObjectsByType<RunnerCameraFollow>(FindObjectsSortMode.None))
             follow.Configure(balloon);
-        Vector3 target = new Vector3(0f, .6f, LandingZForAir(remainingAir));
+        Vector3 target = new Vector3(roadCenterX, roadTop + .6f, LandingZForAir(remainingAir));
         float duration = Mathf.Lerp(1.8f, 4.5f, remainingAir);
         for (float elapsed = 0f; elapsed < duration; elapsed += Time.deltaTime)
         {

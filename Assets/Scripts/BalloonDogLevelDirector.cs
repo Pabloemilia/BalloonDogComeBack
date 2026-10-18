@@ -6,7 +6,7 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
 {
     private const string RuntimeName = "__BalloonDogLevelDirector";
     public static int CurrentLevel => BalloonDogCampaign.CurrentLevel;
-    public static float FinishZ { get; private set; } = BalloonDogMapFinale.FinishZ;
+    public static float FinishZ => BalloonDogMapFinale.FinishZ;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateRuntimeDirector()
@@ -30,7 +30,7 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
 
     private void ConfigureMainMap()
     {
-        FinishZ = BalloonDogMapFinale.FinishZ;
+        BalloonDogMapFinale.RefreshCourseLayout();
         // Keep the authored player spawn, road, obstacles and camera intact.
     }
 }
