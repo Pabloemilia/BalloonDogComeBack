@@ -31,11 +31,6 @@ public sealed class BalloonDogLevelDirector : MonoBehaviour
     private void ConfigureMainMap()
     {
         FinishZ = BalloonDogMapFinale.FinishZ;
-        foreach (FinishLine finish in FindObjectsByType<FinishLine>(FindObjectsSortMode.None))
-            FinishZ = Mathf.Max(FinishZ, finish.transform.position.z);
-        foreach (BalloonDogCampaignFinish finish in
-            FindObjectsByType<BalloonDogCampaignFinish>(FindObjectsSortMode.None))
-            FinishZ = Mathf.Max(FinishZ, finish.transform.position.z);
         // Keep the authored player spawn, road, obstacles and camera intact.
     }
 }

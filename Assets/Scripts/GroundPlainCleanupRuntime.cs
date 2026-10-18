@@ -33,6 +33,8 @@ public sealed class GroundPlainCleanupRuntime : MonoBehaviour
             }
 
             GameObject go = renderer.gameObject;
+            // Bonus pads are intentional gameplay targets, including the orange ones.
+            if (go.GetComponentInParent<BalloonDogMapFinale>() != null) continue;
             string objectName = go.name != null
                 ? go.name.ToUpperInvariant()
                 : string.Empty;

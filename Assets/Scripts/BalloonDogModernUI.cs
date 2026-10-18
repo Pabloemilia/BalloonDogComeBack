@@ -2579,8 +2579,16 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         gameplayOverlay.transform.SetParent(safeRoot, false);
         Stretch(gameplayOverlay.GetComponent<RectTransform>());
 
-        // Gameplay intentionally contains only the existing ShrinkButton.
-        // Keep this empty overlay as the gameplay visibility/state marker.
+        Button pause = CreatePauseActionButton(
+            gameplayOverlay.transform, "GameplayPauseButton", "II", null,
+            "PauseMenu/Buttons/PauseButtonBlueClean", Vector2.zero,
+            new Vector2(112f, 112f), Cyan, MenuBlue, PauseGame, 52f, 0f);
+        RectTransform stage = pause.transform.parent as RectTransform;
+        stage.anchorMin = Vector2.one;
+        stage.anchorMax = Vector2.one;
+        stage.pivot = Vector2.one;
+        stage.anchoredPosition = new Vector2(-24f, -24f);
+        pause.GetComponentInChildren<TMP_Text>().raycastTarget = false;
 
     }
 
@@ -2801,7 +2809,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void PauseGame()
     {
-        if (pauseActionInProgress ||
+        if (pauseActionInProgress || Time.timeScale <= 0f ||
             (gameManager != null && gameManager.IsGameOver) ||
             (pauseScreen != null && pauseScreen.activeSelf))
         {

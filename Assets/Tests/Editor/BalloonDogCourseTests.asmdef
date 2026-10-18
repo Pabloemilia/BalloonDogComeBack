@@ -1,0 +1,5 @@
+{
+    "name": "BalloonDogCourseTests",
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}
