@@ -69,12 +69,7 @@ public sealed class BalloonDogMapFinale : MonoBehaviour
                 palette[i].SetColor("_BaseColor", colors[i]);
         }
         RenderSettings.fog = false;
-        foreach (Camera camera in FindObjectsByType<Camera>(FindObjectsSortMode.None))
-        {
-            if (camera.GetComponent<RunnerCameraFollow>() == null) continue;
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.72f, 0.65f, 0.87f);
-        }
+        // The gameplay camera owns its cloud skybox; preserve its scene settings.
         // Match the authored road width, elevation and far edge exactly.
         float postOffset = Mathf.Max(.5f, RoadWidth * .5f - .2f);
         Block("Finish_Left", new Vector3(roadCenterX - postOffset, roadTop + 2.3f, FinishZ),

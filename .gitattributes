@@ -188,3 +188,6 @@ Assets/Resources/MarketUI/SkinCase/*.png -filter -diff -merge -text
 
 # Collection runtime artwork uses regular Git blobs.
 Assets/Resources/CollectionUI/*.png -filter -diff -merge -text
+
+# Supplied gameplay sky artwork is a regular Git blob.
+Assets/Art/GameplayBackground/*.png -filter -diff -merge -text
