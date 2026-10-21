@@ -14,6 +14,7 @@ public sealed class AirController : MonoBehaviour
 
     private float currentAir;
     private bool ranOutOfAir;
+    private float continueProtectionUntil;
 
     public float CurrentAir => currentAir;
     public float MaxAir => maxAir;
@@ -61,6 +62,13 @@ public sealed class AirController : MonoBehaviour
         NotifyAirChanged();
     }
 
+    public void RestoreAfterContinue()
+    {
+        ResetToFull();
+        // Grace time lets the player move clear of the obstacle that killed them.
+        continueProtectionUntil = Time.time + 2f;
+    }
+
     public bool HasAir(float requiredAmount)
     {
         return currentAir >= Mathf.Max(0f, requiredAmount);
@@ -84,7 +92,7 @@ public sealed class AirController : MonoBehaviour
 
     public void RemoveAir(float amount)
     {
-        if (amount <= 0f || ranOutOfAir)
+        if (amount <= 0f || ranOutOfAir || Time.time < continueProtectionUntil)
         {
             return;
         }
@@ -104,7 +112,7 @@ public sealed class AirController : MonoBehaviour
 
     public void EmptyAir(string reason = "BALON PATLADI")
     {
-        if (ranOutOfAir)
+        if (ranOutOfAir || Time.time < continueProtectionUntil)
         {
             return;
         }

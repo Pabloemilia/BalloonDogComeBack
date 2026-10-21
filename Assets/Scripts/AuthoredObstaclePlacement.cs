@@ -29,6 +29,7 @@ public sealed class AuthoredObstaclePlacement : MonoBehaviour
     public static Transform PreservePlacement(Animator animator)
     {
         if (animator == null || animator.runtimeAnimatorController == null) return null;
+        if (animator.GetComponentInParent<BalloonDogEndlessRunner>() != null) return null;
         bool purchasedTrap = false;
         foreach (AnimationClip clip in animator.runtimeAnimatorController.animationClips)
             if (clip != null && clip.name.StartsWith("Obstacle ")) purchasedTrap = true;

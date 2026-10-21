@@ -120,46 +120,80 @@ public sealed class BalloonDogCourseTests
     }
 
     [UnityTest]
-    public IEnumerator DogStaysAtFinishAndPauseFreezesTheSeparateBalloon()
+    public IEnumerator DeathShowsContinueBeforeFinalResultAndExpiresOnce()
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Game.unity", OpenSceneMode.Single);
         yield return new EnterPlayMode();
-        // Allow the existing menu/UI rebuild to finish while time is frozen.
         for (int i = 0; i < 15; i++) yield return null;
-        Component menu = UnityEngine.Object.FindAnyObjectByType(RuntimeType("MainMenuController")) as Component;
-        Call(menu.GetType(), menu, "StartGame");
-        yield return new WaitForSecondsRealtime(3f);
-        Component runner = UnityEngine.Object.FindAnyObjectByType(RuntimeType("PlayerRunner")) as Component;
-        Rigidbody body = runner.GetComponent<Rigidbody>();
-        body.position = new Vector3(0f, 1f, 65f);
-        runner.transform.position = body.position;
-        yield return new WaitForSeconds(.65f);
-        GameObject balloon = GameObject.Find("AirBonusBalloon");
-        Assert.That(balloon, Is.Not.Null);
-        Assert.That(runner.transform.position.z, Is.EqualTo(65f).Within(.01f));
-        Assert.That(GameObject.Find("GameplayPauseButton"), Is.Not.Null);
-        Component ui = UnityEngine.Object.FindAnyObjectByType(RuntimeType("BalloonDogModernUI")) as Component;
-        Call(ui.GetType(), ui, "PauseGame");
-        Vector3 pausedPosition = balloon.transform.position;
-        yield return new WaitForSecondsRealtime(.3f);
-        Assert.That(Time.timeScale, Is.Zero);
-        Assert.That(Vector3.Distance(balloon.transform.position, pausedPosition), Is.LessThan(.001f));
-        Call(ui.GetType(), ui, "ResumeGame");
-        // Pause-screen exit uses unscaled animation; do not advance the run until it closes.
-        float deadline = Time.realtimeSinceStartup + 3f;
-        while (Time.timeScale == 0f && Time.realtimeSinceStartup < deadline) yield return null;
-        Assert.That(Time.timeScale, Is.EqualTo(1f));
-        deadline = Time.realtimeSinceStartup + 7f;
         Component manager = UnityEngine.Object.FindAnyObjectByType(RuntimeType("GameManager")) as Component;
-        while (!(bool)manager.GetType().GetProperty("IsGameOver").GetValue(manager) &&
-               Time.realtimeSinceStartup < deadline)
-        {
-            Assert.That(balloon.transform.position.z, Is.LessThan(128f));
-            Assert.That(runner.transform.position.z, Is.EqualTo(65f).Within(.01f));
-            yield return null;
-        }
-        Assert.That((bool)manager.GetType().GetProperty("LastRunCompleted").GetValue(manager), Is.True);
-        Assert.That(balloon.transform.position.z, Is.EqualTo(125f).Within(.01f));
+        Type type = manager.GetType();
+        int ended = 0;
+        Action onEnded = () => ended++;
+        type.GetEvent("GameEnded").AddEventHandler(manager, onEnded);
+        Call(type, manager, "TriggerGameOver", "TEST DEATH");
+        Assert.That((bool)type.GetProperty("IsContinuePending").GetValue(manager), Is.True);
+        Assert.That((bool)type.GetProperty("IsResultFinalized").GetValue(manager), Is.False);
+        Assert.That(ended, Is.Zero);
+        Assert.That(Time.timeScale, Is.Zero);
+        Component prompt = manager.GetComponent(RuntimeType("BalloonDogContinuePrompt"));
+        Type promptType = prompt.GetType();
+        Assert.That(GameObject.Find("ContinueOfferCanvas"), Is.Not.Null);
+        // Duplicate fatal contacts cannot reset the four-second offer.
+        Call(promptType, prompt, "Advance", 2f);
+        Call(type, manager, "TriggerGameOver", "SECOND CONTACT");
+        Assert.That((float)promptType.GetProperty("RemainingSeconds").GetValue(prompt), Is.EqualTo(2f).Within(.001f));
+        // With no ad provider, requesting an ad must not grant a revive or reset time.
+        promptType.GetField("ShowRewardedAd").SetValue(null, null);
+        Call(promptType, prompt, "WatchAd");
+        Assert.That((bool)type.GetProperty("IsContinuePending").GetValue(manager), Is.True);
+        Call(promptType, prompt, "Advance", 1.99f);
+        Assert.That(ended, Is.Zero);
+        Call(promptType, prompt, "Advance", .02f);
+        Assert.That((bool)type.GetProperty("IsResultFinalized").GetValue(manager), Is.True);
+        Assert.That(ended, Is.EqualTo(1));
+        Call(type, manager, "ExpireContinueOffer");
+        Call(type, manager, "CompleteRewardedContinue");
+        Assert.That(ended, Is.EqualTo(1));
+        Assert.That((bool)type.GetProperty("IsGameOver").GetValue(manager), Is.True);
+        type.GetEvent("GameEnded").RemoveEventHandler(manager, onEnded);
+        Time.timeScale = 1f;
+        yield return new ExitPlayMode();
+    }
+
+    [UnityTest]
+    public IEnumerator RewardCallbackAloneCanResumeAndFailurePreservesRemainingTime()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/Game.unity", OpenSceneMode.Single);
+        yield return new EnterPlayMode();
+        for (int i = 0; i < 15; i++) yield return null;
+        Component manager = UnityEngine.Object.FindAnyObjectByType(RuntimeType("GameManager")) as Component;
+        Type type = manager.GetType();
+        Call(type, manager, "TriggerGameOver", "TEST DEATH");
+        Component prompt = manager.GetComponent(RuntimeType("BalloonDogContinuePrompt"));
+        Type pt = prompt.GetType();
+        Action<bool> reward = null;
+        Action<Action<bool>> provider = callback => reward = callback;
+        pt.GetField("ShowRewardedAd").SetValue(null, provider);
+        Call(pt, prompt, "Advance", 1f);
+        Call(pt, prompt, "WatchAd");
+        Call(pt, prompt, "Advance", 5f);
+        Assert.That((float)pt.GetProperty("RemainingSeconds").GetValue(prompt), Is.EqualTo(3f).Within(.001f));
+        reward(false);
+        Call(pt, prompt, "Advance", 0f);
+        Assert.That((bool)type.GetProperty("IsContinuePending").GetValue(manager), Is.True);
+        Call(pt, prompt, "WatchAd");
+        reward(true);
+        Call(pt, prompt, "Advance", 0f);
+        Assert.That((bool)type.GetProperty("IsGameOver").GetValue(manager), Is.False);
+        Assert.That(Time.timeScale, Is.EqualTo(1f));
+        Component air = UnityEngine.Object.FindAnyObjectByType(RuntimeType("AirController")) as Component;
+        Assert.That((float)air.GetType().GetProperty("NormalizedAir").GetValue(air), Is.EqualTo(1f));
+        // A duplicate callback must not revive a different, subsequent death offer.
+        Call(type, manager, "TriggerGameOver", "NEXT DEATH");
+        reward(true);
+        Call(pt, prompt, "Advance", 0f);
+        Assert.That((bool)type.GetProperty("IsContinuePending").GetValue(manager), Is.True);
+        pt.GetField("ShowRewardedAd").SetValue(null, null);
         Time.timeScale = 1f;
         yield return new ExitPlayMode();
     }

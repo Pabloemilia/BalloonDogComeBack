@@ -34,7 +34,7 @@ public sealed class NearMissSensor : MonoBehaviour
         if (obstacle != null)
         {
             collided.Add(obstacle);
-            collided.Add(obstacle.root);
+            if (obstacle.GetComponent<BalloonDogEndlessContact>() == null) collided.Add(obstacle.root);
         }
     }
 
@@ -79,6 +79,9 @@ public sealed class NearMissSensor : MonoBehaviour
         {
             return null;
         }
+
+        BalloonDogEndlessContact endless = other.GetComponentInParent<BalloonDogEndlessContact>();
+        if (endless != null && !endless.IsPickup) return endless.transform;
 
         Obstacle obstacle = other.GetComponentInParent<Obstacle>();
         if (obstacle != null)

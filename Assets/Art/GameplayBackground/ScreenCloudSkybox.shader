@@ -35,7 +35,7 @@ Shader "BalloonDog/Screen Cloud Skybox"
             half4 frag(Varyings input) : SV_Target
             {
                 float2 uv = input.screenPosition.xy / input.screenPosition.w;
-                // Cover the viewport without stretching the supplied landscape art.
+                // Cover the viewport without stretching the supplied portrait art.
                 // Portrait screens crop the sides; wide screens crop top and bottom.
                 float viewportAspect = _ScreenParams.x / _ScreenParams.y;
                 float imageAspect = _MainTex_TexelSize.z / _MainTex_TexelSize.w;

@@ -13,6 +13,9 @@ public sealed class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text endSummaryText;
 
     private bool isGameOver;
+    private BalloonDogContinuePrompt continuePrompt;
+    public bool IsContinuePending { get; private set; }
+    public bool IsResultFinalized => isGameOver && !IsContinuePending;
 
     public static GameManager Instance { get; private set; }
     public static int BestScore => PlayerPrefs.GetInt(BestScorePreferenceKey, 0);
@@ -66,48 +69,50 @@ public sealed class GameManager : MonoBehaviour
 
         isGameOver = true;
         int score = ResolveCurrentScore();
-        SaveBestScore(score);
         LastRunCompleted = false;
         LastScore = score;
         LastEndReason = reason;
-        LastEndTitle = "RUN OVER";
-        LastEndSummary = $"{reason}\nSkor: {score}\nEn iyi: {BestScore}";
-        ShowEndPanel(LastEndTitle, LastEndSummary);
+        LastEndTitle = "GAME OVER";
+        LastEndSummary = $"{reason}\nScore: {score}\nBest: {BestScore}";
+        IsContinuePending = true;
+        Time.timeScale = 0f;
         CameraShakeController.ShakeGlobal(0.32f, 0.18f);
-        Time.timeScale = 0f;
-        GameEnded?.Invoke();
+        continuePrompt = GetComponent<BalloonDogContinuePrompt>();
+        if (continuePrompt == null) continuePrompt = gameObject.AddComponent<BalloonDogContinuePrompt>();
+        continuePrompt.Show(this);
     }
 
-    public void TriggerLevelComplete(
-        int baseScore,
-        float launchDistance,
-        int multiplier,
-        int finalScore)
-    {
-        if (isGameOver)
-        {
-            return;
-        }
+    // Legacy scene/editor integrations may still call these methods. Endless
+    // runs have no completion state or completion UI, and these calls do nothing.
+    public void TriggerLevelComplete(int baseScore, float launchDistance, int multiplier, int finalScore) { }
+    public void TriggerLevelComplete(int score) { }
 
-        isGameOver = true;
-        SaveBestScore(finalScore);
-        LastRunCompleted = true;
-        LastScore = finalScore;
-        LastEndReason = "FINISH REACHED";
-        LastEndTitle = "LEVEL COMPLETE";
-        LastEndSummary =
-            $"x{multiplier} MULTIPLIER\n" +
-            $"Launch: {launchDistance:0.0} m\n" +
-            $"Score: {baseScore} → {finalScore}\n" +
-            $"Best: {BestScore}";
+    public void ExpireContinueOffer()
+    {
+        if (!IsContinuePending) return;
+        IsContinuePending = false;
+        if (continuePrompt != null) continuePrompt.Close();
+        SaveBestScore(LastScore);
+        LastEndSummary = $"{LastEndReason}\nScore: {LastScore}\nBest: {BestScore}";
         ShowEndPanel(LastEndTitle, LastEndSummary);
         Time.timeScale = 0f;
         GameEnded?.Invoke();
     }
 
-    public void TriggerLevelComplete(int score)
+    // Only the rewarded-ad success callback may resume the current run.
+    public void CompleteRewardedContinue()
     {
-        TriggerLevelComplete(score, 0f, 1, score);
+        if (!IsContinuePending) return;
+        AirController air = FindAnyObjectByType<AirController>();
+        PlayerRunner runner = FindAnyObjectByType<PlayerRunner>();
+        if (air == null || runner == null) { ExpireContinueOffer(); return; }
+        IsContinuePending = false;
+        isGameOver = false;
+        if (continuePrompt != null) continuePrompt.Close();
+        if (endPanel != null) endPanel.SetActive(false);
+        air.RestoreAfterContinue();
+        runner.RestoreAfterContinue();
+        Time.timeScale = 1f;
     }
 
     public void RestartGame()
@@ -143,6 +148,8 @@ public sealed class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         isGameOver = false;
+        IsContinuePending = false;
+        if (continuePrompt != null) continuePrompt.Close();
 
         Scene currentScene = SceneManager.GetActiveScene();
 

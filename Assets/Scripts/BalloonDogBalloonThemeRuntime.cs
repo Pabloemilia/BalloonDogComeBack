@@ -331,7 +331,23 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             skins.sizeDelta = new Vector2(460f, 164f);
             StyleButton(skins, new Color(0.18f, 0.54f, 0.96f, 1f), "SKINS", 60f);
             SetButtonLabelTuning(skins, 6f, new Vector4(10f, 4f, 10f, 6f));
-            SetButtonIcon(skins, GetSkinsIconSprite());
+            SetButtonIcon(skins, GetSkinsIconSprite(), 74f);
+            RectTransform skinsIcon = skins.Find("ThemeIcon") as RectTransform;
+            if (skinsIcon != null)
+            {
+                skinsIcon.anchorMin = skinsIcon.anchorMax = new Vector2(0.5f, 0.5f);
+                skinsIcon.anchoredPosition = new Vector2(-140f, 6f);
+            }
+            TMP_Text skinsLabel = skins.GetComponentInChildren<TMP_Text>(true);
+            if (skinsLabel != null)
+            {
+                skinsLabel.margin = Vector4.zero;
+                skinsLabel.fontSize = 54f;
+                skinsLabel.rectTransform.anchorMin = skinsLabel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                skinsLabel.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                skinsLabel.rectTransform.anchoredPosition = new Vector2(40f, 6f);
+                skinsLabel.rectTransform.sizeDelta = new Vector2(310f, 140f);
+            }
         }
     }
 
@@ -752,7 +768,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         TMP_Text level = FindComponent<TMP_Text>("LevelLabel");
         if (level != null)
         {
-            level.text = "LEVEL " + Mathf.Max(1, BalloonDogCampaign.CurrentLevel);
+            level.text = "ENDLESS";
             level.fontSize = 24f;
             level.fontStyle = FontStyles.Normal;
             level.fontWeight = FontWeight.Bold;
@@ -813,7 +829,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         TMP_Text skin = FindComponent<TMP_Text>("GameplaySkin");
         if (skin != null)
         {
-            skin.text = "LEVEL " + Mathf.Max(1, BalloonDogCampaign.CurrentLevel);
+            skin.text = "ENDLESS";
             skin.fontSize = 24f;
             skin.fontStyle = FontStyles.Normal;
             skin.fontWeight = FontWeight.Regular;
@@ -861,15 +877,6 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         StyleResultValue("BestCaption", 24f, new Color(1f, 0.82f, 0.16f, 1f), new Vector2(0f, -160f), new Vector2(420f, 55f));
         StyleResultValue("ResultBest", 54f, Color.white, new Vector2(0f, -250f), new Vector2(760f, 100f));
         StyleResultValue("ResultHint", 18f, new Color(0.82f, 0.76f, 0.94f, 1f), new Vector2(0f, -1010f), new Vector2(720f, 40f));
-
-        RectTransform nextLevel = FindRect("CampaignNextLevelButton");
-        if (nextLevel != null)
-        {
-            nextLevel.anchoredPosition = new Vector2(0f, -665f);
-            nextLevel.sizeDelta = new Vector2(790f, 138f);
-            string label = BalloonDogCampaign.CurrentLevel >= BalloonDogCampaign.LevelCount ? "PLAY AGAIN" : "NEXT LEVEL";
-            StyleButton(nextLevel, new Color(0.35f, 0.82f, 0.24f, 0.99f), label, 34f);
-        }
 
         RectTransform restart = FindRect("ModernRestartButton");
         if (restart != null)
@@ -1613,39 +1620,8 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
     private static Sprite GetSkinsIconSprite()
     {
-        if (skinsIconSprite != null)
-        {
-            return skinsIconSprite;
-        }
-
-        const int size = 64;
-        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        texture.name = "BalloonDogSkinsIcon";
-        texture.wrapMode = TextureWrapMode.Clamp;
-        texture.filterMode = FilterMode.Bilinear;
-        texture.hideFlags = HideFlags.HideAndDontSave;
-        Color clear = new Color(0f,0f,0f,0f);
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                texture.SetPixel(x, y, clear);
-            }
-        }
-        for (int y = 12; y < 44; y++)
-        {
-            for (int x = 16; x < 48; x++)
-            {
-                bool fill = false;
-                if (y >= 20 && x >= 22 && x <= 42) fill = true;
-                if (y >= 12 && y < 22 && ((x >= 16 && x <= 24) || (x >= 40 && x <= 48) || (x >= 24 && x <= 40))) fill = true;
-                if (y >= 22 && y < 44 && x >= 24 && x <= 40) fill = true;
-                if (fill) texture.SetPixel(x, y, Color.white);
-            }
-        }
-        texture.Apply();
-        skinsIconSprite = Sprite.Create(texture, new Rect(0,0,size,size), new Vector2(0.5f,0.5f), 100f);
-        skinsIconSprite.name = "BalloonDogSkinsIconSprite";
+        if (skinsIconSprite == null)
+            skinsIconSprite = Resources.Load<Sprite>("CollectionUI/SkinsShirt");
         return skinsIconSprite;
     }
 

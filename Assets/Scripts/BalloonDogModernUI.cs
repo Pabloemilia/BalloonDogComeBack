@@ -92,8 +92,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private TMP_Text coinText;
     private TMP_Text mainBestText;
     private TMP_Text equippedNameText;
-    private TMP_Text resultTitleText;
-    private TMP_Text resultTitleBottomText;
     private Image resultTitleArtwork;
     private TMP_Text resultReasonText;
     private TMP_Text resultScoreText;
@@ -125,6 +123,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private readonly List<Image> menuPreviewParts = new List<Image>();
     private int lastKnownCoins = -1;
     private string lastKnownSkin = string.Empty;
+    private Button resultBonusButton;
+    private TMP_Text resultBonusHint;
+    private bool resultBonusPending;
+    private bool resultBonusClaimed;
+    private int resultAdGeneration;
+    private readonly System.Collections.Concurrent.ConcurrentQueue<System.Action> resultAdCallbacks =
+        new System.Collections.Concurrent.ConcurrentQueue<System.Action>();
     private bool resultRewardGranted;
     private int lastRunReward;
     private RectTransform wheelTransform;
@@ -239,6 +244,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void ResetRuntimeReferences()
     {
+        resultAdGeneration++;
+        resultBonusPending = resultBonusClaimed = false;
+        resultBonusButton = null;
+        resultBonusHint = null;
+        while (resultAdCallbacks.TryDequeue(out System.Action ignoredAdCallback)) { }
         canvas = null;
         pauseCanvas = null;
         safeRoot = null;
@@ -264,8 +274,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         coinText = null;
         mainBestText = null;
         equippedNameText = null;
-        resultTitleText = null;
-        resultTitleBottomText = null;
         resultTitleArtwork = null;
         resultReasonText = null;
         resultScoreText = null;
@@ -296,6 +304,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void Update()
     {
+        while (resultAdCallbacks.TryDequeue(out System.Action adCallback)) adCallback();
         if (gameManager == null)
         {
             gameManager = GameManager.Instance ?? FindAnyObjectByType<GameManager>();
@@ -311,7 +320,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             scoreController = FindAnyObjectByType<ScoreController>();
         }
 
-        if (gameManager != null && gameManager.IsGameOver &&
+        if (gameManager != null && gameManager.IsResultFinalized &&
             resultScreen != null && !resultScreen.activeSelf)
         {
             HandleGameEnded();
@@ -939,6 +948,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         cardImage.color = Color.clear;
         cardImage.raycastTarget = true;
 
+        // Animate artwork/content inside a stationary hit target.
+        RectTransform pressContent = CreateRect("PressContent", card);
+        SetRect(pressContent, Vector2.zero, offerCardSize);
+
         // Trim transparent source padding, then give every visible card the
         // same centered 494 x 494 area inside its 530 x 530 hit area.
         bool isWatchAd = cardResource == "Card_WatchAd";
@@ -947,7 +960,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Sprite cardSprite = GetCenteredStoreCardSprite("MarketUI/Extras/" + artworkResource);
         if (cardSprite != null)
         {
-            RectTransform artworkRect = CreateRect("CardArtwork", card);
+            RectTransform artworkRect = CreateRect("CardArtwork", pressContent);
             SetRect(artworkRect, Vector2.zero, offerCardSize - Vector2.one * 36f);
             Image artwork = artworkRect.gameObject.AddComponent<Image>();
             artwork.sprite = cardSprite;
@@ -957,15 +970,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             artwork.raycastTarget = false;
         }
 
-        Button cardButton = card.gameObject.AddComponent<Button>();
+        Button cardButton = card.gameObject.AddComponent<BalloonDogStoreCardButton>();
         cardButton.targetGraphic = cardImage;
-        ColorBlock cardColors = cardButton.colors;
-        cardColors.normalColor = Color.white;
-        cardColors.highlightedColor = Color.white;
-        cardColors.pressedColor = new Color(0.82f, 0.88f, 1f, 1f);
-        cardColors.selectedColor = Color.white;
-        cardColors.fadeDuration = 0.08f;
-        cardButton.colors = cardColors;
+        cardButton.transition = Selectable.Transition.None;
+        cardButton.navigation = new Navigation { mode = Navigation.Mode.None };
         if (cardResource == "Card_Coins" || cardResource == "Card_Gems")
             cardButton.onClick.AddListener(() => ShowCurrencyPacks(cardResource == "Card_Gems"));
         else if (isWatchAd)
@@ -978,7 +986,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         bool hasPrice = price != null;
 
         Image icon = CreateResourceImage(
-            card,
+            pressContent,
             "OfferIcon",
             "MarketUI/Extras/" + iconResource,
             new Vector2(0f, isWatchAd ? 6f : hasPrice ? 105f : 57f),
@@ -989,7 +997,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         icon.raycastTarget = false;
 
         Text titleText = CreateMarketFontText(
-            card, "OfferTitle", title,
+            pressContent, "OfferTitle", title,
             new Vector2(0f, isWatchAd ? 174f : hasPrice ? -30f : -97f),
             new Vector2(450f, 74f), isWatchAd ? 46f : 41f);
         titleText.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -1000,7 +1008,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         if (isWatchAd)
         {
             Text rewardText = CreateMarketFontText(
-                card, "RewardText", "+5 GEMS",
+                pressContent, "RewardText", "+5 GEMS",
                 new Vector2(0f, -165f), new Vector2(450f, 80f), 48f);
             rewardText.alignment = TextAnchor.MiddleCenter;
             AddGraphicShadow(rewardText,
@@ -1010,7 +1018,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         if (hasPrice)
         {
             Text priceText = CreateMarketFontText(
-                card, "OfferPrice", price,
+                pressContent, "OfferPrice", price,
                 new Vector2(0f, -158f),
                 new Vector2(400f, 70f), 37f);
             priceText.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -1018,6 +1026,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             AddGraphicShadow(priceText, new Color(0.03f, 0.12f, 0.28f, 0.82f),
                 new Vector2(0f, -3f));
         }
+        ((BalloonDogStoreCardButton)cardButton).Configure(pressContent);
     }
 
     private GameObject BuildCurrencyPacksScreen(bool gems)
@@ -1660,17 +1669,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultTitleArtwork = CreateResourceImage(
             content, "GameOverTitleArtwork", "GameOver/Title",
             new Vector2(0f, 785f), new Vector2(840f, 420f));
-        // The title artwork already has its own stars; do not stack glints on them.
-        // Completion keeps its existing LEVEL COMPLETE wording.
-        resultTitleText = CreateResultTitleLine(
-            content, "ResultTitleTop", "LEVEL", new Vector2(0f, 830f),
-            Color.white, new Color(0.66f, 0.86f, 1f, 1f), 122f);
-        resultTitleBottomText = CreateResultTitleLine(
-            content, "ResultTitleBottom", "COMPLETE", new Vector2(0f, 650f),
-            new Color(1f, 0.96f, 0.42f, 1f), new Color(1f, 0.42f, 0.02f, 1f), 132f);
-        resultTitleText.gameObject.SetActive(false);
-        resultTitleBottomText.gameObject.SetActive(false);
-
         // Kept for the existing result-state wiring, but intentionally hidden
         // because the supplied reference contains no separate reason line.
         resultReasonText = CreatePauseText(
@@ -1724,13 +1722,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(580f, 76f),
             new Color(1f, 1f, 1f, 0.001f),
             new Color(0.81f, 1f, 0.96f, 1f),
-            ReturnToMainMenu,
+            ReturnFromResult,
             42f);
         RemoveButtonShadow(noThanks);
         TMP_Text noThanksLabel = noThanks.GetComponentInChildren<TMP_Text>(true);
         BalloonDogTitanFont.Apply(noThanksLabel);
         AddTextShadow(noThanksLabel,
             new Color(0.02f, 0.30f, 0.37f, 0.78f), new Vector2(0f, -3f));
+        AttachResultPressFeedback(noThanks);
     }
 
     private static Sprite CreateResultBackgroundSprite()
@@ -1753,49 +1752,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         texture.Apply(false, true);
         return Sprite.Create(texture, new Rect(0f, 0f, 1f, height),
             new Vector2(0.5f, 0.5f), 100f);
-    }
-
-    private static TMP_Text CreateResultTitleLine(
-        Transform parent,
-        string name,
-        string text,
-        Vector2 position,
-        Color topColor,
-        Color bottomColor,
-        float fontSize)
-    {
-        TMP_Text title = CreatePauseText(
-            parent,
-            name,
-            text,
-            position,
-            new Vector2(900f, 190f),
-            fontSize,
-            Color.white,
-            TextAlignmentOptions.Center);
-        title.enableAutoSizing = true;
-        title.fontSizeMin = fontSize * 0.72f;
-        title.fontSizeMax = fontSize;
-        title.overflowMode = TextOverflowModes.Overflow;
-        title.enableVertexGradient = true;
-        title.colorGradient = new VertexGradient(
-            topColor,
-            topColor,
-            bottomColor,
-            bottomColor);
-        title.outlineColor = new Color(0.24f, 0.03f, 0.50f, 1f);
-        title.outlineWidth = 0.16f;
-        title.characterSpacing = -2f;
-
-        AddTextShadow(
-            title,
-            new Color(0.02f, 0.08f, 0.36f, 0.96f),
-            new Vector2(0f, -10f));
-        AddTextShadow(
-            title,
-            new Color(0.55f, 0.02f, 0.55f, 0.72f),
-            new Vector2(0f, -20f));
-        return title;
     }
 
     private static TMP_Text CreateResultStatCard(
@@ -1906,11 +1862,77 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         return resultSoftLightSprite;
     }
 
-    private static void CreateResultBonusButton(Transform parent, Vector2 position)
+    private static void AttachResultPressFeedback(Button button)
+    {
+        MenuPressScale oldScale = button.GetComponent<MenuPressScale>();
+        if (oldScale != null) { oldScale.enabled = false; Destroy(oldScale); }
+        button.transition = Selectable.Transition.None;
+        button.gameObject.AddComponent<BalloonDogDirectPressButton>().Configure(
+            button, (RectTransform)button.transform, Vector2.zero, false);
+    }
+
+    private void ReturnFromResult()
+    {
+        resultAdGeneration++;
+        resultBonusPending = false;
+        pauseActionInProgress = false;
+        gameManager ??= GameManager.Instance ?? FindAnyObjectByType<GameManager>();
+        if (gameManager == null) { ShowToast("PLEASE TRY AGAIN"); return; }
+        PreparePauseSceneTransition();
+        // Result navigation must never wait for an inactive pause animator.
+        gameManager.ReturnToMainMenu();
+    }
+
+    private void ClaimResultDoubleReward()
+    {
+        if (resultBonusPending || resultBonusClaimed || !resultRewardGranted ||
+            resultScreen == null || !resultScreen.activeSelf) return;
+        if (BalloonDogContinuePrompt.ShowRewardedAd == null)
+        {
+            if (resultBonusHint != null) resultBonusHint.text = "AD NOT AVAILABLE";
+            return;
+        }
+        resultBonusPending = true;
+        resultBonusButton.interactable = false;
+        if (resultBonusHint != null) resultBonusHint.text = "LOADING AD...";
+        int request = ++resultAdGeneration;
+        try
+        {
+            BalloonDogContinuePrompt.ShowRewardedAd(success => resultAdCallbacks.Enqueue(() =>
+            {
+                if (request != resultAdGeneration || !resultBonusPending ||
+                    resultScreen == null || !resultScreen.activeSelf) return;
+                resultAdGeneration++;
+                resultBonusPending = false;
+                if (success)
+                {
+                    resultBonusClaimed = true;
+                    BalloonDogEconomy.AddCoins(lastRunReward);
+                    resultRewardText.text = "+" + (lastRunReward * 2).ToString("N0");
+                    if (resultBonusHint != null) resultBonusHint.text = "2X REWARD CLAIMED";
+                }
+                else
+                {
+                    resultBonusButton.interactable = true;
+                    if (resultBonusHint != null) resultBonusHint.text = "AD NOT COMPLETED — TRY AGAIN";
+                }
+            }));
+        }
+        catch (System.Exception error)
+        {
+            resultAdGeneration++;
+            resultBonusPending = false;
+            resultBonusButton.interactable = true;
+            if (resultBonusHint != null) resultBonusHint.text = "AD NOT AVAILABLE";
+            Debug.LogWarning("Rewarded result ad failed: " + error.Message, this);
+        }
+    }
+
+    private void CreateResultBonusButton(Transform parent, Vector2 position)
     {
         Button button = CreateButton(
             parent, "ResultDoubleRewardButton", string.Empty, position,
-            new Vector2(940f, 382f), Color.white, Color.white, null, 1f);
+            new Vector2(940f, 382f), Color.white, Color.white, ClaimResultDoubleReward, 1f);
         RemoveButtonShadow(button);
         button.GetComponentInChildren<TMP_Text>(true).gameObject.SetActive(false);
         Image background = button.GetComponent<Image>();
@@ -1918,7 +1940,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         background.type = Image.Type.Simple;
         background.preserveAspect = true;
         button.transition = Selectable.Transition.None;
-        button.gameObject.AddComponent<BalloonDogBonusPressFeedback>();
+        resultBonusButton = button;
         // The bonus button stays free of decorative stars.
         // Keep the hint below the visible button and independent of its press scale.
         TMP_Text hint = CreatePauseText(parent, "BonusHint",
@@ -1928,8 +1950,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.02f, 0.29f, 0.35f, 1f),
             TextAlignmentOptions.Center);
         BalloonDogTitanFont.Apply(hint);
-        // Existing visual-only bonus: connect an ad completion callback before
-        // granting any additional reward. NO THANKS returns to the main menu.
+        resultBonusHint = hint;
+        AttachResultPressFeedback(button);
     }
 
     private static void CreateResultGlint(
@@ -3097,7 +3119,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void HandleGameEnded()
     {
-        if (gameManager == null || !gameManager.IsGameOver || resultScreen == null)
+        if (gameManager == null || !gameManager.IsResultFinalized || resultScreen == null)
         {
             return;
         }
@@ -3106,23 +3128,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         {
             lastRunReward = BalloonDogEconomy.CalculateRunReward(
                 gameManager.LastScore,
-                gameManager.LastRunCompleted);
+                false);
             BalloonDogEconomy.AddCoins(lastRunReward);
             resultRewardGranted = true;
         }
 
-        bool completed = gameManager.LastRunCompleted;
-        if (resultTitleArtwork != null)
-        {
-            resultTitleArtwork.gameObject.SetActive(!completed);
-        }
-        resultTitleText.gameObject.SetActive(completed);
-        resultTitleBottomText.gameObject.SetActive(completed);
-        resultTitleText.text = completed ? "LEVEL" : "GAME";
-        if (resultTitleBottomText != null)
-        {
-            resultTitleBottomText.text = completed ? "COMPLETE" : "OVER";
-        }
+        if (resultTitleArtwork != null) resultTitleArtwork.gameObject.SetActive(true);
         if (resultReasonText != null)
         {
             resultReasonText.text = string.IsNullOrWhiteSpace(gameManager.LastEndReason)

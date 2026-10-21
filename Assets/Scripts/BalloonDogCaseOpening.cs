@@ -48,20 +48,20 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         Image buttonArt = Artwork(machine, "OpenCase", Load("OpenCaseButton"), new Vector2(0f, -347f),
             new Vector2(880f, 418f));
         buttonArt.preserveAspect = true;
-        buttonArt.raycastTarget = true;
-        open = buttonArt.gameObject.AddComponent<Button>();
-        open.targetGraphic = buttonArt;
+        // The decorative frame stays still; only the orange face receives input.
+        RectTransform faceRect = CreateRect("OrangeFace", buttonArt.transform, Vector2.zero,
+            buttonArt.rectTransform.sizeDelta);
+        BalloonDogCaseButtonFace face = faceRect.gameObject.AddComponent<BalloonDogCaseButtonFace>();
+        face.sprite = buttonArt.sprite;
+        face.raycastTarget = true;
+        open = faceRect.gameObject.AddComponent<BalloonDogCaseFaceButton>();
+        open.targetGraphic = face;
         open.navigation = new Navigation { mode = Navigation.Mode.None };
-        ColorBlock colors = open.colors;
-        colors.normalColor = colors.highlightedColor = colors.selectedColor = Color.white;
-        colors.pressedColor = new Color(0.72f, 0.78f, 0.86f, 1f);
-        colors.disabledColor = new Color(0.6f, 0.65f, 0.72f, 0.8f);
-        colors.fadeDuration = 0.06f;
-        open.colors = colors;
+        open.transition = Selectable.Transition.None;
         open.onClick.AddListener(OpenCase);
-        buttonArt.gameObject.AddComponent<MenuPressScale>();
-        TMP_Text openLabel = Label(buttonArt.transform, "OPEN CASE", new Vector2(0f, -20f),
+        TMP_Text openLabel = Label(faceRect, "OPEN CASE", new Vector2(0f, -20f),
             new Vector2(650f, 150f), 70f);
+        ((BalloonDogCaseFaceButton)open).Configure(face, openLabel.rectTransform);
         openLabel.outlineColor = new Color32(91, 35, 62, 255);
         openLabel.outlineWidth = 0.18f;
         status = Label(machine, "", new Vector2(0f, -549f), new Vector2(780f, 59f), 25f);
@@ -89,7 +89,9 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         if (!built || status == null || open == null) return;
         bool complete = BalloonDogEconomy.AllSkinsOwned;
         bool enough = BalloonDogEconomy.Coins >= Cost;
-        open.interactable = !spinning && !complete && enough;
+        // Keep tactile feedback available even when no purchase is possible.
+        // OpenCase separately guards ownership and coin balance before spending.
+        open.interactable = !spinning;
         if (spinning) return;
         status.color = Color.white;
         if (!string.IsNullOrEmpty(resultMessage)) status.text = resultMessage;

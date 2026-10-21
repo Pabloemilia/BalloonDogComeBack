@@ -24,7 +24,7 @@ public sealed class AuthoredMenuView : MonoBehaviour
         {
             if (label.name == "CoinsLabel") label.text = BalloonDogEconomy.Coins.ToString("N0");
             if (label.name == "Best_Label") label.text = "BEST  " + GameManager.BestScore.ToString("N0");
-            if (label.name == "Level") label.text = "LEVEL " + BalloonDogCampaign.CurrentLevel;
+            if (label.name == "Level") label.text = "ENDLESS";
         }
         BalloonDogSkinSystem.ApplySelectedSkin();
     }

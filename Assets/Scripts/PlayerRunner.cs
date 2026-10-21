@@ -82,6 +82,15 @@ public sealed class PlayerRunner : MonoBehaviour
         }
     }
 
+    public void RestoreAfterContinue()
+    {
+        if (slowCoroutine != null) StopCoroutine(slowCoroutine);
+        slowCoroutine = null;
+        slowMultiplier = 1f;
+        SetMovementEnabled(true);
+        if (playerRigidbody != null) playerRigidbody.linearVelocity = Vector3.zero;
+    }
+
     public void ApplySlow(float speedMultiplier, float duration)
     {
         if (!movementEnabled)

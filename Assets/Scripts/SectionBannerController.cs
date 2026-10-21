@@ -26,6 +26,13 @@ public sealed class SectionBannerController : MonoBehaviour
         }
     }
 
+    public void Retire()
+    {
+        StopAllCoroutines();
+        if (bannerText != null) bannerText.gameObject.SetActive(false);
+        enabled = false;
+    }
+
     private void Update()
     {
         if (player == null || sectionZ == null || sectionNames == null)

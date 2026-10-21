@@ -26,13 +26,9 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
     private GameObject gameplayProgress;
     private TMP_Text progressLabel;
     private Image progressFill;
-    private GameObject nextLevelButton;
-    private TMP_Text nextLevelLabel;
 
     private GameManager gameManager;
     private PlayerRunner player;
-    private bool processedCurrentResult;
-    private bool completedResult;
     private bool privacyNoticeUpdated;
     private Rect lastSafeArea;
     private Vector2Int lastScreenSize;
@@ -63,8 +59,6 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
     {
         gameManager = null;
         player = null;
-        processedCurrentResult = false;
-        completedResult = false;
         privacyNoticeUpdated = false;
         RefreshLabels();
     }
@@ -91,61 +85,13 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
         }
     }
 
-    private void ProcessGameResult()
-    {
-        if (gameManager == null)
-        {
-            return;
-        }
-
-        if (!gameManager.IsGameOver)
-        {
-            processedCurrentResult = false;
-            completedResult = false;
-            return;
-        }
-        if (processedCurrentResult)
-        {
-            return;
-        }
-
-        processedCurrentResult = true;
-        completedResult = gameManager.LastRunCompleted;
-        if (!completedResult)
-        {
-            return;
-        }
-
-        int completedLevel = BalloonDogCampaign.CurrentLevel;
-        BalloonDogCampaign.MarkCurrentLevelComplete();
-        if (completedLevel < BalloonDogCampaign.LevelCount)
-        {
-            BalloonDogCampaign.SelectLevel(completedLevel + 1);
-        }
-        RefreshLabels();
-    }
+    private void ProcessGameResult() { }
 
     private void RefreshVisibility()
     {
-        bool mainVisible = IsActive("ModernMainScreen");
-        bool resultVisible = IsActive("ModernResultScreen") &&
-                             gameManager != null &&
-                             gameManager.IsGameOver &&
-                             completedResult;
-
-        selector.SetActive(mainVisible);
+        selector.SetActive(false);
         gameplayProgress.SetActive(false);
-        nextLevelButton.SetActive(resultVisible);
-
-        GameObject restartButton = GameObject.Find("ModernRestartButton");
-        if (restartButton != null)
-        {
-            restartButton.SetActive(!resultVisible);
-        }
-        if (IsActive("ModernPrivacyScreen"))
-        {
-            RefreshPrivacyNotice();
-        }
+        if (IsActive("ModernPrivacyScreen")) RefreshPrivacyNotice();
     }
 
     private void RefreshProgress()
@@ -191,17 +137,6 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
         player = FindAnyObjectByType<PlayerRunner>();
     }
 
-    private void ContinueCampaign()
-    {
-        if (gameManager == null)
-        {
-            return;
-        }
-
-        Time.timeScale = 1f;
-        gameManager.RestartGame();
-    }
-
     private void RefreshLabels()
     {
         if (selectorLabel != null)
@@ -212,13 +147,6 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
                 "\n" + BalloonDogCampaign.GetLevelName(level);
         }
 
-        if (nextLevelLabel != null)
-        {
-            nextLevelLabel.text =
-                BalloonDogCampaign.CurrentLevel >= BalloonDogCampaign.LevelCount
-                    ? "PLAY AGAIN"
-                    : "NEXT LEVEL";
-        }
     }
 
     private void BuildCanvas()
@@ -245,30 +173,12 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
 
         selector = CreateRect("CampaignLevelSelector", safeRoot).gameObject;
         SetRect(selector.GetComponent<RectTransform>(), new Vector2(0f, 495f), new Vector2(850f, 116f));
-        CreatePanel(selector.transform, new Vector2(0f, 0f), new Vector2(600f, 116f), DeepPurple);
-        selectorLabel = CreateText(selector.transform, "LevelLabel", "LEVEL 1", Vector2.zero, new Vector2(550f, 104f), 27f, Color.white);
-        CreateButton(selector.transform, "PreviousLevel", "", new Vector2(-370f, 0f), new Vector2(104f, 104f), DeepPurple, Color.white, SelectPrevious);
-        CreateButton(selector.transform, "NextLevel", "", new Vector2(370f, 0f), new Vector2(104f, 104f), Orange, new Color(0.15f, 0.05f, 0.01f), SelectNext);
-
         gameplayProgress = CreateRect("CampaignGameplayProgress", safeRoot).gameObject;
         // Keep a hidden state object; no gameplay level/progress HUD is built.
         gameplayProgress.SetActive(false);
 
-        Button resultButton = CreateButton(
-            safeRoot,
-            "CampaignNextLevelButton",
-            "NEXT LEVEL",
-            new Vector2(0f, -665f),
-            new Vector2(790f, 150f),
-            Lime,
-            new Color(0.08f, 0.25f, 0.015f),
-            ContinueCampaign);
-        nextLevelButton = resultButton.gameObject;
-        nextLevelLabel = resultButton.GetComponentInChildren<TMP_Text>(true);
-
         selector.SetActive(false);
         gameplayProgress.SetActive(false);
-        nextLevelButton.SetActive(false);
         RefreshLabels();
         ApplySafeArea();
     }
@@ -520,65 +430,8 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
     }
 }
 
-/// <summary>Direct campaign finish without the obsolete launch minigame.</summary>
-[RequireComponent(typeof(Collider))]
+/// <summary>Legacy scene compatibility; endless runs do not stop at campaign finish markers.</summary>
 public sealed class BalloonDogCampaignFinish : MonoBehaviour
 {
-    private bool completed;
-    private ScoreController playerScore;
-
-    private void Reset()
-    {
-        GetComponent<Collider>().isTrigger = true;
-    }
-
-    private void Update()
-    {
-        playerScore ??= FindAnyObjectByType<ScoreController>();
-        if (!completed && playerScore != null &&
-            playerScore.transform.position.z >= transform.position.z - 0.35f)
-        {
-            Complete(playerScore);
-        }
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (completed || other == null ||
-            other.GetComponent<NearMissSensor>() != null)
-        {
-            return;
-        }
-
-        ScoreController score = other.GetComponentInParent<ScoreController>();
-        if (score != null)
-        {
-            Complete(score);
-        }
-    }
-
-    private void Complete(ScoreController score)
-    {
-        if (completed)
-        {
-            return;
-        }
-        completed = true;
-
-        PlayerRunner runner = score.GetComponent<PlayerRunner>();
-        if (runner != null)
-        {
-            runner.SetMovementEnabled(false);
-        }
-        PlayerHorizontalController horizontal =
-            score.GetComponent<PlayerHorizontalController>();
-        if (horizontal != null)
-        {
-            horizontal.enabled = false;
-        }
-
-        GameAudioController.PlayFinish();
-        GameManager manager = GameManager.Instance ?? FindAnyObjectByType<GameManager>();
-        manager?.TriggerLevelComplete(score.CurrentScore);
-    }
+    private void Awake() { enabled = false; }
 }
