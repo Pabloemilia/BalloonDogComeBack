@@ -33,16 +33,23 @@ public sealed class BalloonDogAnimatedTrap : MonoBehaviour
     }
     public static Vector3 FitScale(Bounds bounds)
     {
-        // Wider silhouettes, longer traps and full-height animated hammers.
-        // A clear adjacent lane remains wider than the largest player capsule.
-        float horizontal=Mathf.Min(1.7f/Mathf.Max(.01f,bounds.size.x),5.2f/Mathf.Max(.01f,bounds.size.z));
-        float height=Mathf.Clamp(bounds.size.y*horizontal,.8f,4.5f);
-        return new Vector3(horizontal,height/Mathf.Max(.01f,bounds.size.y),horizontal);
+        float scale=Mathf.Min(1.7f/Mathf.Max(.01f,bounds.size.x),
+            5.2f/Mathf.Max(.01f,bounds.size.z),3.2f/Mathf.Max(.01f,bounds.size.y));
+        return Vector3.one*scale;
     }
+    public static Bounds ReferenceBounds(GameObject view,Transform space)
+        => GeometryBounds(view.GetComponentsInChildren<MeshRenderer>(true),space);
     public static Bounds MeasureAnimation(GameObject view,Transform mount,Animator[] animators)
+        => MeasureAnimation(view,mount,animators,out _);
+    public static Bounds MeasureAnimation(GameObject view,Transform mount,Animator[] animators,out Bounds support)
     {
         MeshRenderer[] renderers=view.GetComponentsInChildren<MeshRenderer>(true);
+        var initial=new Matrix4x4[renderers.Length];
+        var stationary=new bool[renderers.Length];
+        for(int i=0;i<renderers.Length;i++)
+        { initial[i]=mount.worldToLocalMatrix*renderers[i].transform.localToWorldMatrix;stationary[i]=true; }
         Bounds result=GeometryBounds(renderers,mount);
+        Bounds reference=result;
         foreach(var animator in animators)
         {
             if(animator.runtimeAnimatorController==null) continue;
@@ -56,9 +63,24 @@ public sealed class BalloonDogAnimatedTrap : MonoBehaviour
                 {
                     clip.SampleAnimation(animator.gameObject,clip.length*frame/48f);
                     result.Encapsulate(GeometryBounds(renderers,mount));
+                    for(int i=0;i<renderers.Length;i++)
+                    {
+                        Matrix4x4 current=mount.worldToLocalMatrix*renderers[i].transform.localToWorldMatrix;
+                        for(int element=0;element<16;element++)
+                            if(Mathf.Abs(current[element]-initial[i][element])>.0001f) stationary[i]=false;
+                    }
                 }
             }
             animator.enabled=true;animator.Rebind();animator.Update(0);
+        }
+        // A stationary support determines the floor even when a blade swings
+        // below it. Models without a fixed support use their reference pose.
+        support=reference;bool foundSupport=false;
+        for(int i=0;i<renderers.Length;i++)
+        {
+            if(!stationary[i] || !renderers[i].enabled || !renderers[i].gameObject.activeInHierarchy) continue;
+            Bounds part=GeometryBounds(new[]{renderers[i]},mount);
+            if(!foundSupport) { support=part;foundSupport=true; } else support.Encapsulate(part);
         }
         if(animators.Length==0 && view.GetComponentsInChildren<UnityEngine.VFX.VisualEffect>(true).Length==0)
         {
@@ -74,11 +96,13 @@ public sealed class BalloonDogAnimatedTrap : MonoBehaviour
         Bounds result=new Bounds(Vector3.zero,Vector3.one*.01f);bool first=true;
         foreach(var renderer in renderers)
         {
-            Bounds world=renderer.bounds;
+            var filter=renderer.GetComponent<MeshFilter>();
+            if(!renderer.enabled || !renderer.gameObject.activeInHierarchy || filter==null || filter.sharedMesh==null) continue;
+            Bounds world=filter.sharedMesh.bounds;
             for(int corner=0;corner<8;corner++)
             {
                 Vector3 point=world.center+Vector3.Scale(world.extents,new Vector3((corner&1)==0?-1:1,(corner&2)==0?-1:1,(corner&4)==0?-1:1));
-                point=mount.InverseTransformPoint(point);
+                point=mount.InverseTransformPoint(renderer.transform.TransformPoint(point));
                 if(first) { result=new Bounds(point,Vector3.zero);first=false; } else result.Encapsulate(point);
             }
         }

@@ -77,8 +77,29 @@ public sealed class BalloonDogEndlessTests
             Vector3 fitted=Vector3.Scale(bounds.size,scale);
             Assert.That(fitted.x,Is.LessThanOrEqualTo(1.701f));
             Assert.That(fitted.z,Is.LessThanOrEqualTo(5.201f));
-            Assert.That(fitted.y,Is.InRange(.799f,4.501f));
+            Assert.That(fitted.y,Is.LessThanOrEqualTo(3.201f));
+            Assert.That(scale.x,Is.EqualTo(scale.y));
+            Assert.That(scale.x,Is.EqualTo(scale.z));
             Assert.That(2f-fitted.x*.5f-.552f,Is.GreaterThan(.5f));
+        }
+    }
+    [Test]
+    public void EveryTrapHasPlacementAndUniformScaleFitsItsMovingFootprint()
+    {
+        Type type=Runtime("BalloonDogTrapPlacement");
+        for(int id=1;id<=29;id++)
+        {
+            object profile=type.GetMethod("For").Invoke(null,new object[]{id});
+            Assert.That((int)type.GetField("id").GetValue(profile),Is.EqualTo(id));
+            foreach(var dimensions in new[]{new Vector3(1,2,1),new Vector3(8,.3f,2),new Vector3(.5f,7,2)})
+            {
+                var reference=new Bounds(new Vector3(0,2,0),dimensions);
+                var swept=new Bounds(Vector3.zero,dimensions*1.5f);
+                float scale=(float)type.GetMethod("Scale").Invoke(profile,new object[]{reference,swept,2f});
+                Assert.That(scale,Is.GreaterThan(0));
+                Assert.That(swept.size.x*scale,Is.LessThanOrEqualTo(1.651f));
+                Assert.That(swept.size.z*scale,Is.LessThanOrEqualTo(5.201f));
+            }
         }
     }
     [UnityTest]

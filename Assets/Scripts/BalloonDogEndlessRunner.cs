@@ -30,6 +30,8 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
     }
     private readonly List<Chunk> chunks = new List<Chunk>();
     private readonly Dictionary<int, Bounds> animationEnvelopes = new Dictionary<int, Bounds>();
+    private readonly Dictionary<int, Bounds> referenceBounds = new Dictionary<int, Bounds>();
+    private readonly Dictionary<int, float> groundHeights = new Dictionary<int, float>();
     private readonly List<Material> ownedMaterials = new List<Material>();
     private PlayerRunner runner;
     private ScoreController score;
@@ -233,7 +235,11 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
         // Clip curves can animate their root without overwriting the lane or scale.
         Transform mount=new GameObject("AnimationFit").transform;
         mount.SetParent(root.transform,false);
-        GameObject view=Instantiate(prefab,mount,false);
+        Transform facing=new GameObject("Facing").transform;
+        facing.SetParent(mount,false);
+        var profile=BalloonDogTrapPlacement.For(artId);
+        facing.localRotation=Quaternion.Euler(0,profile.yaw,0);
+        GameObject view=Instantiate(prefab,facing,false);
         view.transform.localPosition=Vector3.zero;
         Animator[] animators=view.GetComponentsInChildren<Animator>(true);
         foreach(var animator in animators)
@@ -252,12 +258,18 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
         Bounds envelope;
         if(!animationEnvelopes.TryGetValue(artId,out envelope))
         {
-            envelope=BalloonDogAnimatedTrap.MeasureAnimation(view,mount,animators);
+            referenceBounds.Add(artId,BalloonDogAnimatedTrap.ReferenceBounds(view,mount));
+            envelope=BalloonDogAnimatedTrap.MeasureAnimation(view,mount,animators,out Bounds support);
+            groundHeights.Add(artId,support.min.y);
             animationEnvelopes.Add(artId,envelope);
         }
-        Vector3 fittedScale=BalloonDogAnimatedTrap.FitScale(envelope);
-        mount.localScale=fittedScale;
-        mount.localPosition=-Vector3.Scale(new Vector3(envelope.center.x,envelope.min.y,envelope.center.z),fittedScale);
+        Bounds reference=referenceBounds[artId];
+        float fit=profile.Scale(reference,envelope,width/3f);
+        mount.localScale=Vector3.one*fit;
+        // The fixed support owns ground contact. The swept animation volume is
+        // only a clearance limit; a hammer's lowest swing is not its foot.
+        mount.localPosition=new Vector3(-envelope.center.x*fit,
+            -groundHeights[artId]*fit+profile.groundOffset,-reference.center.z*fit);
         foreach(var animator in animators)
         {
             animator.enabled=true;animator.Rebind();animator.Update(0);
