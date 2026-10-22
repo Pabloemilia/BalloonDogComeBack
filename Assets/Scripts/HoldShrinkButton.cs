@@ -22,7 +22,15 @@ public sealed class HoldShrinkButton : MonoBehaviour, IPointerDownHandler
     private void Awake()
     {
         button = GetComponent<Button>();
+        MainMenuController.StyleShrinkButton(gameObject);
         RefreshVisuals();
+    }
+
+    private void OnEnable()
+    {
+        // This button starts inactive in the baked scene. Style it whenever it
+        // becomes visible, independently of the retired main-menu theme path.
+        MainMenuController.StyleShrinkButton(gameObject);
     }
 
     public void Configure(BalloonSizeController controller)

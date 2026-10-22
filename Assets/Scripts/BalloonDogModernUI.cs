@@ -2597,7 +2597,16 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         stage.anchorMax = Vector2.one;
         stage.pivot = Vector2.one;
         stage.anchoredPosition = new Vector2(-24f, -24f);
-        pause.GetComponentInChildren<TMP_Text>().raycastTarget = false;
+        RectTransform pauseRect = pause.transform as RectTransform;
+        pauseRect.anchoredPosition = Vector2.zero;
+        pauseRect.sizeDelta = new Vector2(112f, 112f);
+        pause.GetComponentInChildren<TMP_Text>(true).gameObject.SetActive(false);
+        // The general action-button label has wide side margins. Use a centered
+        // pair of bars so a small pause button keeps a full-size, balanced icon.
+        RectTransform pauseGlyph = CreateRect("PauseGlyph", pause.transform);
+        SetRect(pauseGlyph, new Vector2(0f, 4f), new Vector2(42f, 44f));
+        CreateImage(pauseGlyph, "LeftBar", new Vector2(-12f, 0f), new Vector2(13f, 44f), Color.white, false);
+        CreateImage(pauseGlyph, "RightBar", new Vector2(12f, 0f), new Vector2(13f, 44f), Color.white, false);
 
     }
 
@@ -2606,9 +2615,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         RectTransform card = CreateRect("GameplayAirHud", parent);
         card.anchorMin = new Vector2(0f, 1f);
         card.anchorMax = Vector2.one;
-        card.pivot = new Vector2(.5f, 1f);
+        card.pivot = new Vector2(0f, 1f);
         card.offsetMin = new Vector2(24f, -150f);
         card.offsetMax = new Vector2(-160f, -22f);
+        card.localScale = Vector3.one * .5f;
         Image shell = card.gameObject.AddComponent<Image>();
         shell.sprite = GetRoundedSprite();
         shell.type = Image.Type.Sliced;

@@ -174,9 +174,9 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             play.anchorMin = play.anchorMax = new Vector2(.5f, 0f);
             play.anchoredPosition = new Vector2(0f, 180f);
             play.sizeDelta = new Vector2(890f, 270f);
-            StyleButton(play, new Color(0.35f, 0.84f, 0.23f, 1f), "PLAY", 88f);
-            SetButtonLabelTuning(play, 0f, new Vector4(8f, 2f, 8f, 4f));
+            StyleButton(play, new Color(0.35f, 0.84f, 0.23f, 1f), "PLAY", 112f);
             SetButtonIcon(play, null);
+            SetButtonLabelTuning(play, 8f, new Vector4(30f, 6f, 30f, 12f));
             BalloonDogMenuArtwork.Apply(play, "butonyesil", true);
         }
 
@@ -189,24 +189,9 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             market.sizeDelta = size;
             StyleButton(market, new Color(0.18f, 0.54f, 0.96f, 1f), "MARKET", 68f);
             SetButtonLabelTuning(market, 0f, new Vector4(10f, 4f, 10f, 6f));
-            SetButtonIcon(market, GetMarketIconSprite(), 92f);
+            SetButtonIcon(market, GetMarketIconSprite(), 104f);
             BalloonDogMenuArtwork.Apply(market, "butonmavi", true);
-            RectTransform marketIcon = market.Find("ThemeIcon") as RectTransform;
-            if (marketIcon != null)
-            {
-                marketIcon.anchorMin = marketIcon.anchorMax = new Vector2(0.5f, 0.5f);
-                marketIcon.anchoredPosition = new Vector2(-size.x * .5f + 86f, 6f);
-            }
-            TMP_Text marketLabel = market.GetComponentInChildren<TMP_Text>(true);
-            if (marketLabel != null)
-            {
-                marketLabel.margin = Vector4.zero;
-                marketLabel.fontSize = 68f;
-                marketLabel.rectTransform.anchorMin = marketLabel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-                marketLabel.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                marketLabel.rectTransform.anchoredPosition = new Vector2(62f, 6f);
-                marketLabel.rectTransform.sizeDelta = new Vector2(size.x - 164f, 180f);
-            }
+            LayoutNavigationContent(market);
         }
 
         RectTransform skins = FindRect("SkinsNavButton");
@@ -218,25 +203,34 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             skins.sizeDelta = size;
             StyleButton(skins, new Color(0.18f, 0.54f, 0.96f, 1f), "SKINS", 68f);
             SetButtonLabelTuning(skins, 0f, new Vector4(10f, 4f, 10f, 6f));
-            SetButtonIcon(skins, GetSkinsIconSprite(), 92f);
+            SetButtonIcon(skins, GetSkinsIconSprite(), 104f);
             BalloonDogMenuArtwork.Apply(skins, "butonmavi", true);
-            RectTransform skinsIcon = skins.Find("ThemeIcon") as RectTransform;
-            if (skinsIcon != null)
-            {
-                skinsIcon.anchorMin = skinsIcon.anchorMax = new Vector2(0.5f, 0.5f);
-                skinsIcon.anchoredPosition = new Vector2(-size.x * .5f + 86f, 6f);
-            }
-            TMP_Text skinsLabel = skins.GetComponentInChildren<TMP_Text>(true);
-            if (skinsLabel != null)
-            {
-                skinsLabel.margin = Vector4.zero;
-                skinsLabel.fontSize = 68f;
-                skinsLabel.rectTransform.anchorMin = skinsLabel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-                skinsLabel.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                skinsLabel.rectTransform.anchoredPosition = new Vector2(62f, 6f);
-                skinsLabel.rectTransform.sizeDelta = new Vector2(size.x - 164f, 180f);
-            }
+            LayoutNavigationContent(skins);
         }
+    }
+
+    private static void LayoutNavigationContent(RectTransform button)
+    {
+        RectTransform icon = button.Find("ThemeIcon") as RectTransform;
+        TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+        if (icon == null || label == null) return;
+        label.margin = Vector4.zero;
+        label.enableAutoSizing = false;
+        label.fontSize = 68f;
+        float labelWidth = label.GetPreferredValues(label.text).x + 8f;
+        float scale = Mathf.Min(1f, (button.sizeDelta.x - 80f) / (104f + 20f + labelWidth));
+        float iconSize = 104f * scale;
+        float gap = 20f * scale;
+        labelWidth *= scale;
+        label.fontSize *= scale;
+        float groupWidth = iconSize + gap + labelWidth;
+        icon.anchorMin = icon.anchorMax = icon.pivot = new Vector2(.5f, .5f);
+        icon.sizeDelta = new Vector2(iconSize, iconSize);
+        icon.anchoredPosition = new Vector2((-groupWidth + iconSize) * .5f, 6f);
+        RectTransform text = label.rectTransform;
+        text.anchorMin = text.anchorMax = text.pivot = new Vector2(.5f, .5f);
+        text.anchoredPosition = new Vector2((groupWidth - labelWidth) * .5f, 6f);
+        text.sizeDelta = new Vector2(labelWidth, 150f);
     }
 
     private static void GetMainNavigationLayout(Transform parent, out Vector2 size, out float offset)
@@ -262,13 +256,17 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             coinCard.anchoredPosition = new Vector2(18f, -14f);
             EnsurePillBackground(coinCard, new Color(0.91f, 0.86f, 0.63f, 0.96f), new Color(1f, 1f, 1f, 0.03f));
             BalloonDogMenuArtwork.Apply(coinCard, "coin_panel_background");
-            SetPillIcon(coinCard, GetCoinIconSprite(), Color.white, 44f, 34f);
+            SetPillIcon(coinCard, GetCoinIconSprite(), Color.white, 62f, 44f);
+            RectTransform icon = coinCard.Find("ThemePillIcon") as RectTransform;
+            if (icon != null) icon.anchoredPosition = new Vector2(44f, 6f);
         }
 
         if (coin != null)
         {
             coin.text = BalloonDogEconomy.Coins.ToString("N0");
-            coin.fontSize = 38f;
+            coin.fontSize = 46f;
+            coin.fontSizeMin = 20f;
+            coin.fontSizeMax = 46f;
             coin.fontStyle = FontStyles.Normal;
             coin.fontWeight = FontWeight.Bold;
             coin.alignment = TextAlignmentOptions.MidlineLeft;
@@ -278,9 +276,9 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             RectTransform labelRect = coin.rectTransform;
             labelRect.anchorMin = Vector2.zero;
             labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            coin.margin = new Vector4(76f, 0f, 18f, 0f);
+            labelRect.offsetMin = new Vector2(88f, 18f);
+            labelRect.offsetMax = new Vector2(-18f, -6f);
+            coin.margin = Vector4.zero;
         }
 
         RectTransform settings = FindRect("MainSettingsButton");

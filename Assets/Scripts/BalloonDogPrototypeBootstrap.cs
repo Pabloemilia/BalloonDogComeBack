@@ -659,10 +659,14 @@ public sealed class BalloonDogPrototypeBootstrap : MonoBehaviour
         GameObject shrinkButton = CreateButton(
             canvas.transform,
             "ShrinkButton",
-            "KÜÇÜL\nBASILI TUT");
+            string.Empty);
         SetRect(shrinkButton.GetComponent<RectTransform>(),
-            new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-            new Vector2(0f, 70f), new Vector2(360f, 150f));
+            new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f),
+            new Vector2(0f, 115f), new Vector2(420f, 210f));
+        Image shrinkImage = shrinkButton.GetComponent<Image>();
+        shrinkImage.sprite = Resources.Load<Sprite>("shrink_transform_icon");
+        shrinkImage.color = Color.white;
+        shrinkImage.preserveAspect = true;
         GetOrAdd<HoldShrinkButton>(shrinkButton).Configure(sizeController);
 
         GameObject endPanel = CreateEndPanel(

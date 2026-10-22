@@ -437,7 +437,7 @@ public sealed class MainMenuController : MonoBehaviour
             30f);
 
         ApplyCleanMainMenuLayout();
-        StyleShrinkButton();
+        StyleShrinkButton(FindNamedObject("ShrinkButton"));
     }
 
     private void ApplyCleanMainMenuLayout()
@@ -725,10 +725,8 @@ public sealed class MainMenuController : MonoBehaviour
         rect.localScale = Vector3.one;
     }
 
-    private static void StyleShrinkButton()
+    public static void StyleShrinkButton(GameObject shrinkButton)
     {
-        GameObject shrinkButton = FindNamedObject("ShrinkButton");
-
         if (shrinkButton == null)
         {
             return;
@@ -814,9 +812,10 @@ public sealed class MainMenuController : MonoBehaviour
 
         cachedShrinkIconSprite = Sprite.Create(
             texture,
-            new Rect(0f, 0f, texture.width, texture.height),
+            new Rect(14f, 95f, 1748f, 751f),
             new Vector2(0.5f, 0.5f),
             100f);
+        cachedShrinkIconSprite.name = "Shrink CLICK Artwork";
 
         return cachedShrinkIconSprite;
     }
