@@ -402,6 +402,8 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
             proxy.transform.SetParent(root.transform,false);
             proxy.AddComponent<BalloonDogTrapHitbox>().Configure(mesh,contact);
         }
+        // VFX particles are not meshes and need their own emission-aware contact.
+        BalloonDogFlameHazard.Install(view);
         var motion=root.AddComponent<BalloonDogAnimatedTrap>();
         motion.Configure(animators,(float)random.NextDouble());
         return contact;
