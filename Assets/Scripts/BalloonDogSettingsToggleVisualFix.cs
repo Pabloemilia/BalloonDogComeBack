@@ -171,21 +171,7 @@ public sealed class BalloonDogSettingsToggleVisualFix : MonoBehaviour
         Image background,
         string resourcePath)
     {
-        Sprite sprite = Resources.Load<Sprite>(resourcePath);
-        if (sprite != null && background.sprite != sprite)
-        {
-            background.sprite = sprite;
-            background.type = Image.Type.Sliced;
-        }
-
-        background.color = Color.white;
-        Material material =
-            Resources.Load<Material>(resourcePath + "Satin");
-        background.material =
-            material != null && material.shader != null &&
-            material.shader.isSupported
-                ? material
-                : null;
+        BalloonDogMenuArtwork.ApplyButtonBackground(background, resourcePath == MintButtonPath);
     }
 
     private static TMP_Text CreateLabel(

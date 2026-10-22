@@ -20,12 +20,14 @@ public static class BalloonDogMenuArtwork
         {
             case "settings_button": frame = new Rect(196f, 166f, 909f, 870f); break;
             case "coin_panel_background": frame = new Rect(99f, 94f, 1841f, 578f); break;
-            case "butonmavi": frame = new Rect(41f, 70f, 1968f, 546f); break;
-            case "butonyesil": frame = new Rect(19f, 96f, 1995f, 582f); break;
+            case "butonmavi": frame = new Rect(75f, 72f, 1898f, 520f); break;
+            case "butonyesil": frame = new Rect(50f, 80f, 1954f, 511f); break;
+            case "best_button": frame = new Rect(94f, 68f, 1873f, 500f); break;
             default: return Sprites[name] = source;
         }
+        bool button = name == "butonmavi" || name == "butonyesil" || name == "best_button";
         Sprite sprite = Sprite.Create(source.texture, frame, new Vector2(.5f, .5f),
-            100f, 0, SpriteMeshType.FullRect);
+            100f, 0, SpriteMeshType.FullRect, button ? new Vector4(260f, 95f, 260f, 95f) : Vector4.zero);
         sprite.name = name + " UI Frame";
         return Sprites[name] = sprite;
     }
@@ -37,6 +39,12 @@ public static class BalloonDogMenuArtwork
         if (sprite == null) return;
         Image image = rect.GetComponent<Image>();
         if (image == null) image = rect.gameObject.AddComponent<Image>();
+        if (name == "butonmavi" || name == "butonyesil" || name == "best_button")
+        {
+            ApplyButtonSprite(image, sprite);
+            image.raycastTarget = interactive;
+            return;
+        }
         image.enabled = true;
         image.sprite = sprite;
         image.type = Image.Type.Simple;
@@ -53,5 +61,51 @@ public static class BalloonDogMenuArtwork
         }
         Button button = rect.GetComponent<Button>();
         if (button != null) button.targetGraphic = image;
+    }
+
+    public static bool ApplyButtonBackground(Image image, bool green)
+    {
+        Sprite sprite = Get(green ? "butonyesil" : "butonmavi");
+        if (image == null || sprite == null) return false;
+        ApplyButtonSprite(image, sprite);
+        return true;
+    }
+
+    public static bool ApplyButtonColor(Image image, Color color)
+    {
+        if (color.a < .1f) return false;
+        bool green = color.g > color.r * 1.15f && color.g > color.b * 1.15f;
+        bool blue = color.b > color.r * 1.15f && color.b >= color.g * .9f && color.g > color.r;
+        return (green || blue) && ApplyButtonBackground(image, green);
+    }
+
+    private static void ApplyButtonSprite(Image image, Sprite sprite)
+    {
+        image.enabled = true;
+        image.sprite = sprite;
+        image.type = Image.Type.Sliced;
+        image.preserveAspect = false;
+        float height = image.rectTransform.rect.height;
+        if (height <= 0f) height = image.rectTransform.sizeDelta.y;
+        image.pixelsPerUnitMultiplier = sprite.rect.height / Mathf.Max(1f, height);
+        image.color = Color.white;
+        image.material = null;
+        UiVerticalGradient gradient = image.GetComponent<UiVerticalGradient>();
+        if (gradient != null) gradient.enabled = false;
+        foreach (Shadow shadow in image.GetComponents<Shadow>()) shadow.enabled = false;
+        foreach (string name in new[] { "ThemeTopGloss", "ThemeBottomShade" })
+        {
+            Transform overlay = image.transform.Find(name);
+            if (overlay != null) overlay.gameObject.SetActive(false);
+        }
+        Button button = image.GetComponent<Button>();
+        if (button != null)
+        {
+            button.targetGraphic = image;
+            ColorBlock colors = button.colors;
+            colors.normalColor = colors.highlightedColor = colors.selectedColor = Color.white;
+            colors.pressedColor = new Color(.92f, .95f, 1f, 1f);
+            button.colors = colors;
+        }
     }
 }

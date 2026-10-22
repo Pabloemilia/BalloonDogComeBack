@@ -324,6 +324,7 @@ public sealed class BalloonDogCampaignRuntime : MonoBehaviour
         button.navigation = new Navigation { mode = Navigation.Mode.None };
         button.onClick.AddListener(action);
         CreateText(image.transform, "Label", label, Vector2.zero, size - new Vector2(20f, 12f), 35f, foreground);
+        BalloonDogMenuArtwork.ApplyButtonColor(image, background);
         return button;
     }
 

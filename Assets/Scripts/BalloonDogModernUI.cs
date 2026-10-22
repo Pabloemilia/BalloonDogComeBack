@@ -681,10 +681,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         RectTransform rect = CreateRect(name, parent);
         SetRect(rect, position, size);
         Image artwork = rect.gameObject.AddComponent<Image>();
-        artwork.sprite = Resources.Load<Sprite>("Market/BlueButton");
-        artwork.type = Image.Type.Simple;
-        artwork.preserveAspect = false;
-        artwork.color = Color.white;
+        BalloonDogMenuArtwork.ApplyButtonBackground(artwork, false);
 
         Button button = rect.gameObject.AddComponent<Button>();
         button.targetGraphic = artwork;
@@ -1092,6 +1089,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             background.type = Image.Type.Simple;
             background.preserveAspect = false;
             background.raycastTarget = true;
+            if (gems) BalloonDogMenuArtwork.ApplyButtonBackground(background, false);
 
             int quantity = amounts[i];
             Button rowButton = row.gameObject.AddComponent<Button>();
@@ -1333,6 +1331,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         Image artwork = CreateResourceImage(parent, name, "CollectionUI/PageArrow",
             position, new Vector2(215f, 130f));
+        BalloonDogMenuArtwork.ApplyButtonBackground(artwork, false);
+        CreatePauseText(artwork.transform, "PageArrow", ">", Vector2.zero,
+            new Vector2(170f, 100f), 76f, Color.white, TextAlignmentOptions.Center);
         artwork.raycastTarget = true;
         if (previous) artwork.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
         Button button = artwork.gameObject.AddComponent<Button>();
@@ -1939,9 +1940,11 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         RemoveButtonShadow(button);
         button.GetComponentInChildren<TMP_Text>(true).gameObject.SetActive(false);
         Image background = button.GetComponent<Image>();
-        background.sprite = GetResourceSprite("GameOver/DoubleBonus");
-        background.type = Image.Type.Simple;
-        background.preserveAspect = true;
+        BalloonDogMenuArtwork.ApplyButtonBackground(background, true);
+        CreatePauseText(button.transform, "MultiplierLabel", "2X",
+            new Vector2(0f, 60f), new Vector2(760f, 180f), 140f, Color.white, TextAlignmentOptions.Center);
+        CreatePauseText(button.transform, "BonusLabel", "BONUS",
+            new Vector2(0f, -95f), new Vector2(700f, 100f), 70f, Gold, TextAlignmentOptions.Center);
         button.transition = Selectable.Transition.None;
         resultBonusButton = button;
         // The bonus button stays free of decorative stars.
@@ -2484,26 +2487,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             return false;
         }
 
-        Sprite backgroundSprite =
-            GetResourceSlicedSprite(backgroundResourcePath);
-        if (backgroundSprite == null)
-        {
-            return false;
-        }
-
-        background.pixelsPerUnitMultiplier = backgroundResourcePath.StartsWith("SettingsUI/") ? 1.8f : 1f;
-        background.sprite = backgroundSprite;
-        background.type = Image.Type.Sliced;
-        background.color = Color.white;
-
-        Material satinMaterial =
-            Resources.Load<Material>(backgroundResourcePath + "Satin");
-        background.material =
-            satinMaterial != null && satinMaterial.shader != null &&
-            satinMaterial.shader.isSupported
-                ? satinMaterial
-                : null;
-        return true;
+        bool green = backgroundResourcePath.Contains("Mint") || backgroundResourcePath.Contains("Resume");
+        return BalloonDogMenuArtwork.ApplyButtonBackground(background, green);
     }
 
     private static TMP_Text CreatePauseText(
@@ -2751,6 +2736,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Image image = button.GetComponent<Image>();
         image.sprite = GetCircleSprite();
         image.type = Image.Type.Simple;
+        BalloonDogMenuArtwork.ApplyButtonBackground(image, false);
         return button;
     }
 
@@ -3672,6 +3658,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             FontStyles.Bold,
             TextAlignmentOptions.Center);
         text.raycastTarget = false;
+        BalloonDogMenuArtwork.ApplyButtonColor(image, backgroundColor);
         return button;
     }
 

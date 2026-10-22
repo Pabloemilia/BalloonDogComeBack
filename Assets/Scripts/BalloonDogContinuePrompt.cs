@@ -26,7 +26,6 @@ public sealed class BalloonDogContinuePrompt : MonoBehaviour
     private static Sprite rounded;
     private Sprite panelSprite;
     private Sprite timerSprite;
-    private Material panelPressMaterial;
 
     public float RemainingSeconds => remaining;
     public bool WaitingForAd => waitingForAd;
@@ -120,8 +119,6 @@ public sealed class BalloonDogContinuePrompt : MonoBehaviour
         overlay = null;
         if (panelSprite != null) Destroy(panelSprite);
         panelSprite = null;
-        if (panelPressMaterial != null) Destroy(panelPressMaterial);
-        panelPressMaterial = null;
         if (timerSprite != null)
         {
             Destroy(timerSprite.texture);
@@ -190,24 +187,20 @@ public sealed class BalloonDogContinuePrompt : MonoBehaviour
         Stretch(timerFill.rectTransform);
         timerFill.raycastTarget = false;
 
-        // The panel itself is rendered once. Press shading is confined to the
-        // green face by its shader; no second copy can leave a rectangular seam.
-        Shader pressShader = Resources.Load<Shader>("ContinueUI/ContinuePress");
-        if (pressShader != null && pressShader.isSupported)
-        {
-            panelPressMaterial = new Material(pressShader);
-            panel.material = panelPressMaterial;
-        }
-        else Debug.LogWarning("Continue press shader unavailable; original panel kept without tint.", this);
+        // The new capsule covers the complete old painted face and its rim.
+        // Only this standalone button animates; the surrounding card stays still.
         RectTransform buttonRect = Rect("WatchAdButton", panel.transform,
-            ArtPosition(769f, 680f), ArtSize(1034f, 200f));
+            ArtPosition(769f, 680f), ArtSize(1200f, 310f));
+        Image face = buttonRect.gameObject.AddComponent<Image>();
+        BalloonDogMenuArtwork.ApplyButtonBackground(face, true);
+        Text(buttonRect, "WatchAdLabel", "WATCH AD", Vector2.zero,
+            buttonRect.sizeDelta - new Vector2(80f, 32f), 68f, Color.white);
         watch = buttonRect.gameObject.AddComponent<Button>();
-        watch.targetGraphic = panel;
+        watch.targetGraphic = face;
         watch.navigation = new Navigation { mode = Navigation.Mode.None };
         watch.onClick.AddListener(WatchAd);
         BalloonDogDirectPressButton input = buttonRect.gameObject.AddComponent<BalloonDogDirectPressButton>();
-        input.Configure(watch, buttonRect, new Vector2(58f / 1034f, 58f / 200f), true);
-        input.UsePanelPressMaterial(panelPressMaterial);
+        input.Configure(watch, buttonRect, new Vector2(155f / 1200f, .5f), false);
 
         // Transient ad status sits below the card; the approved bottom caption
         // remains untouched in the panel art.

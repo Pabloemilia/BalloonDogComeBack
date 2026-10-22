@@ -291,8 +291,8 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             settings.pivot = new Vector2(1f, 1f);
             settings.anchoredPosition = new Vector2(-10f, -10f);
             settings.sizeDelta = new Vector2(112f, 112f);
-            StyleIconButton(settings, Color.white, null);
-            BalloonDogMenuArtwork.Apply(settings, "settings_button", true);
+            StyleIconButton(settings, Color.white, GetGearIconSprite());
+            BalloonDogMenuArtwork.Apply(settings, "butonmavi", true);
         }
     }
 
@@ -639,6 +639,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             bestCard.anchoredPosition = new Vector2(0f, -700f);
             EnsurePillBackground(bestCard, new Color(0.24f, 0.50f, 0.94f, 0.96f), new Color(1f, 1f, 1f, 0.05f));
             SoftenPillOutline(bestCard, 0.02f, 0.08f);
+            BalloonDogMenuArtwork.Apply(bestCard, "best_button");
         }
 
         if (best == null)
@@ -1004,6 +1005,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         {
             best.anchorMin = best.anchorMax = new Vector2(.5f, 1f);
             best.anchoredPosition = new Vector2(0f, -700f);
+            BalloonDogMenuArtwork.Apply(best, "best_button");
         }
         RectTransform coins = root.Find("Coins") as RectTransform;
         if (coins != null)
@@ -1042,11 +1044,16 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             settings.pivot = Vector2.one;
             settings.anchoredPosition = new Vector2(-10f, -10f);
             settings.sizeDelta = new Vector2(112f, 112f);
-            BalloonDogMenuArtwork.Apply(settings, "settings_button");
+            BalloonDogMenuArtwork.Apply(settings, "butonmavi");
         }
         if (settingsIcon != null)
         {
-            settingsIcon.gameObject.SetActive(false);
+            settingsIcon.SetParent(settings, false);
+            settingsIcon.anchorMin = settingsIcon.anchorMax = new Vector2(.5f, .5f);
+            settingsIcon.anchoredPosition = Vector2.zero;
+            settingsIcon.sizeDelta = new Vector2(60f, 60f);
+            settingsIcon.GetComponent<Image>().sprite = GetGearIconSprite();
+            settingsIcon.gameObject.SetActive(true);
         }
         RectTransform level = root.Find("Level") as RectTransform;
         if (level != null)
@@ -1114,6 +1121,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         label.characterSpacing = 0f;
         label.margin = new Vector4(10f, 5f, 10f, 7f);
         ApplySmoothLowPolyText(label, 0f);
+        BalloonDogMenuArtwork.ApplyButtonColor(image, fill);
     }
 
     private static void SetButtonLabelTuning(RectTransform rect, float characterSpacing, Vector4 margin)

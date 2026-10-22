@@ -820,6 +820,7 @@ public sealed class MainMenuController : MonoBehaviour
 
         outline.effectColor = new Color(0.01f, 0.18f, 0.32f, 0.75f);
         outline.effectDistance = new Vector2(5f, -5f);
+        BalloonDogMenuArtwork.ApplyButtonBackground(background, false);
     }
 
     private static Sprite GetShrinkIconSprite()
@@ -925,6 +926,7 @@ public sealed class MainMenuController : MonoBehaviour
             outline.effectDistance =
                 new Vector2(2f, -2f);
         }
+        BalloonDogMenuArtwork.ApplyButtonColor(image, normal);
     }
 
     private static void CreateBubbleBackdrop(GameObject panel)
