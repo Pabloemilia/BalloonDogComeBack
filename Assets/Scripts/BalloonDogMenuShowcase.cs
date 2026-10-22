@@ -12,7 +12,6 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
     private readonly List<Material> skinMaterials = new List<Material>();
     private readonly List<Mesh> bakedMeshes = new List<Mesh>();
     private readonly List<Material> stageMaterials = new List<Material>();
-    private readonly List<RectTransform> bubbles = new List<RectTransform>();
     private RawImage picture;
     private GameObject stage;
     private Transform dogPivot;
@@ -20,6 +19,7 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
     private Camera studioCamera;
     private Camera worldCamera;
     private bool worldCameraWasEnabled;
+    private int worldCameraCullingMask;
     private RenderTexture target;
     private BalloonDogSkinSwitcher switcher;
     private bool dirty = true;
@@ -27,8 +27,6 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
     private float frameAspect;
     private string displayedEconomySkin;
     private GameObject displayedVisual;
-    private Texture2D bubbleTexture;
-    private Sprite bubbleSprite;
 
     private void OnEnable()
     {
@@ -39,15 +37,27 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         nextRetry = 0f;
         CanvasGroup group = GetComponent<CanvasGroup>();
         if (group != null) { group.alpha = 1f; group.interactable = true; }
-        if (Application.isPlaying)
-        {
-            worldCamera = Camera.main;
-            if (worldCamera != null)
-            {
-                worldCameraWasEnabled = worldCamera.enabled;
-                worldCamera.enabled = false;
-            }
-        }
+        if (Application.isPlaying) PrepareWorldCamera();
+    }
+
+    private void PrepareWorldCamera()
+    {
+        worldCamera = Camera.main;
+        if (worldCamera == null) return;
+        worldCameraWasEnabled = worldCamera.enabled;
+        worldCameraCullingMask = worldCamera.cullingMask;
+        // The studio renders only to a texture. Keep a display camera active
+        // so Unity does not draw "Display 1 / No cameras rendering" over the UI.
+        worldCamera.cullingMask = 0;
+        worldCamera.enabled = true;
+    }
+
+    private void RestoreWorldCamera()
+    {
+        if (worldCamera == null) return;
+        worldCamera.cullingMask = worldCameraCullingMask;
+        worldCamera.enabled = worldCameraWasEnabled;
+        worldCamera = null;
     }
 
     private void BindPlayer()
@@ -65,7 +75,7 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         CanvasGroup group = GetComponent<CanvasGroup>();
         if (group == null) group = gameObject.AddComponent<CanvasGroup>();
         group.interactable = false;
-        if (worldCamera != null) worldCamera.enabled = worldCameraWasEnabled;
+        RestoreWorldCamera();
         float elapsed = 0f;
         while (this != null && elapsed < .24f && isActiveAndEnabled)
         {
@@ -97,13 +107,6 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         float time = Application.isPlaying ? Time.unscaledTime : 0f;
         if (dogPivot != null)
             dogPivot.localRotation = Quaternion.Euler(0f, 145f + Mathf.Sin(time * .65f) * 8f, 0f);
-        for (int i = 0; i < bubbles.Count; i++)
-        {
-            if (bubbles[i] == null) continue;
-            Vector2 pos = BubblePosition(i);
-            pos.y += Mathf.Sin(time * (.55f + i * .08f) + i) * 18f;
-            bubbles[i].anchoredPosition = pos;
-        }
     }
 
     private void BuildStudio()
@@ -140,7 +143,6 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         frame.anchorMax = Vector2.one;
         frame.offsetMin = new Vector2(70f, 560f);
         frame.offsetMax = new Vector2(-70f, -770f);
-        BuildBubbles();
 
         stage = new GameObject("__BalloonDogMenuStudio");
         stage.hideFlags = HideFlags.HideAndDontSave;
@@ -343,46 +345,6 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         return go;
     }
 
-    private static Vector2 BubblePosition(int index)
-    {
-        return new Vector2(index % 2 == 0 ? 100f : -95f, -850f - index * 160f);
-    }
-
-    private void BuildBubbles()
-    {
-        if (bubbles.Count > 0) return;
-        bubbleTexture = new Texture2D(128, 128, TextureFormat.RGBA32, false)
-            { name = "MenuSoapBubble", hideFlags = HideFlags.HideAndDontSave };
-        Color[] pixels = new Color[128 * 128];
-        for (int y = 0; y < 128; y++)
-        for (int x = 0; x < 128; x++)
-        {
-            Vector2 p = (new Vector2(x, y) - new Vector2(63.5f, 63.5f)) / 60f;
-            float radius = p.magnitude;
-            float edge = Mathf.Exp(-Mathf.Pow((radius - .94f) * 30f, 2f));
-            float glint = Mathf.Exp(-((p - new Vector2(-.40f, .58f)).sqrMagnitude) * 95f);
-            Color color = Color.Lerp(new Color(.45f, .95f, 1f), new Color(1f, .67f, .94f), Mathf.Clamp01(p.x + .5f));
-            color = Color.Lerp(color, Color.white, glint);
-            color.a = Mathf.Clamp01(edge * .72f + glint * .95f + (radius < .9f ? .045f : 0f));
-            pixels[y * 128 + x] = color;
-        }
-        bubbleTexture.SetPixels(pixels);
-        bubbleTexture.Apply();
-        bubbleSprite = Sprite.Create(bubbleTexture, new Rect(0, 0, 128, 128), Vector2.one * .5f);
-        for (int i = 0; i < 5; i++)
-        {
-            Image bubble = MakeUi("MenuBubble_" + i, typeof(Image)).GetComponent<Image>();
-            bubble.sprite = bubbleSprite;
-            bubble.raycastTarget = false;
-            RectTransform rect = bubble.rectTransform;
-            rect.anchorMin = rect.anchorMax = new Vector2(i % 2 == 0 ? 0f : 1f, 1f);
-            rect.anchoredPosition = BubblePosition(i);
-            rect.sizeDelta = Vector2.one * (i == 0 ? 108f : 60f + i * 9f);
-            rect.SetSiblingIndex(1);
-            bubbles.Add(rect);
-        }
-    }
-
     private static Transform FindChild(Transform root, string name)
     {
         foreach (Transform child in root)
@@ -415,8 +377,7 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         BalloonDogEconomy.Changed -= MarkDirty;
         if (switcher != null) switcher.SkinChanged -= HandleSkinChanged;
         switcher = null;
-        if (worldCamera != null) worldCamera.enabled = worldCameraWasEnabled;
-        worldCamera = null;
+        RestoreWorldCamera();
         if (studioCamera != null) studioCamera.enabled = false;
         ReleaseTarget();
         ClearDog();
@@ -428,9 +389,6 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
     private void OnDestroy()
     {
         if (picture != null) Dispose(picture.gameObject);
-        foreach (RectTransform bubble in bubbles) if (bubble != null) Dispose(bubble.gameObject);
-        Dispose(bubbleSprite);
-        Dispose(bubbleTexture);
     }
 
     private static void Dispose(Object item)

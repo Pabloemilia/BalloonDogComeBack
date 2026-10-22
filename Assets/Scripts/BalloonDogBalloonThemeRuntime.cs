@@ -184,27 +184,28 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         if (market != null)
         {
             market.anchorMin = market.anchorMax = new Vector2(.5f, 0f);
-            market.anchoredPosition = new Vector2(-310f, 450f);
-            market.sizeDelta = new Vector2(460f, 164f);
-            StyleButton(market, new Color(0.18f, 0.54f, 0.96f, 1f), "MARKET", 60f);
+            GetMainNavigationLayout(market.parent, out Vector2 size, out float offset);
+            market.anchoredPosition = new Vector2(-offset, 450f);
+            market.sizeDelta = size;
+            StyleButton(market, new Color(0.18f, 0.54f, 0.96f, 1f), "MARKET", 68f);
             SetButtonLabelTuning(market, 0f, new Vector4(10f, 4f, 10f, 6f));
-            SetButtonIcon(market, GetMarketIconSprite(), 74f);
+            SetButtonIcon(market, GetMarketIconSprite(), 92f);
             BalloonDogMenuArtwork.Apply(market, "butonmavi", true);
             RectTransform marketIcon = market.Find("ThemeIcon") as RectTransform;
             if (marketIcon != null)
             {
                 marketIcon.anchorMin = marketIcon.anchorMax = new Vector2(0.5f, 0.5f);
-                marketIcon.anchoredPosition = new Vector2(-140f, 6f);
+                marketIcon.anchoredPosition = new Vector2(-size.x * .5f + 86f, 6f);
             }
             TMP_Text marketLabel = market.GetComponentInChildren<TMP_Text>(true);
             if (marketLabel != null)
             {
                 marketLabel.margin = Vector4.zero;
-                marketLabel.fontSize = 54f;
+                marketLabel.fontSize = 68f;
                 marketLabel.rectTransform.anchorMin = marketLabel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
                 marketLabel.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                marketLabel.rectTransform.anchoredPosition = new Vector2(40f, 6f);
-                marketLabel.rectTransform.sizeDelta = new Vector2(310f, 140f);
+                marketLabel.rectTransform.anchoredPosition = new Vector2(62f, 6f);
+                marketLabel.rectTransform.sizeDelta = new Vector2(size.x - 164f, 180f);
             }
         }
 
@@ -212,29 +213,40 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         if (skins != null)
         {
             skins.anchorMin = skins.anchorMax = new Vector2(.5f, 0f);
-            skins.anchoredPosition = new Vector2(310f, 450f);
-            skins.sizeDelta = new Vector2(460f, 164f);
-            StyleButton(skins, new Color(0.18f, 0.54f, 0.96f, 1f), "SKINS", 60f);
+            GetMainNavigationLayout(skins.parent, out Vector2 size, out float offset);
+            skins.anchoredPosition = new Vector2(offset, 450f);
+            skins.sizeDelta = size;
+            StyleButton(skins, new Color(0.18f, 0.54f, 0.96f, 1f), "SKINS", 68f);
             SetButtonLabelTuning(skins, 0f, new Vector4(10f, 4f, 10f, 6f));
-            SetButtonIcon(skins, GetSkinsIconSprite(), 74f);
+            SetButtonIcon(skins, GetSkinsIconSprite(), 92f);
             BalloonDogMenuArtwork.Apply(skins, "butonmavi", true);
             RectTransform skinsIcon = skins.Find("ThemeIcon") as RectTransform;
             if (skinsIcon != null)
             {
                 skinsIcon.anchorMin = skinsIcon.anchorMax = new Vector2(0.5f, 0.5f);
-                skinsIcon.anchoredPosition = new Vector2(-140f, 6f);
+                skinsIcon.anchoredPosition = new Vector2(-size.x * .5f + 86f, 6f);
             }
             TMP_Text skinsLabel = skins.GetComponentInChildren<TMP_Text>(true);
             if (skinsLabel != null)
             {
                 skinsLabel.margin = Vector4.zero;
-                skinsLabel.fontSize = 54f;
+                skinsLabel.fontSize = 68f;
                 skinsLabel.rectTransform.anchorMin = skinsLabel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
                 skinsLabel.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                skinsLabel.rectTransform.anchoredPosition = new Vector2(40f, 6f);
-                skinsLabel.rectTransform.sizeDelta = new Vector2(310f, 140f);
+                skinsLabel.rectTransform.anchoredPosition = new Vector2(62f, 6f);
+                skinsLabel.rectTransform.sizeDelta = new Vector2(size.x - 164f, 180f);
             }
         }
+    }
+
+    private static void GetMainNavigationLayout(Transform parent, out Vector2 size, out float offset)
+    {
+        RectTransform screen = parent as RectTransform;
+        float width = screen != null && screen.rect.width > 0f ? screen.rect.width : 1080f;
+        // Grow the artwork up to 25%, keeping a 32-unit gap and side margins.
+        float buttonWidth = Mathf.Min(575f, (width - 96f) * .5f);
+        size = new Vector2(buttonWidth, 210f);
+        offset = (buttonWidth + 32f) * .5f;
     }
 
     private void FixCoinAndSettings()
@@ -938,19 +950,36 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
                 if (name != "Play")
                 {
                     rect.anchorMin = rect.anchorMax = new Vector2(.5f, 0f);
-                    rect.anchoredPosition = new Vector2(name == "Market" ? -310f : 310f, 450f);
+                    GetMainNavigationLayout(root, out Vector2 size, out float offset);
+                    rect.anchoredPosition = new Vector2(name == "Market" ? -offset : offset, 450f);
+                    rect.sizeDelta = size;
+                    string iconName = name + "Icon";
+                    Transform icon = rect.Find(iconName) ?? root.Find(iconName);
+                    if (icon == null)
+                    {
+                        icon = new GameObject(iconName, typeof(RectTransform), typeof(Image)).transform;
+                    }
+                    icon.SetParent(rect, false);
+                    Image iconImage = icon.GetComponent<Image>();
+                    iconImage.sprite = name == "Market" ? GetMarketIconSprite() : GetSkinsIconSprite();
+                    iconImage.preserveAspect = true;
+                    iconImage.raycastTarget = false;
+                    RectTransform iconRect = (RectTransform)icon;
+                    iconRect.anchorMin = iconRect.anchorMax = new Vector2(.5f, .5f);
+                    iconRect.anchoredPosition = new Vector2(-size.x * .5f + 86f, 6f);
+                    iconRect.sizeDelta = new Vector2(92f, 92f);
                 }
                 Transform child = rect.Find(name + "_Label");
                 if (child != null)
                 {
                     Text label = child.GetComponent<Text>();
-                    label.fontSize = name == "Play" ? 88 : name == "Market" ? 54 : 60;
+                    label.fontSize = name == "Play" ? 88 : 68;
                     RectTransform textRect = label.rectTransform;
                     textRect.sizeDelta = rect.sizeDelta;
-                    if (name == "Market")
+                    if (name != "Play")
                     {
-                        textRect.anchoredPosition = new Vector2(40f, 6f);
-                        textRect.sizeDelta = new Vector2(310f, 140f);
+                        textRect.anchoredPosition = new Vector2(62f, 6f);
+                        textRect.sizeDelta = new Vector2(rect.sizeDelta.x - 164f, 180f);
                     }
                     child.SetAsLastSibling();
                 }

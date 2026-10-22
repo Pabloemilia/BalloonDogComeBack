@@ -108,6 +108,34 @@ public sealed class BalloonDogMenuShowcaseTests
     }
 
     [Test]
+    public void MenuKeepsADisplayCameraAndRestoresItsOriginalState()
+    {
+        Camera displayCamera = new GameObject("GameplayCamera", typeof(Camera)).GetComponent<Camera>();
+        displayCamera.tag = "MainCamera";
+        displayCamera.enabled = true;
+        int originalMask = displayCamera.cullingMask;
+
+        showcase.GetType().GetMethod("PrepareWorldCamera", Private).Invoke(showcase, null);
+        Assert.That(displayCamera.enabled, Is.True, "The menu must keep a camera rendering to Display 1.");
+        Assert.That(displayCamera.targetTexture, Is.Null, "The display camera must not render only to a texture.");
+        Assert.That(displayCamera.cullingMask, Is.Zero, "Gameplay geometry should stay hidden behind the menu.");
+        Camera studio = (Camera)Field(showcase, "studioCamera").GetValue(showcase);
+        Assert.That(studio.targetTexture, Is.Not.Null, "The live skin preview still uses its separate texture.");
+
+        System.Collections.IEnumerator leave = (System.Collections.IEnumerator)
+            showcase.GetType().GetMethod("LeaveMenu").Invoke(showcase, null);
+        leave.MoveNext();
+        Assert.That(displayCamera.enabled, Is.True);
+        Assert.That(displayCamera.cullingMask, Is.EqualTo(originalMask));
+
+        // A later disable must not overwrite changes made after PLAY restored the camera.
+        displayCamera.cullingMask = 123;
+        menu.SetActive(false);
+        Assert.That(displayCamera.cullingMask, Is.EqualTo(123));
+        ((IDisposable)leave).Dispose();
+    }
+
+    [Test]
     public void TheCloudPlateAndStudioShaderAreAvailableInPlayerResources()
     {
         Assert.That(Resources.Load<Sprite>("MenuRefresh/MenuCloudSky"), Is.Not.Null);
