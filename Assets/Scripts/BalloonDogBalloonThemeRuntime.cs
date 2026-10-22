@@ -116,7 +116,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         if (image != null)
         {
             image.enabled = true;
-            image.color = new Color(0.05f, 0.07f, 0.10f, 0.12f);
+            image.color = Color.white;
         }
 
         UiVerticalGradient gradient = mainScreen.GetComponent<UiVerticalGradient>();
@@ -905,6 +905,15 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
     /// <summary>Reuses the actual menu surface styling for authored, noninteractive artwork.</summary>
     public static void StyleAuthoredMenu(Transform root)
     {
+        Image background = root.GetComponent<Image>();
+        Sprite sky = Resources.Load<Sprite>("MenuRefresh/MenuCloudSky");
+        if (background != null && sky != null)
+        {
+            background.sprite = sky;
+            background.color = Color.white;
+            background.type = Image.Type.Simple;
+            background.preserveAspect = false;
+        }
         foreach (string name in new[] { "Market", "Skins", "Play", "Best", "Settings", "Coins" })
         {
             RectTransform rect = root.Find(name) as RectTransform;

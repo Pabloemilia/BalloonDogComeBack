@@ -1,0 +1,442 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+/// <summary>A separate, collider-free studio preview of the equipped player visual.</summary>
+[ExecuteAlways]
+[DisallowMultipleComponent]
+public sealed class BalloonDogMenuShowcase : MonoBehaviour
+{
+    private const int PreviewLayer = 30;
+    private readonly List<Material> skinMaterials = new List<Material>();
+    private readonly List<Mesh> bakedMeshes = new List<Mesh>();
+    private readonly List<Material> stageMaterials = new List<Material>();
+    private readonly List<RectTransform> bubbles = new List<RectTransform>();
+    private RawImage picture;
+    private GameObject stage;
+    private Transform dogPivot;
+    private Transform dog;
+    private Camera studioCamera;
+    private Camera worldCamera;
+    private bool worldCameraWasEnabled;
+    private RenderTexture target;
+    private BalloonDogSkinSwitcher switcher;
+    private bool dirty = true;
+    private float nextRetry;
+    private float frameAspect;
+    private string displayedEconomySkin;
+    private GameObject displayedVisual;
+    private Texture2D bubbleTexture;
+    private Sprite bubbleSprite;
+
+    private void OnEnable()
+    {
+        BuildStudio();
+        BalloonDogEconomy.Changed += MarkDirty;
+        BindPlayer();
+        dirty = true;
+        nextRetry = 0f;
+        CanvasGroup group = GetComponent<CanvasGroup>();
+        if (group != null) { group.alpha = 1f; group.interactable = true; }
+        if (Application.isPlaying)
+        {
+            worldCamera = Camera.main;
+            if (worldCamera != null)
+            {
+                worldCameraWasEnabled = worldCamera.enabled;
+                worldCamera.enabled = false;
+            }
+        }
+    }
+
+    private void BindPlayer()
+    {
+        if (switcher != null) return;
+        switcher = FindAnyObjectByType<BalloonDogSkinSwitcher>();
+        if (switcher != null) switcher.SkinChanged += HandleSkinChanged;
+    }
+
+    private void MarkDirty() { dirty = true; }
+    private void HandleSkinChanged(int index, GameObject visual) { dirty = true; }
+
+    public IEnumerator LeaveMenu()
+    {
+        CanvasGroup group = GetComponent<CanvasGroup>();
+        if (group == null) group = gameObject.AddComponent<CanvasGroup>();
+        group.interactable = false;
+        if (worldCamera != null) worldCamera.enabled = worldCameraWasEnabled;
+        float elapsed = 0f;
+        while (this != null && elapsed < .24f && isActiveAndEnabled)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            group.alpha = 1f - Mathf.SmoothStep(0f, 1f, elapsed / .24f);
+            yield return null;
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (stage == null || picture == null) return;
+        BindPlayer();
+        GameObject visual = switcher != null ? switcher.ActiveSkinInstance : null;
+        string economySkin = BalloonDogEconomy.EquippedSkinId;
+        if (visual != displayedVisual || displayedEconomySkin != economySkin) dirty = true;
+        if (dirty && Time.realtimeSinceStartup >= nextRetry)
+        {
+            nextRetry = Time.realtimeSinceStartup + .15f;
+            // Defer to LateUpdate so every skin/economy subscriber has finished.
+            if (BuildEquippedDog(visual))
+            {
+                displayedVisual = visual;
+                displayedEconomySkin = economySkin;
+                dirty = false;
+            }
+        }
+        ResizeTarget();
+        float time = Application.isPlaying ? Time.unscaledTime : 0f;
+        if (dogPivot != null)
+            dogPivot.localRotation = Quaternion.Euler(0f, 145f + Mathf.Sin(time * .65f) * 8f, 0f);
+        for (int i = 0; i < bubbles.Count; i++)
+        {
+            if (bubbles[i] == null) continue;
+            Vector2 pos = BubblePosition(i);
+            pos.y += Mathf.Sin(time * (.55f + i * .08f) + i) * 18f;
+            bubbles[i].anchoredPosition = pos;
+        }
+    }
+
+    private void BuildStudio()
+    {
+        Image backdrop = GetComponent<Image>();
+        Sprite sky = Resources.Load<Sprite>("MenuRefresh/MenuCloudSky");
+        if (backdrop != null && sky != null)
+        {
+            backdrop.sprite = sky;
+            backdrop.type = Image.Type.Simple;
+            backdrop.preserveAspect = false;
+            backdrop.color = Color.white;
+        }
+        UiVerticalGradient gradient = GetComponent<UiVerticalGradient>();
+        if (gradient != null) gradient.enabled = false;
+        foreach (string name in new[] { "FigmaPattern", "FigmaMainButtons", "FigmaMiscButtons", "PrivacyLinkButton" })
+        {
+            Transform old = transform.Find(name);
+            if (old != null) old.gameObject.SetActive(false);
+        }
+
+        Transform existing = transform.Find("LiveSkinShowcase");
+        if (existing != null) picture = existing.GetComponent<RawImage>();
+        else
+        {
+            GameObject go = MakeUi("LiveSkinShowcase", typeof(RawImage));
+            picture = go.GetComponent<RawImage>();
+        }
+        picture.raycastTarget = false;
+        picture.color = Color.white;
+        picture.transform.SetAsFirstSibling();
+        RectTransform frame = picture.rectTransform;
+        frame.anchorMin = Vector2.zero;
+        frame.anchorMax = Vector2.one;
+        frame.offsetMin = new Vector2(70f, 560f);
+        frame.offsetMax = new Vector2(-70f, -770f);
+        BuildBubbles();
+
+        stage = new GameObject("__BalloonDogMenuStudio");
+        stage.hideFlags = HideFlags.HideAndDontSave;
+        stage.transform.position = new Vector3(10000f, -10000f, 10000f);
+        GameObject cameraObject = new GameObject("MenuStudioCamera", typeof(Camera));
+        cameraObject.transform.SetParent(stage.transform, false);
+        studioCamera = cameraObject.GetComponent<Camera>();
+        studioCamera.clearFlags = CameraClearFlags.SolidColor;
+        studioCamera.backgroundColor = Color.clear;
+        studioCamera.cullingMask = 1 << PreviewLayer;
+        studioCamera.orthographic = true;
+        studioCamera.orthographicSize = 2.2f;
+        studioCamera.nearClipPlane = .1f;
+        studioCamera.farClipPlane = 30f;
+        studioCamera.allowHDR = false;
+        studioCamera.allowMSAA = true;
+        studioCamera.depth = -100f;
+        studioCamera.enabled = false;
+        cameraObject.transform.localPosition = new Vector3(5f, 3.5f, -7f);
+        cameraObject.transform.LookAt(stage.transform.position + Vector3.up * 1.35f);
+
+        // A real 3D pedestal; primitives have no active physics in the studio.
+        AddPlatform("WhitePedestal", -.18f, 4.15f, .32f, new Color(.80f, .94f, 1f));
+        AddPlatform("CyanRim", -.005f, 4.10f, .075f, new Color(.07f, .74f, .95f));
+        AddPlatform("CyanTop", .045f, 3.97f, .05f, new Color(.20f, .90f, .96f));
+        dogPivot = new GameObject("EquippedDogTurntable").transform;
+        dogPivot.SetParent(stage.transform, false);
+    }
+
+    private void AddPlatform(string name, float y, float diameter, float height, Color color)
+    {
+        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        go.name = name;
+        go.layer = PreviewLayer;
+        go.transform.SetParent(stage.transform, false);
+        go.transform.localPosition = Vector3.up * y;
+        go.transform.localScale = new Vector3(diameter, height * .5f, diameter);
+        Collider collider = go.GetComponent<Collider>();
+        collider.enabled = false;
+        Dispose(collider);
+        Material material = MakeMaterial(null, color);
+        stageMaterials.Add(material);
+        go.GetComponent<Renderer>().sharedMaterial = material;
+    }
+
+    private bool BuildEquippedDog(GameObject visual)
+    {
+        PlayerRunner player = FindAnyObjectByType<PlayerRunner>();
+        Transform origin = player != null ? player.transform : null;
+        if (visual == null && player != null)
+        {
+            Transform model = FindChild(player.transform, "BalloonDogModel");
+            if (model != null) visual = model.gameObject;
+        }
+        if (visual == null) return false;
+        if (origin == null) origin = visual.transform;
+        ClearDog();
+        dog = new GameObject("EquippedSkinVisual").transform;
+        dog.SetParent(dogPivot, false);
+        dogPivot.localRotation = Quaternion.identity;
+        int count = 0;
+        foreach (Renderer source in visual.GetComponentsInChildren<Renderer>(true))
+        {
+            if (!source.enabled || !source.gameObject.activeInHierarchy || source is ParticleSystemRenderer ||
+                source is TrailRenderer || source is LineRenderer) continue;
+            Mesh mesh = null;
+            if (source is SkinnedMeshRenderer skinned)
+            {
+                mesh = new Mesh { name = "MenuSkinSnapshot" };
+                skinned.BakeMesh(mesh);
+                bakedMeshes.Add(mesh);
+            }
+            else if (source.TryGetComponent(out MeshFilter filter)) mesh = filter.sharedMesh;
+            if (mesh == null) continue;
+            // Copy only mesh renderers. Player scripts, animators, physics,
+            // audio, prefabs' Awake callbacks and shared materials stay untouched.
+            GameObject part = new GameObject(source.name, typeof(MeshFilter), typeof(MeshRenderer));
+            part.layer = PreviewLayer;
+            part.transform.SetParent(dog, false);
+            part.transform.localPosition = origin.InverseTransformPoint(source.transform.position);
+            part.transform.localRotation = Quaternion.Inverse(origin.rotation) * source.transform.rotation;
+            Vector3 scale = source.transform.lossyScale;
+            Vector3 basis = origin.lossyScale;
+            part.transform.localScale = new Vector3(scale.x / basis.x, scale.y / basis.y, scale.z / basis.z);
+            part.GetComponent<MeshFilter>().sharedMesh = mesh;
+            Material[] originals = source.sharedMaterials;
+            Material[] copies = new Material[Mathf.Max(1, originals.Length)];
+            MaterialPropertyBlock properties = new MaterialPropertyBlock();
+            source.GetPropertyBlock(properties);
+            for (int i = 0; i < copies.Length; i++)
+            {
+                Material original = i < originals.Length ? originals[i] : null;
+                Color color = Color.white;
+                if (original != null)
+                {
+                    if (original.HasProperty("_BaseColor")) color = original.GetColor("_BaseColor");
+                    else if (original.HasProperty("_Color")) color = original.GetColor("_Color");
+                }
+                Color blockColor = properties.GetColor("_BaseColor");
+                if (blockColor.a <= 0f) blockColor = properties.GetColor("_Color");
+                if (blockColor.a > 0f) color = blockColor;
+                if (switcher == null || switcher.CurrentSkinIndex == 0)
+                    color = BalloonDogEconomy.EquippedSkin.PrimaryColor;
+                copies[i] = MakeMaterial(original, color);
+                skinMaterials.Add(copies[i]);
+            }
+            part.GetComponent<Renderer>().sharedMaterials = copies;
+            count++;
+        }
+        if (count == 0) { ClearDog(); return false; }
+        Bounds bounds = DogBounds();
+        float dimension = Mathf.Max(bounds.size.y, bounds.size.x * .85f, bounds.size.z * .85f);
+        dog.localScale = Vector3.one * (2.8f / Mathf.Max(.01f, dimension));
+        bounds = DogBounds();
+        Vector3 localFeet = stage.transform.InverseTransformPoint(
+            new Vector3(bounds.center.x, bounds.min.y, bounds.center.z));
+        dog.localPosition -= localFeet;
+        dog.localPosition += Vector3.up * .075f;
+        dogPivot.localRotation = Quaternion.Euler(0f, 145f, 0f);
+        FitCamera();
+        return true;
+    }
+
+    private Material MakeMaterial(Material original, Color color)
+    {
+        Shader shader = Resources.Load<Shader>("MenuRefresh/MenuStudioBalloon");
+        if (shader == null) shader = Shader.Find("Universal Render Pipeline/Lit");
+        Material material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+        material.SetColor("_BaseColor", color);
+        if (original != null)
+        {
+            string textureKey = original.HasProperty("_BaseMap") ? "_BaseMap" : "_MainTex";
+            if (original.HasProperty(textureKey) && original.GetTexture(textureKey) != null)
+            {
+                material.SetTexture("_BaseMap", original.GetTexture(textureKey));
+                material.SetTextureScale("_BaseMap", original.GetTextureScale(textureKey));
+                material.SetTextureOffset("_BaseMap", original.GetTextureOffset(textureKey));
+            }
+        }
+        return material;
+    }
+
+    private Bounds DogBounds()
+    {
+        Renderer[] renderers = dog.GetComponentsInChildren<Renderer>();
+        Bounds bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+        return bounds;
+    }
+
+    private void ResizeTarget()
+    {
+        float aspect = picture.rectTransform.rect.width / Mathf.Max(1f, picture.rectTransform.rect.height);
+        aspect = Mathf.Clamp(aspect, .1f, 10f);
+        if (target != null && Mathf.Abs(aspect - frameAspect) < .015f) return;
+        ReleaseTarget();
+        frameAspect = aspect;
+        int width = 896;
+        int height = Mathf.Max(128, Mathf.RoundToInt(width / aspect));
+        if (height > 1400) { height = 1400; width = Mathf.RoundToInt(height * aspect); }
+        target = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32)
+        {
+            name = "EquippedSkinMenuPreview", antiAliasing = 4,
+            filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp,
+            hideFlags = HideFlags.HideAndDontSave
+        };
+        target.Create();
+        studioCamera.targetTexture = target;
+        studioCamera.aspect = (float)width / height;
+        studioCamera.enabled = true;
+        picture.texture = target;
+        FitCamera();
+    }
+
+    private void FitCamera()
+    {
+        if (studioCamera == null || stage == null) return;
+        float maxX = 0f, maxY = 0f;
+        foreach (Renderer renderer in stage.GetComponentsInChildren<Renderer>())
+        {
+            Bounds b = renderer.bounds;
+            for (int x = -1; x <= 1; x += 2)
+            for (int y = -1; y <= 1; y += 2)
+            for (int z = -1; z <= 1; z += 2)
+            {
+                Vector3 point = studioCamera.transform.InverseTransformPoint(
+                    b.center + Vector3.Scale(b.extents, new Vector3(x, y, z)));
+                maxX = Mathf.Max(maxX, Mathf.Abs(point.x));
+                maxY = Mathf.Max(maxY, Mathf.Abs(point.y));
+            }
+        }
+        studioCamera.orthographicSize = Mathf.Max(maxY, maxX / Mathf.Max(.1f, studioCamera.aspect)) * 1.12f;
+    }
+
+    private GameObject MakeUi(string name, System.Type graphic)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), graphic);
+        if (!Application.isPlaying) go.hideFlags = HideFlags.HideAndDontSave;
+        go.transform.SetParent(transform, false);
+        return go;
+    }
+
+    private static Vector2 BubblePosition(int index)
+    {
+        return new Vector2(index % 2 == 0 ? 100f : -95f, -850f - index * 160f);
+    }
+
+    private void BuildBubbles()
+    {
+        if (bubbles.Count > 0) return;
+        bubbleTexture = new Texture2D(128, 128, TextureFormat.RGBA32, false)
+            { name = "MenuSoapBubble", hideFlags = HideFlags.HideAndDontSave };
+        Color[] pixels = new Color[128 * 128];
+        for (int y = 0; y < 128; y++)
+        for (int x = 0; x < 128; x++)
+        {
+            Vector2 p = (new Vector2(x, y) - new Vector2(63.5f, 63.5f)) / 60f;
+            float radius = p.magnitude;
+            float edge = Mathf.Exp(-Mathf.Pow((radius - .94f) * 30f, 2f));
+            float glint = Mathf.Exp(-((p - new Vector2(-.40f, .58f)).sqrMagnitude) * 95f);
+            Color color = Color.Lerp(new Color(.45f, .95f, 1f), new Color(1f, .67f, .94f), Mathf.Clamp01(p.x + .5f));
+            color = Color.Lerp(color, Color.white, glint);
+            color.a = Mathf.Clamp01(edge * .72f + glint * .95f + (radius < .9f ? .045f : 0f));
+            pixels[y * 128 + x] = color;
+        }
+        bubbleTexture.SetPixels(pixels);
+        bubbleTexture.Apply();
+        bubbleSprite = Sprite.Create(bubbleTexture, new Rect(0, 0, 128, 128), Vector2.one * .5f);
+        for (int i = 0; i < 5; i++)
+        {
+            Image bubble = MakeUi("MenuBubble_" + i, typeof(Image)).GetComponent<Image>();
+            bubble.sprite = bubbleSprite;
+            bubble.raycastTarget = false;
+            RectTransform rect = bubble.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(i % 2 == 0 ? 0f : 1f, 1f);
+            rect.anchoredPosition = BubblePosition(i);
+            rect.sizeDelta = Vector2.one * (i == 0 ? 108f : 60f + i * 9f);
+            rect.SetSiblingIndex(1);
+            bubbles.Add(rect);
+        }
+    }
+
+    private static Transform FindChild(Transform root, string name)
+    {
+        foreach (Transform child in root)
+        {
+            if (child.name == name) return child;
+            Transform found = FindChild(child, name);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
+    private void ClearDog()
+    {
+        if (dog != null) { dog.gameObject.SetActive(false); Dispose(dog.gameObject); dog = null; }
+        foreach (Material material in skinMaterials) Dispose(material);
+        skinMaterials.Clear();
+        foreach (Mesh mesh in bakedMeshes) Dispose(mesh);
+        bakedMeshes.Clear();
+    }
+
+    private void ReleaseTarget()
+    {
+        if (studioCamera != null) studioCamera.targetTexture = null;
+        if (picture != null) picture.texture = null;
+        if (target != null) { target.Release(); Dispose(target); target = null; }
+    }
+
+    private void OnDisable()
+    {
+        BalloonDogEconomy.Changed -= MarkDirty;
+        if (switcher != null) switcher.SkinChanged -= HandleSkinChanged;
+        switcher = null;
+        if (worldCamera != null) worldCamera.enabled = worldCameraWasEnabled;
+        worldCamera = null;
+        if (studioCamera != null) studioCamera.enabled = false;
+        ReleaseTarget();
+        ClearDog();
+        foreach (Material material in stageMaterials) Dispose(material);
+        stageMaterials.Clear();
+        if (stage != null) { stage.SetActive(false); Dispose(stage); stage = null; }
+    }
+
+    private void OnDestroy()
+    {
+        if (picture != null) Dispose(picture.gameObject);
+        foreach (RectTransform bubble in bubbles) if (bubble != null) Dispose(bubble.gameObject);
+        Dispose(bubbleSprite);
+        Dispose(bubbleTexture);
+    }
+
+    private static void Dispose(Object item)
+    {
+        if (item == null) return;
+        if (Application.isPlaying) Destroy(item);
+        else DestroyImmediate(item);
+    }
+}

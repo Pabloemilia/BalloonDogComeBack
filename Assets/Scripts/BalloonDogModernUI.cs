@@ -140,6 +140,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private BalloonDogPauseScreenAnimator pauseAnimator;
     private Coroutine rebuildRoutine;
     private bool economySubscribed;
+    private bool menuLaunchInProgress;
 
     private static Sprite roundedSprite;
     private static Sprite circleSprite;
@@ -244,6 +245,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void ResetRuntimeReferences()
     {
+        menuLaunchInProgress = false;
         resultAdGeneration++;
         resultBonusPending = resultBonusClaimed = false;
         resultBonusButton = null;
@@ -521,6 +523,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             ShowPrivacyFromMain,
             22f);
         RemoveButtonShadow(privacyButton);
+        mainScreen.AddComponent<BalloonDogMenuShowcase>();
     }
 
     private void CreateBalloonDogPreview(Transform parent)
@@ -2817,6 +2820,28 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     }
 
     private void StartGame()
+    {
+        if (menuLaunchInProgress) return;
+        if (mainScreen != null && mainScreen.activeInHierarchy &&
+            mainScreen.TryGetComponent(out BalloonDogMenuShowcase showcase))
+        {
+            StartCoroutine(LaunchFromShowcase(showcase));
+            return;
+        }
+        StartRunImmediately();
+    }
+
+    private IEnumerator LaunchFromShowcase(BalloonDogMenuShowcase showcase)
+    {
+        menuLaunchInProgress = true;
+        GameObject leavingScreen = mainScreen;
+        try { yield return showcase.LeaveMenu(); }
+        finally { menuLaunchInProgress = false; }
+        if (leavingScreen != null && leavingScreen == mainScreen && leavingScreen.activeInHierarchy)
+            StartRunImmediately();
+    }
+
+    private void StartRunImmediately()
     {
         resultRewardGranted = false;
         lastRunReward = 0;
