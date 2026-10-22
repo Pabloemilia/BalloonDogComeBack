@@ -1940,11 +1940,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         RemoveButtonShadow(button);
         button.GetComponentInChildren<TMP_Text>(true).gameObject.SetActive(false);
         Image background = button.GetComponent<Image>();
-        BalloonDogMenuArtwork.ApplyButtonBackground(background, true);
-        CreatePauseText(button.transform, "MultiplierLabel", "2X",
-            new Vector2(0f, 60f), new Vector2(760f, 180f), 140f, Color.white, TextAlignmentOptions.Center);
-        CreatePauseText(button.transform, "BonusLabel", "BONUS",
-            new Vector2(0f, -95f), new Vector2(700f, 100f), 70f, Gold, TextAlignmentOptions.Center);
+        background.sprite = GetResourceSprite("GameOver/DoubleBonus");
+        background.type = Image.Type.Simple;
+        background.preserveAspect = true;
         button.transition = Selectable.Transition.None;
         resultBonusButton = button;
         // The bonus button stays free of decorative stars.

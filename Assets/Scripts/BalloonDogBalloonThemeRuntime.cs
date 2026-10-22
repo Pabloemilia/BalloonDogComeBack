@@ -352,19 +352,25 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         }
 
         Image background = screen.GetComponent<Image>();
-        if (background != null && secondaryBackgroundSprite != null)
-        {
-            background.enabled = true;
-            background.sprite = secondaryBackgroundSprite;
-            background.type = Image.Type.Simple;
-            background.preserveAspect = false;
-            background.color = Color.white;
-        }
+        if (background == null) return;
+        background.enabled = true;
+        background.sprite = secondaryBackgroundSprite;
+        background.type = Image.Type.Simple;
+        background.preserveAspect = false;
+        background.color = Color.white;
 
         UiVerticalGradient gradient = screen.GetComponent<UiVerticalGradient>();
-        if (gradient != null)
+        if (secondaryBackgroundSprite != null)
         {
-            gradient.enabled = false;
+            if (gradient != null) gradient.enabled = false;
+        }
+        else
+        {
+            // The optional background PNG is absent in some project versions.
+            // Keep a real blue-to-mint surface instead of an untextured white image.
+            if (gradient == null) gradient = screen.AddComponent<UiVerticalGradient>();
+            gradient.Configure(new Color(.13f, .44f, .96f, 1f), new Color(.27f, .84f, .53f, 1f));
+            gradient.enabled = true;
         }
 
         SetChildActive(screen.transform, "FigmaPattern", false);
