@@ -191,3 +191,6 @@ Assets/Resources/CollectionUI/*.png -filter -diff -merge -text
 
 # Supplied gameplay sky artwork is a regular Git blob.
 Assets/Art/GameplayBackground/*.png -filter -diff -merge -text
+
+# Supplied main menu artwork uses regular Git blobs.
+Assets/Resources/MenuRefresh/*.png -filter -diff -merge -text

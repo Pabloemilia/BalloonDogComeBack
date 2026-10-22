@@ -4,7 +4,7 @@ using UnityEngine.TextCore.LowLevel;
 
 /// <summary>
 /// Loads Titan One from Resources and creates one cached dynamic TMP font
-/// asset for the runtime-built Pause Menu.
+/// asset for the game UI.
 /// </summary>
 public static class BalloonDogTitanFont
 {
@@ -26,7 +26,7 @@ public static class BalloonDogTitanFont
             {
                 Debug.LogError(
                     "Titan One could not be loaded from Resources/" +
-                    ResourcePath + ". Pause text will retain its TMP fallback font.");
+                    ResourcePath + ". UI text will retain its TMP fallback font.");
                 missingReported = true;
             }
             return null;

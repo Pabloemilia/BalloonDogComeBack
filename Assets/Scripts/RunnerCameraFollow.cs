@@ -7,13 +7,14 @@ public sealed class RunnerCameraFollow : MonoBehaviour
     [SerializeField] private Transform target;
 
     [Header("Camera Settings")]
-    [SerializeField] private Vector3 offset = new Vector3(0f, 4f, -7f);
+    [SerializeField] private Vector3 offset = new Vector3(-0.09f, 2.016f, -5.32f);
     [SerializeField, Range(0f, 1f)] private float horizontalFollowAmount = 0.15f;
     [SerializeField, Min(0f)] private float followSmoothness = 8f;
 
     public void Configure(Transform followTarget)
     {
         target = followTarget;
+        SnapToTarget();
     }
 
     public void SnapToTarget()

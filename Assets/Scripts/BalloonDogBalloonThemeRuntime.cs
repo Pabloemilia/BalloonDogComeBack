@@ -13,12 +13,8 @@ using UnityEngine.UI;
 public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 {
     private const string RuntimeObjectName = "__BalloonDogBalloonThemeRuntime";
-    private const string SpriteResourcePath = "BalloonLetterSprites";
 
     private float nextRefreshTime;
-    private RectTransform titleRoot;
-    private string builtTitle = string.Empty;
-    private readonly Dictionary<char, Sprite> letterSprites = new Dictionary<char, Sprite>();
     private static Sprite roundedUiSprite;
     private static Sprite coinIconSprite;
     private static Sprite gearIconSprite;
@@ -46,7 +42,6 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += HandleSceneLoaded;
         RemoveOld3DLetterObjects();
-        LoadLetterSprites();
     }
 
     private void OnDestroy()
@@ -72,11 +67,8 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        titleRoot = null;
-        builtTitle = string.Empty;
         PolishedTextIds.Clear();
         RemoveOld3DLetterObjects();
-        LoadLetterSprites();
         RefreshNow();
     }
 
@@ -142,142 +134,30 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
     private void BuildOrRefreshTitle()
     {
         RectTransform titleRect = FindRect("MainTitle");
-        if (titleRect == null)
-        {
-            return;
-        }
-
+        if (titleRect == null) return;
         TMP_Text legacyText = titleRect.GetComponent<TMP_Text>();
         if (legacyText != null)
         {
             legacyText.text = string.Empty;
             legacyText.enabled = false;
         }
-
-        if (titleRoot == null)
+        Transform oldLetters = titleRect.Find("BalloonSpriteTitle");
+        if (oldLetters != null) oldLetters.gameObject.SetActive(false);
+        titleRect.anchorMin = titleRect.anchorMax = new Vector2(.5f, 1f);
+        titleRect.pivot = new Vector2(.5f, 1f);
+        titleRect.anchoredPosition = new Vector2(0f, -185f);
+        titleRect.sizeDelta = new Vector2(960f, 458f);
+        Transform existing = titleRect.Find("BalloonDogLogo");
+        RectTransform logo;
+        if (existing == null)
         {
-            Transform existing = titleRect.Find("BalloonSpriteTitle");
-            if (existing != null)
-            {
-                titleRoot = existing as RectTransform;
-            }
-            else
-            {
-                GameObject go = new GameObject("BalloonSpriteTitle", typeof(RectTransform));
-                go.transform.SetParent(titleRect, false);
-                titleRoot = go.GetComponent<RectTransform>();
-                Stretch(titleRoot);
-            }
+            GameObject go = new GameObject("BalloonDogLogo", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(titleRect, false);
+            logo = go.GetComponent<RectTransform>();
+            Stretch(logo);
         }
-
-        if (letterSprites.Count == 0)
-        {
-            if (legacyText != null)
-            {
-                legacyText.enabled = true;
-                legacyText.text = "BALLOON DOG";
-                legacyText.fontSize = 80f;
-                legacyText.fontStyle = FontStyles.Bold;
-                legacyText.alignment = TextAlignmentOptions.Center;
-                legacyText.color = Color.white;
-            }
-
-            if (titleRoot != null)
-            {
-                titleRoot.gameObject.SetActive(false);
-            }
-            return;
-        }
-
-        titleRoot.gameObject.SetActive(true);
-        if (builtTitle != "BALLOON DOG")
-        {
-            BuildSpriteWord(titleRoot, "BALLOON DOG", 0.92f, 8f);
-            builtTitle = "BALLOON DOG";
-        }
-    }
-
-    private void BuildSpriteWord(RectTransform root, string text, float heightFill, float spacing)
-    {
-        for (int i = root.childCount - 1; i >= 0; i--)
-        {
-            Destroy(root.GetChild(i).gameObject);
-        }
-
-        float targetHeight = Mathf.Max(1f, root.rect.height * heightFill);
-        List<(Sprite sprite, float width)> parts = new List<(Sprite sprite, float width)>();
-        float totalWidth = 0f;
-
-        foreach (char rawChar in text.ToUpperInvariant())
-        {
-            if (rawChar == ' ')
-            {
-                float gap = targetHeight * 0.36f;
-                parts.Add((null, gap));
-                totalWidth += gap;
-                continue;
-            }
-
-            if (!letterSprites.TryGetValue(rawChar, out Sprite sprite) || sprite == null)
-            {
-                float gap = targetHeight * 0.45f;
-                parts.Add((null, gap));
-                totalWidth += gap;
-                continue;
-            }
-
-            float aspect = sprite.rect.height > 0f ? sprite.rect.width / sprite.rect.height : 0.75f;
-            float width = targetHeight * Mathf.Clamp(aspect, 0.30f, 1.20f);
-            parts.Add((sprite, width));
-            totalWidth += width;
-        }
-
-        totalWidth += Mathf.Max(0, parts.Count - 1) * spacing;
-        float scaleDown = totalWidth > root.rect.width && totalWidth > 0f ? root.rect.width / totalWidth : 1f;
-        targetHeight *= scaleDown;
-        spacing *= scaleDown;
-
-        float finalWidth = 0f;
-        foreach ((Sprite _, float originalWidth) in parts)
-        {
-            finalWidth += originalWidth * scaleDown;
-        }
-        finalWidth += Mathf.Max(0, parts.Count - 1) * spacing;
-
-        float cursor = -finalWidth * 0.5f;
-        for (int index = 0; index < parts.Count; index++)
-        {
-            Sprite sprite = parts[index].sprite;
-            float width = parts[index].width * scaleDown;
-            if (sprite != null)
-            {
-                GameObject letterObject = new GameObject("Letter_" + index, typeof(RectTransform), typeof(Image));
-                letterObject.transform.SetParent(root, false);
-                RectTransform rect = letterObject.GetComponent<RectTransform>();
-                rect.anchorMin = new Vector2(0.5f, 0.5f);
-                rect.anchorMax = new Vector2(0.5f, 0.5f);
-                rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.sizeDelta = new Vector2(width, targetHeight);
-                rect.anchoredPosition = new Vector2(cursor + width * 0.5f, 0f);
-
-                Image image = letterObject.GetComponent<Image>();
-                image.sprite = sprite;
-                image.color = Color.white;
-                image.preserveAspect = true;
-                image.raycastTarget = false;
-
-                BalloonDogFloatingLetter floatAnim = letterObject.AddComponent<BalloonDogFloatingLetter>();
-                // Keep the playful balloon motion subtle. The old 10-18 px
-                // amplitude could pull an O far away from the rest of the word.
-                floatAnim.Configure(
-                    index,
-                    Mathf.Lerp(2.5f, 4.5f, Random.value),
-                    Mathf.Lerp(0.65f, 0.95f, Random.value),
-                    Random.Range(0f, 6.28318f));
-            }
-
-            cursor += width + spacing;
-        }
+        else logo = existing as RectTransform;
+        BalloonDogMenuArtwork.Apply(logo, "balloon_dog_logo");
     }
 
     private void FixMenuButtons()
@@ -291,21 +171,25 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         RectTransform play = FindRect("ModernPlayButton");
         if (play != null)
         {
-            play.anchoredPosition = new Vector2(0f, -920f);
-            play.sizeDelta = new Vector2(890f, 190f);
+            play.anchorMin = play.anchorMax = new Vector2(.5f, 0f);
+            play.anchoredPosition = new Vector2(0f, 180f);
+            play.sizeDelta = new Vector2(890f, 270f);
             StyleButton(play, new Color(0.35f, 0.84f, 0.23f, 1f), "PLAY", 88f);
-            SetButtonLabelTuning(play, 16f, new Vector4(8f, 2f, 8f, 4f));
+            SetButtonLabelTuning(play, 0f, new Vector4(8f, 2f, 8f, 4f));
             SetButtonIcon(play, null);
+            BalloonDogMenuArtwork.Apply(play, "butonyesil", true);
         }
 
         RectTransform market = FindRect("MarketNavButton");
         if (market != null)
         {
-            market.anchoredPosition = new Vector2(-310f, -650f);
+            market.anchorMin = market.anchorMax = new Vector2(.5f, 0f);
+            market.anchoredPosition = new Vector2(-310f, 450f);
             market.sizeDelta = new Vector2(460f, 164f);
             StyleButton(market, new Color(0.18f, 0.54f, 0.96f, 1f), "MARKET", 60f);
-            SetButtonLabelTuning(market, 6f, new Vector4(10f, 4f, 10f, 6f));
+            SetButtonLabelTuning(market, 0f, new Vector4(10f, 4f, 10f, 6f));
             SetButtonIcon(market, GetMarketIconSprite(), 74f);
+            BalloonDogMenuArtwork.Apply(market, "butonmavi", true);
             RectTransform marketIcon = market.Find("ThemeIcon") as RectTransform;
             if (marketIcon != null)
             {
@@ -327,11 +211,13 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         RectTransform skins = FindRect("SkinsNavButton");
         if (skins != null)
         {
-            skins.anchoredPosition = new Vector2(310f, -650f);
+            skins.anchorMin = skins.anchorMax = new Vector2(.5f, 0f);
+            skins.anchoredPosition = new Vector2(310f, 450f);
             skins.sizeDelta = new Vector2(460f, 164f);
             StyleButton(skins, new Color(0.18f, 0.54f, 0.96f, 1f), "SKINS", 60f);
-            SetButtonLabelTuning(skins, 6f, new Vector4(10f, 4f, 10f, 6f));
+            SetButtonLabelTuning(skins, 0f, new Vector4(10f, 4f, 10f, 6f));
             SetButtonIcon(skins, GetSkinsIconSprite(), 74f);
+            BalloonDogMenuArtwork.Apply(skins, "butonmavi", true);
             RectTransform skinsIcon = skins.Find("ThemeIcon") as RectTransform;
             if (skinsIcon != null)
             {
@@ -360,10 +246,10 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             coinCard.anchorMin = new Vector2(0f, 1f);
             coinCard.anchorMax = new Vector2(0f, 1f);
             coinCard.pivot = new Vector2(0f, 1f);
-            coinCard.sizeDelta = new Vector2(258f, 86f);
+            coinCard.sizeDelta = new Vector2(290f, 96f);
             coinCard.anchoredPosition = new Vector2(18f, -14f);
             EnsurePillBackground(coinCard, new Color(0.91f, 0.86f, 0.63f, 0.96f), new Color(1f, 1f, 1f, 0.03f));
-            SoftenPillOutline(coinCard, 0.015f, 0.06f);
+            BalloonDogMenuArtwork.Apply(coinCard, "coin_panel_background");
             SetPillIcon(coinCard, GetCoinIconSprite(), Color.white, 44f, 34f);
         }
 
@@ -393,8 +279,8 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             settings.pivot = new Vector2(1f, 1f);
             settings.anchoredPosition = new Vector2(-10f, -10f);
             settings.sizeDelta = new Vector2(112f, 112f);
-            StyleIconButton(settings, new Color(0.24f, 0.50f, 0.94f, 1f), GetGearIconSprite());
-            SoftenPillOutline(settings, 0.02f, 0.10f);
+            StyleIconButton(settings, Color.white, null);
+            BalloonDogMenuArtwork.Apply(settings, "settings_button", true);
         }
     }
 
@@ -525,13 +411,13 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             coinCard.anchorMin = new Vector2(0f, 1f);
             coinCard.anchorMax = new Vector2(0f, 1f);
             coinCard.pivot = new Vector2(0f, 1f);
-            coinCard.sizeDelta = new Vector2(258f, 86f);
+            coinCard.sizeDelta = new Vector2(290f, 96f);
             coinCard.anchoredPosition = new Vector2(18f, -14f);
             EnsurePillBackground(
                 coinCard,
                 new Color(0.91f, 0.86f, 0.63f, 0.96f),
                 new Color(1f, 1f, 1f, 0.03f));
-            SoftenPillOutline(coinCard, 0.015f, 0.06f);
+            BalloonDogMenuArtwork.Apply(coinCard, "coin_panel_background");
             SetPillIcon(coinCard, GetCoinIconSprite(), Color.white, 44f, 34f);
         }
 
@@ -737,7 +623,8 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         if (bestCard != null)
         {
             bestCard.sizeDelta = new Vector2(300f, 82f);
-            bestCard.anchoredPosition = new Vector2(0f, 585f);
+            bestCard.anchorMin = bestCard.anchorMax = new Vector2(.5f, 1f);
+            bestCard.anchoredPosition = new Vector2(0f, -700f);
             EnsurePillBackground(bestCard, new Color(0.24f, 0.50f, 0.94f, 0.96f), new Color(1f, 1f, 1f, 0.05f));
             SoftenPillOutline(bestCard, 0.02f, 0.08f);
         }
@@ -918,56 +805,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
     private static TMP_FontAsset ResolveUiFont()
     {
-        foreach (TMP_FontAsset asset in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
-        {
-            if (asset == null)
-            {
-                continue;
-            }
-
-            if (asset.name.Contains("Audex"))
-            {
-                return asset;
-            }
-        }
-
-        foreach (Font font in Resources.FindObjectsOfTypeAll<Font>())
-        {
-            if (font == null)
-            {
-                continue;
-            }
-
-            if (!font.name.Contains("Audex"))
-            {
-                continue;
-            }
-
-            try
-            {
-                TMP_FontAsset created = TMP_FontAsset.CreateFontAsset(font, 90, 9, GlyphRenderMode.SDFAA, 1024, 1024, AtlasPopulationMode.Dynamic, true);
-                created.name = "Audex Runtime SDF";
-                return created;
-            }
-            catch
-            {
-            }
-        }
-
-        foreach (TMP_FontAsset asset in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
-        {
-            if (asset == null)
-            {
-                continue;
-            }
-
-            if (asset.name.Contains("LiberationSans SDF"))
-            {
-                return asset;
-            }
-        }
-
-        return null;
+        return BalloonDogTitanFont.Get();
     }
 
     private static void ApplySmoothLowPolyText(TMP_Text text, float characterSpacing = 0f)
@@ -992,7 +830,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         }
 
         text.fontStyle = FontStyles.Normal;
-        text.fontWeight = FontWeight.Bold;
+        text.fontWeight = FontWeight.Regular;
         text.characterSpacing = characterSpacing;
         text.wordSpacing = 0f;
         text.lineSpacing = 0f;
@@ -1017,47 +855,6 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         runtimeMaterial.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0.0f);
         runtimeMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 0f);
         runtimeMaterial.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, 0f);
-    }
-
-    private void LoadLetterSprites()
-    {
-        letterSprites.Clear();
-        Sprite[] sprites = Resources.LoadAll<Sprite>(SpriteResourcePath);
-        foreach (Sprite sprite in sprites)
-        {
-            if (sprite == null)
-            {
-                continue;
-            }
-
-            string normalized = sprite.name.ToUpperInvariant();
-            char found = '\0';
-            for (char c = 'A'; c <= 'Z'; c++)
-            {
-                if (normalized == c.ToString() || normalized.EndsWith("_" + c) || normalized.EndsWith("-" + c))
-                {
-                    found = c;
-                    break;
-                }
-            }
-
-            if (found == '\0')
-            {
-                for (char c = '0'; c <= '9'; c++)
-                {
-                    if (normalized == c.ToString() || normalized.EndsWith("_" + c) || normalized.EndsWith("-" + c))
-                    {
-                        found = c;
-                        break;
-                    }
-                }
-            }
-
-            if (found != '\0')
-            {
-                letterSprites[found] = sprite;
-            }
-        }
     }
 
     private void RemoveOld3DLetterObjects()
@@ -1122,11 +919,17 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
                 new Color(.18f, .54f, .96f, 1f);
             if (name == "Market" || name == "Skins" || name == "Play")
             {
-                EnsureSurfaceChrome(rect);
+                BalloonDogMenuArtwork.Apply(rect, name == "Play" ? "butonyesil" : "butonmavi");
                 if (name == "Play")
                 {
-                    rect.anchoredPosition = new Vector2(0f, -920f);
-                    rect.sizeDelta = new Vector2(890f, 190f);
+                    rect.anchorMin = rect.anchorMax = new Vector2(.5f, 0f);
+                    rect.anchoredPosition = new Vector2(0f, 180f);
+                    rect.sizeDelta = new Vector2(890f, 270f);
+                }
+                if (name != "Play")
+                {
+                    rect.anchorMin = rect.anchorMax = new Vector2(.5f, 0f);
+                    rect.anchoredPosition = new Vector2(name == "Market" ? -310f : 310f, 450f);
                 }
                 Transform child = rect.Find(name + "_Label");
                 if (child != null)
@@ -1144,13 +947,34 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
                 }
             }
         }
+        RectTransform logo = root.Find("BalloonDogLogo") as RectTransform;
+        if (logo != null)
+        {
+            logo.anchorMin = logo.anchorMax = new Vector2(.5f, 1f);
+            logo.pivot = new Vector2(.5f, 1f);
+            logo.anchoredPosition = new Vector2(0f, -185f);
+            BalloonDogMenuArtwork.Apply(logo, "balloon_dog_logo");
+        }
+        Font titan = Resources.Load<Font>("Fonts/TitanOne/TitanOne-Regular");
+        foreach (Text text in root.GetComponentsInChildren<Text>(true))
+        {
+            if (titan != null) text.font = titan;
+            text.fontStyle = FontStyle.Normal;
+        }
+        RectTransform best = root.Find("Best") as RectTransform;
+        if (best != null)
+        {
+            best.anchorMin = best.anchorMax = new Vector2(.5f, 1f);
+            best.anchoredPosition = new Vector2(0f, -700f);
+        }
         RectTransform coins = root.Find("Coins") as RectTransform;
         if (coins != null)
         {
             coins.anchorMin = coins.anchorMax = new Vector2(0f, 1f);
             coins.pivot = new Vector2(0f, 1f);
             coins.anchoredPosition = new Vector2(18f, -14f);
-            coins.sizeDelta = new Vector2(258f, 86f);
+            coins.sizeDelta = new Vector2(290f, 96f);
+            BalloonDogMenuArtwork.Apply(coins, "coin_panel_background");
             RectTransform label = root.Find("CoinsLabel") as RectTransform;
             RectTransform icon = root.Find("CoinIcon") as RectTransform;
             // Also find the elements after a previous, idempotent styling pass.
@@ -1178,12 +1002,13 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         {
             settings.anchorMin = settings.anchorMax = Vector2.one;
             settings.pivot = Vector2.one;
-            settings.anchoredPosition = new Vector2(-14f, -14f);
+            settings.anchoredPosition = new Vector2(-10f, -10f);
+            settings.sizeDelta = new Vector2(112f, 112f);
+            BalloonDogMenuArtwork.Apply(settings, "settings_button");
         }
         if (settingsIcon != null)
         {
-            settingsIcon.anchorMin = settingsIcon.anchorMax = Vector2.one;
-            settingsIcon.anchoredPosition = new Vector2(-67f, -67f);
+            settingsIcon.gameObject.SetActive(false);
         }
         RectTransform level = root.Find("Level") as RectTransform;
         if (level != null)

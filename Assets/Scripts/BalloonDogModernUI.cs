@@ -3699,7 +3699,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         label.text = text;
         label.fontSize = fontSize;
         label.color = color;
-        label.fontStyle = style;
+        BalloonDogTitanFont.Apply(label);
         label.alignment = alignment;
         label.enableWordWrapping = false;
         label.overflowMode = TextOverflowModes.Ellipsis;
