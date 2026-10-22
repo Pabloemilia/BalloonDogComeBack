@@ -13,8 +13,11 @@ public sealed class BalloonDogAnimatedTrap : MonoBehaviour
         foreach(var animator in animators)
         {
             if(animator==null || animator.runtimeAnimatorController==null) continue;
+            var impact=animator.GetComponent<BalloonDogTrapImpactVfx>();
+            impact?.ResetForReuse();
             animator.enabled=true;animator.Rebind();animator.Update(0);
             if(animator.layerCount>0) { animator.Play(0,0,phase);animator.Update(0); }
+            impact?.Synchronize();
         }
     }
     public static Bounds MeasureFootprint(GameObject view,Transform space,Animator[] animators)

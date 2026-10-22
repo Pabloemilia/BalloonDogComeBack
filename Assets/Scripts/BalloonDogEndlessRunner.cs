@@ -366,8 +366,8 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
             animator.cullingMode=AnimatorCullingMode.AlwaysAnimate;
             animator.enabled=true;animator.Rebind();animator.Update(0);
         }
-        // Keep the package's flame timer and VFX; smoke contact scripts require
-        // a different ground/collision setup and do not own gameplay damage here.
+        // Keep the package's flame timer. Legacy smoke collision callbacks use
+        // a different ground setup; the animation-phase controller below owns dust.
         foreach(var behaviour in view.GetComponentsInChildren<MonoBehaviour>(true))
             if(!(behaviour is FlameControl)) behaviour.enabled=false;
         foreach(var col in view.GetComponentsInChildren<Collider>(true)) col.enabled=false;
@@ -389,6 +389,7 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
             if(animator.runtimeAnimatorController!=null && animator.layerCount>0)
                 animator.Play(0,0,(float)random.NextDouble());
             animator.speed=.8f;
+            BalloonDogTrapImpactVfx.Install(animator);
         }
         // Contact boxes follow the actual animated parts, not an invisible solid
         // rectangle spanning the entire animation's empty space.

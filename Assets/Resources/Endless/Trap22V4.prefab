@@ -250,8 +250,8 @@ VisualEffect:
   m_GameObject: {fileID: 2025947836308065969}
   m_Enabled: 1
   m_Asset: {fileID: 8926484042661614526, guid: 3cf2596a019ed8640b9c0b063297d70f, type: 3}
-  m_InitialEventName: OnPlay
-  m_InitialEventNameOverriden: 0
+  m_InitialEventName: OnStop
+  m_InitialEventNameOverriden: 1
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_ResourceVersion: 1
@@ -403,8 +403,8 @@ VisualEffect:
   m_GameObject: {fileID: 3109518030057582890}
   m_Enabled: 1
   m_Asset: {fileID: 8926484042661614526, guid: 3cf2596a019ed8640b9c0b063297d70f, type: 3}
-  m_InitialEventName: OnPlay
-  m_InitialEventNameOverriden: 0
+  m_InitialEventName: OnStop
+  m_InitialEventNameOverriden: 1
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_ResourceVersion: 1
@@ -608,8 +608,8 @@ VisualEffect:
   m_GameObject: {fileID: 3420327644422819207}
   m_Enabled: 1
   m_Asset: {fileID: 8926484042661614526, guid: 3cf2596a019ed8640b9c0b063297d70f, type: 3}
-  m_InitialEventName: OnPlay
-  m_InitialEventNameOverriden: 0
+  m_InitialEventName: OnStop
+  m_InitialEventNameOverriden: 1
   m_StartSeed: 0
   m_ResetSeedOnPlay: 1
   m_ResourceVersion: 1

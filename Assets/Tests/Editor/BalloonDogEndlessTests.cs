@@ -369,7 +369,17 @@ public sealed class BalloonDogEndlessTests
             CollectionAssert.Contains(AllowedIds,id);
         }
         foreach(var animator in runtime.GetComponentsInChildren<Animator>(true))
-        { Assert.That(animator.enabled,Is.True);Assert.That(animator.applyRootMotion,Is.False); }
+        {
+            Assert.That(animator.enabled,Is.True);Assert.That(animator.applyRootMotion,Is.False);
+            if(animator.runtimeAnimatorController==null) continue;
+            foreach(var clip in animator.runtimeAnimatorController.animationClips)
+                if(clip.name=="Obstacle 8" || clip.name=="Obstacle 22")
+                {
+                    var impact=animator.GetComponent(Runtime("BalloonDogTrapImpactVfx"));
+                    Assert.That(impact,Is.Not.Null,"Ground-striking traps must replay dust on each animation loop");
+                    Assert.That(((Behaviour)impact).enabled,Is.True,"The legacy smoke callback cleanup must not disable the new controller");
+                }
+        }
         int traps=runtime.GetComponentsInChildren(Runtime("BalloonDogEndlessContact"),true).Length;
         Assert.That(traps,Is.EqualTo(110));
         // Recycle through many ring revolutions without building more objects.
@@ -392,6 +402,16 @@ public sealed class BalloonDogEndlessTests
                 var trap=(Component)rows.GetValue(row);
                 Assert.That(unique.Add(trap),Is.True,"Every row must own a different pooled trap");
                 Assert.That(trap.transform.localPosition.z,Is.EqualTo(14+row*11.2f).Within(.001f));
+                var impact=trap.GetComponentInChildren(Runtime("BalloonDogTrapImpactVfx"),true) as Component;
+                if(impact!=null)
+                {
+                    var flags=BindingFlags.Instance|BindingFlags.NonPublic;
+                    Assert.That((bool)impact.GetType().GetField("hasSample",flags).GetValue(impact),Is.True,
+                        "Reused dust controllers must be synchronized to the new pose before animation resumes");
+                    float sampled=(float)impact.GetType().GetField("previousTime",flags).GetValue(impact);
+                    float posed=impact.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).normalizedTime;
+                    Assert.That(sampled,Is.EqualTo(posed).Within(.0001f));
+                }
                 var companions=(Array)chunk.GetType().GetField("companions").GetValue(chunk);
                 if(companions.GetValue(row) is Component companion)
                 {
