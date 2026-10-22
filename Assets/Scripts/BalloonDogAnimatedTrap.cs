@@ -14,8 +14,29 @@ public sealed class BalloonDogAnimatedTrap : MonoBehaviour
         {
             if(animator==null || animator.runtimeAnimatorController==null) continue;
             animator.enabled=true;animator.Rebind();animator.Update(0);
-            if(animator.layerCount>0) animator.Play(0,0,phase);
+            if(animator.layerCount>0) { animator.Play(0,0,phase);animator.Update(0); }
         }
+    }
+    public static Bounds MeasureFootprint(GameObject view,Transform space,Animator[] animators)
+    {
+        Bounds result=ReferenceBounds(view,space);
+        foreach(var animator in animators)
+        {
+            if(animator.runtimeAnimatorController==null) continue;
+            animator.enabled=false;
+            foreach(var clip in animator.runtimeAnimatorController.animationClips)
+            {
+                if(clip==null) continue;
+                for(int frame=0;frame<=48;frame++)
+                {
+                    clip.SampleAnimation(animator.gameObject,clip.length*frame/48f);
+                    result.Encapsulate(ReferenceBounds(view,space));
+                }
+            }
+            animator.enabled=true;animator.Rebind();animator.Update(0);
+        }
+        result.Expand(new Vector3(.12f,.04f,.12f));
+        return result;
     }
     public static Bounds ReferenceBounds(GameObject view,Transform space)
         => GeometryBounds(view.GetComponentsInChildren<MeshRenderer>(true),space);

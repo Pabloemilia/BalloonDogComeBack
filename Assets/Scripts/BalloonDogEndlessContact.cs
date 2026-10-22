@@ -8,6 +8,18 @@ public sealed class BalloonDogEndlessContact : MonoBehaviour
     public void ResetContact(bool active) { consumed=false;gameObject.SetActive(active); }
     private void OnTriggerEnter(Collider other)
     {
+        // Damage proxies must confirm visible surface contact first.
+        if(!IsPickup) return;
+        ApplyContact(other);
+    }
+    public void ApplyVisibleHit(Collider other)
+    {
+        if(IsPickup) return;
+        ApplyContact(other);
+    }
+    private void ApplyContact(Collider other)
+    {
+        if(other==null || !other.enabled || other.isTrigger) return;
         if(consumed || other.GetComponent<NearMissSensor>()!=null) return;
         AirController air=other.GetComponentInParent<AirController>();
         if(air==null || GameManager.Instance!=null && GameManager.Instance.IsGameOver) return;
