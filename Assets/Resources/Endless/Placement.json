@@ -2,206 +2,323 @@
   "traps": [
     {
       "id": 1,
+      "scale": {
+        "x": 3,
+        "y": 3,
+        "z": 3
+      },
+      "position": {
+        "x": 0,
+        "y": 0.074,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 1.35,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 2,
-      "yaw": 90,
-      "targetWidth": 1.65,
-      "targetHeight": 1.35,
-      "groundOffset": 0.02
-    },
-    {
-      "id": 3,
-      "yaw": 90,
-      "targetWidth": 1.65,
-      "targetHeight": 1.35,
-      "groundOffset": 0.02
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "position": {
+        "x": -0.18,
+        "y": 0,
+        "z": 0
+      },
+      "yaw": 0,
+      "alignment": "fixed",
+      "damagePart": 1
     },
     {
       "id": 4,
+      "scale": {
+        "x": 3,
+        "y": 3,
+        "z": 3
+      },
+      "position": {
+        "x": 0,
+        "y": -1,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 5,
+      "scale": {
+        "x": 3,
+        "y": 3,
+        "z": 3
+      },
+      "position": {
+        "x": 0,
+        "y": -1.5,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 6,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "position": {
+        "x": 0,
+        "y": -0.011,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 1.35,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 7,
+      "scale": {
+        "x": 2.3,
+        "y": 1.6,
+        "z": 2
+      },
+      "position": {
+        "x": -0.02,
+        "y": -0.001,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 1.35,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 8,
-      "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
-    },
-    {
-      "id": 9,
+      "scale": {
+        "x": 2,
+        "y": 2,
+        "z": 2
+      },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
       "yaw": 90,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "alignment": "either",
+      "damagePart": 0
     },
     {
       "id": 10,
-      "yaw": 90,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "scale": {
+        "x": 1.2,
+        "y": 1,
+        "z": 1
+      },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "yaw": 0,
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 11,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
-    },
-    {
-      "id": 12,
-      "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 13,
-      "yaw": 90,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "scale": {
+        "x": 2,
+        "y": 1.5,
+        "z": 12
+      },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "yaw": 270,
+      "alignment": "right",
+      "damagePart": 0
     },
     {
       "id": 14,
-      "yaw": 90,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
-    },
-    {
-      "id": 15,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 1.35,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 16,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "position": {
+        "x": 0,
+        "y": -0.317,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 17,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "position": {
+        "x": 0,
+        "y": 0.022,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 18,
-      "yaw": 90,
-      "targetWidth": 1.65,
-      "targetHeight": 1.35,
-      "groundOffset": 0.02
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "yaw": 0,
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 19,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 20,
+      "scale": {
+        "x": 1.5,
+        "y": 1.3,
+        "z": 1.5
+      },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 21,
-      "yaw": 90,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "scale": {
+        "x": 1.7,
+        "y": 1.4,
+        "z": 1.4
+      },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "yaw": 0,
+      "alignment": "fixed",
+      "damagePart": 2
     },
     {
       "id": 22,
-      "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
-    },
-    {
-      "id": 23,
-      "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
-    },
-    {
-      "id": 24,
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "position": {
+        "x": 2.792,
+        "y": -0.178,
+        "z": 0
+      },
       "yaw": 90,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 25,
-      "yaw": 90,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
-    },
-    {
-      "id": 26,
+      "scale": {
+        "x": 2,
+        "y": 1.3,
+        "z": 1
+      },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
       "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 1.35,
-      "groundOffset": 0.02
-    },
-    {
-      "id": 27,
-      "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 1.35,
-      "groundOffset": 0.02
+      "alignment": "fixed",
+      "damagePart": 0
     },
     {
       "id": 28,
-      "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
-    },
-    {
-      "id": 29,
-      "yaw": 0,
-      "targetWidth": 1.65,
-      "targetHeight": 2.4,
-      "groundOffset": 0.02
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "position": {
+        "x": -2.762,
+        "y": 0,
+        "z": 0
+      },
+      "yaw": 90,
+      "alignment": "fixed",
+      "damagePart": 0
     }
   ]
 }

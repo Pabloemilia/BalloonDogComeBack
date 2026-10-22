@@ -1,38 +1,61 @@
 using System;
 using UnityEngine;
 
-/// <summary>Per-model placement data, outside every authored animation transform.</summary>
+/// <summary>Exact authored transforms. Dimensions are never fitted or recentered.</summary>
 [Serializable]
 public sealed class BalloonDogTrapPlacement
 {
     public int id;
+    public Vector3 scale = Vector3.one;
+    public Vector3 position;
     public float yaw;
-    public float targetWidth = 1.65f;
-    public float targetHeight = 2.2f;
-    public float groundOffset;
+    public string alignment = "fixed";
+    public int damagePart;
     [Serializable] private sealed class Catalog { public BalloonDogTrapPlacement[] traps; }
     private static Catalog catalog;
 
+    public static BalloonDogTrapPlacement[] All
+    {
+        get
+        {
+            if(catalog==null)
+            {
+                var data=Resources.Load<TextAsset>("Endless/Placement");
+                if(data==null) throw new InvalidOperationException("Missing endless placement catalog");
+                catalog=JsonUtility.FromJson<Catalog>(data.text);
+                if(catalog==null || catalog.traps==null || catalog.traps.Length==0)
+                    throw new InvalidOperationException("Empty endless placement catalog");
+            }
+            return catalog.traps;
+        }
+    }
     public static BalloonDogTrapPlacement For(int id)
     {
-        if(catalog==null)
+        foreach(var trap in All) if(trap.id==id) return trap;
+        throw new InvalidOperationException("Trap is not enabled in the placement catalog: "+id);
+    }
+    public static string ResourcePath(int id,int variant)
+        => "Endless/Trap"+id+(variant==1 ? "" : "V"+variant);
+
+    public bool CanDamage(Transform part,Transform visualRoot)
+    {
+        if(damagePart==0) return true;
+        string expected="O"+id+" Part "+damagePart;
+        for(Transform current=part;current!=null;current=current.parent)
         {
-            var data=Resources.Load<TextAsset>("Endless/Placement");
-            if(data==null) throw new InvalidOperationException("Missing endless placement catalog");
-            catalog=JsonUtility.FromJson<Catalog>(data.text);
+            if(current.name==expected) return true;
+            if(current==visualRoot) break;
         }
-        foreach(var trap in catalog.traps) if(trap.id==id) return trap;
-        throw new InvalidOperationException("Missing placement for trap "+id);
+        return false;
     }
 
-    public float Scale(Bounds reference,Bounds swept,float laneWidth)
+    public Vector3 Position(float roadCenter,float floorY,float rowZ,float width,Bounds reference,bool right)
     {
-        // One uniform factor preserves the model and all authored motion ratios.
-        // Both the visual target and the complete moving footprint must fit.
-        float available=Mathf.Max(.1f,laneWidth-.35f);
-        return Mathf.Min(Mathf.Min(targetWidth,available)/Mathf.Max(.01f,reference.size.x),
-            targetHeight/Mathf.Max(.01f,reference.size.y),
-            available/Mathf.Max(.01f,swept.size.x),
-            5.2f/Mathf.Max(.01f,swept.size.z));
+        float x=position.x;
+        // Align the outside of the fixed support/resting model to the road edge.
+        // Bounds are measured after the exact authored rotation and scale.
+        if(alignment=="right" || alignment=="either" && right) x=width*.5f-reference.max.x;
+        else if(alignment=="either") x=-width*.5f-reference.min.x;
+        return new Vector3(roadCenter+x,floorY+position.y,rowZ+position.z);
     }
 }
