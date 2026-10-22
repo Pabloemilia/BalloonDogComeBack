@@ -387,7 +387,7 @@ public sealed class MainMenuController : MonoBehaviour
 
             if (gameObject != null)
             {
-                gameObject.SetActive(visible);
+                gameObject.SetActive(visible && objectName != "AirSlider");
             }
         }
     }

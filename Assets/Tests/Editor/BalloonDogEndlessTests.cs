@@ -26,17 +26,95 @@ public sealed class BalloonDogEndlessTests
             advance.Invoke(endless, new object[] { 0f });
             Assert.That((float)speed.GetValue(runner), Is.EqualTo(5f));
             advance.Invoke(endless, new object[] { 60f });
-            Assert.That((float)speed.GetValue(runner), Is.EqualTo(7.4f).Within(.001f));
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(8f).Within(.001f));
             player.transform.position = Vector3.forward * 1200f;
             player.transform.position -= Vector3.forward * 896f;
             advance.Invoke(endless, new object[] { 0f });
-            Assert.That((float)speed.GetValue(runner), Is.EqualTo(7.4f).Within(.001f));
-            advance.Invoke(endless, new object[] { 90f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(8f).Within(.001f));
+            advance.Invoke(endless, new object[] { 60f });
             Assert.That((float)speed.GetValue(runner), Is.EqualTo(11f).Within(.001f));
             advance.Invoke(endless, new object[] { 3600f });
             Assert.That((float)speed.GetValue(runner), Is.EqualTo(11f).Within(.001f));
         }
         finally { UnityEngine.Object.DestroyImmediate(host); UnityEngine.Object.DestroyImmediate(player); }
+    }
+
+    [Test]
+    public void RepeatedOriginShiftsKeepThePlayerOnTheRoadAndPreserveCameraAndScore()
+    {
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var player = new GameObject("RebasePlayer", typeof(Rigidbody));
+        var host = new GameObject("RebaseRoadTest");
+        var cameraObject = new GameObject("RebaseCamera");
+        bool autoSync = Physics.autoSyncTransforms;
+        try
+        {
+            Physics.autoSyncTransforms = false;
+            Component runner = player.AddComponent(Runtime("PlayerRunner"));
+            Component score = player.AddComponent(Runtime("ScoreController"));
+            score.GetType().GetMethod("Awake", flags).Invoke(score, null);
+            Component endless = host.AddComponent(Runtime("BalloonDogEndlessRunner"));
+            Type type = endless.GetType();
+            type.GetField("runner", flags).SetValue(endless, runner);
+            type.GetField("score", flags).SetValue(endless, score);
+            var chunks = (IList)type.GetField("chunks", flags).GetValue(endless);
+            Type chunkType = type.GetNestedType("Chunk", BindingFlags.NonPublic);
+            var floors = new System.Collections.Generic.List<Collider>();
+            for (int i = 0; i < 6; i++)
+            {
+                object chunk = Activator.CreateInstance(chunkType, true);
+                var road = new GameObject("RebaseRoad_" + i);
+                road.transform.SetParent(host.transform, false);
+                double start = 1904d + i * 56d;
+                road.transform.position = Vector3.forward * (float)start;
+                chunkType.GetField("root").SetValue(chunk, road.transform);
+                chunkType.GetField("start").SetValue(chunk, start);
+                chunks.Add(chunk);
+                var floor = new GameObject("SameGround", typeof(BoxCollider));
+                floor.transform.SetParent(road.transform, false);
+                floor.transform.localPosition = new Vector3(0f, -.5f, 28f);
+                floor.GetComponent<BoxCollider>().size = new Vector3(6f, 1f, 56f);
+                floors.Add(floor.GetComponent<Collider>());
+            }
+            var trap = new GameObject("KinematicTrap", typeof(Rigidbody), typeof(BoxCollider));
+            trap.transform.SetParent(((Transform)chunkType.GetField("root").GetValue(chunks[0])), false);
+            trap.transform.localPosition = new Vector3(2f, 1f, 14f);
+            Rigidbody trapBody = trap.GetComponent<Rigidbody>();
+            trapBody.isKinematic = true;
+            Rigidbody body = player.GetComponent<Rigidbody>();
+            body.useGravity = false;
+            body.position = player.transform.position = new Vector3(0f, 1f, 1930f);
+            body.linearVelocity = Vector3.forward * 8f;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
+            Component follow = cameraObject.AddComponent(Runtime("RunnerCameraFollow"));
+            follow.GetType().GetMethod("Configure").Invoke(follow, new object[] { player.transform });
+            Physics.SyncTransforms();
+            Vector3 cameraOffset = cameraObject.transform.position - player.transform.position;
+            Vector3 trapOffset = trapBody.position - body.position;
+            MethodInfo shift = type.GetMethod("ShiftOrigin", flags);
+            for (int iteration = 0; iteration < 2; iteration++)
+            {
+                shift.Invoke(endless, new object[] { 896f });
+                Assert.That(Vector3.Distance(body.position, player.transform.position), Is.LessThan(.001f));
+                Assert.That(body.position.y, Is.EqualTo(1f).Within(.001f));
+                Assert.That(body.interpolation, Is.EqualTo(RigidbodyInterpolation.Interpolate));
+                Assert.That(body.linearVelocity.z, Is.EqualTo(8f).Within(.001f));
+                Assert.That(Vector3.Distance(cameraObject.transform.position - player.transform.position, cameraOffset), Is.LessThan(.001f));
+                Assert.That(Vector3.Distance(trapBody.position - body.position, trapOffset), Is.LessThan(.001f));
+                Assert.That((double)score.GetType().GetProperty("DistanceTravelled").GetValue(score), Is.EqualTo(1930d).Within(.001d));
+                bool supported = false;
+                foreach (RaycastHit hit in Physics.RaycastAll(body.position, Vector3.down, 3f))
+                    if (floors.Contains(hit.collider)) supported = true;
+                Assert.That(supported, Is.True, "Road collision must remain directly under the player after every shift.");
+            }
+        }
+        finally
+        {
+            Physics.autoSyncTransforms = autoSync;
+            UnityEngine.Object.DestroyImmediate(cameraObject);
+            UnityEngine.Object.DestroyImmediate(host);
+            UnityEngine.Object.DestroyImmediate(player);
+        }
     }
 
     [Test]
@@ -290,9 +368,16 @@ public sealed class BalloonDogEndlessTests
             }
         }
         var owners=new System.Collections.Generic.HashSet<Component>();
-        foreach(var chunk in list) foreach(string field in new[]{"traps","companions"})
-            foreach(var item in (Array)chunk.GetType().GetField(field).GetValue(chunk))
-                if(item is Component contact) Assert.That(owners.Add(contact),Is.True,"Two rows cannot lease the same trap");
+        foreach(var chunk in list)
+        {
+            int activeAir=0;
+            foreach(Component pickup in (Array)chunk.GetType().GetField("air").GetValue(chunk))
+                if(pickup.gameObject.activeSelf) activeAir++;
+            Assert.That(activeAir,Is.EqualTo(1),"Each chunk now has one pickup instead of two.");
+            foreach(string field in new[]{"traps","companions"})
+                foreach(var item in (Array)chunk.GetType().GetField(field).GetValue(chunk))
+                    if(item is Component contact) Assert.That(owners.Add(contact),Is.True,"Two rows cannot lease the same trap");
+        }
         Assert.That(runtime.GetComponentsInChildren(Runtime("BalloonDogEndlessContact"),true).Length,Is.EqualTo(traps));
         Time.timeScale=1;
         yield return new ExitPlayMode();

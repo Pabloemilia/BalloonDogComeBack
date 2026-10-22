@@ -17,7 +17,7 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
     [Header("Progressive Run Speed")]
     [SerializeField, Min(0f)] private float startingRunSpeed = 5f;
     [SerializeField, Min(0f)] private float maximumRunSpeed = 11f;
-    [SerializeField, Min(0f)] private float speedIncreasePerSecond = .04f;
+    [SerializeField, Min(0f)] private float speedIncreasePerSecond = .05f;
     private float activeRunSeconds;
 
     private sealed class Chunk
@@ -177,7 +177,7 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
             routeLane=c.companions[row]!=null ? clearLane : trap.transform.localPosition.x>=roadCenter ? 0 : 2;
             var pickup=c.air[row];
             pickup.transform.localPosition=new Vector3(LaneX(routeLane),floorY+1,FirstObstacleDistance+row*RowSpacing+5);
-            pickup.ResetContact(!tutorial && distance>=endlessStartDistance+FirstObstacleDistance && row%2==0);
+            pickup.ResetContact(!tutorial && distance>=endlessStartDistance+FirstObstacleDistance && row==0);
         }
     }
     private void ReleaseTrap(BalloonDogEndlessContact trap)
@@ -211,16 +211,36 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
     private void Update()
     {
         if(runner==null || chunks.Count==0) return;
-        bool running=Time.timeScale>0 && runner.enabled && runner.MovementEnabled && horizontal!=null && horizontal.enabled
-            && (GameManager.Instance==null || !GameManager.Instance.IsGameOver);
+        bool running=IsRunActive();
         if(tutorialCanvas!=null) tutorialCanvas.gameObject.SetActive(tutorial && running);
         if(!running) return;
         if(tutorial) AdvanceTutorial();
         AdvanceRunSpeed(Time.deltaTime);
         runner.SetDifficultyMultiplier(1f);
-        foreach(Chunk c in chunks)
-            if(c.start+ChunkLength < origin+runner.transform.position.z-24) Place(c);
-        if(runner.transform.position.z>1024) ShiftOrigin(896);
+    }
+
+    private bool IsRunActive() => runner!=null && Time.timeScale>0 && runner.enabled
+        && runner.MovementEnabled && horizontal!=null && horizontal.enabled
+        && (GameManager.Instance==null || !GameManager.Instance.IsGameOver);
+
+    private void FixedUpdate()
+    {
+        if(chunks.Count==0 || !IsRunActive()) return;
+        Rigidbody body=runner.GetComponent<Rigidbody>();
+        // Use the physical pose, never the interpolated render pose, to decide
+        // which road is behind us. Move the world before the next physics step.
+        if(body.position.z>1024f) ShiftOrigin(896f);
+        double behind=origin+body.position.z-24d;
+        bool recycled=false;
+        while(true)
+        {
+            Chunk oldest=chunks[0];
+            foreach(Chunk chunk in chunks) if(chunk.start<oldest.start) oldest=chunk;
+            if(oldest.start+ChunkLength>=behind) break;
+            Place(oldest);
+            recycled=true;
+        }
+        if(recycled) Physics.SyncTransforms();
     }
 
     private void AdvanceRunSpeed(float deltaTime)
@@ -240,14 +260,42 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
 
     private void ShiftOrigin(float amount)
     {
-        origin+=amount;
-        foreach(Chunk c in chunks) c.root.position-=Vector3.forward*amount;
         Rigidbody body=runner.GetComponent<Rigidbody>();
-        body.position-=Vector3.forward*amount;
+        Vector3 shift=Vector3.back*amount;
+        Vector3 playerPosition=body.position+shift;
+        RigidbodyInterpolation interpolation=body.interpolation;
+        body.interpolation=RigidbodyInterpolation.None;
+
+        // Kinematic trap bodies also own physics poses. Record their intended
+        // translated transforms before moving their road parents.
+        var trapBodies=new List<Rigidbody>();
+        var trapPositions=new List<Vector3>();
+        foreach(Chunk chunk in chunks)
+            foreach(Rigidbody trap in chunk.root.GetComponentsInChildren<Rigidbody>(true))
+            {
+                trapBodies.Add(trap);
+                trapPositions.Add(trap.transform.position+shift);
+            }
+        origin+=amount;
+        foreach(Chunk chunk in chunks)
+        {
+            Vector3 position=chunk.root.position;
+            position.z=(float)(chunk.start-origin);
+            chunk.root.position=position;
+        }
+        for(int i=0;i<trapBodies.Count;i++)
+        {
+            trapBodies[i].position=trapPositions[i];
+            trapBodies[i].transform.position=trapPositions[i];
+        }
+        body.position=playerPosition;
+        runner.transform.position=playerPosition;
         score?.ShiftOrigin(amount);
-        foreach(var camera in FindObjectsByType<RunnerCameraFollow>(FindObjectsSortMode.None)) camera.SnapToTarget();
+        foreach(var camera in FindObjectsByType<RunnerCameraFollow>(FindObjectsSortMode.None))
+            camera.ApplyWorldShift(runner.transform,shift);
         foreach(var trail in runner.GetComponentsInChildren<TrailRenderer>()) trail.Clear();
         Physics.SyncTransforms();
+        body.interpolation=interpolation;
     }
 
     private void BuildTutorial()

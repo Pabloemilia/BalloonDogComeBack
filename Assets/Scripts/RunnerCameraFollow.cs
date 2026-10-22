@@ -29,6 +29,12 @@ public sealed class RunnerCameraFollow : MonoBehaviour
         transform.position = targetPosition;
     }
 
+    public void ApplyWorldShift(Transform shiftedTarget, Vector3 translation)
+    {
+        if (target == shiftedTarget || (target != null && target.IsChildOf(shiftedTarget)))
+            transform.position += translation;
+    }
+
     private void LateUpdate()
     {
         if (!Application.isPlaying) { SnapToTarget(); return; }

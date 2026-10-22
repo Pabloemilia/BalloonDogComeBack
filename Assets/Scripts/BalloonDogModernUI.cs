@@ -2586,6 +2586,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         gameplayOverlay = new GameObject("ModernGameplayOverlay", typeof(RectTransform));
         gameplayOverlay.transform.SetParent(safeRoot, false);
         Stretch(gameplayOverlay.GetComponent<RectTransform>());
+        BuildAirMeter(gameplayOverlay.transform);
 
         Button pause = CreatePauseActionButton(
             gameplayOverlay.transform, "GameplayPauseButton", "II", null,
@@ -2598,6 +2599,59 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         stage.anchoredPosition = new Vector2(-24f, -24f);
         pause.GetComponentInChildren<TMP_Text>().raycastTarget = false;
 
+    }
+
+    private static void BuildAirMeter(Transform parent)
+    {
+        RectTransform card = CreateRect("GameplayAirHud", parent);
+        card.anchorMin = new Vector2(0f, 1f);
+        card.anchorMax = Vector2.one;
+        card.pivot = new Vector2(.5f, 1f);
+        card.offsetMin = new Vector2(24f, -150f);
+        card.offsetMax = new Vector2(-160f, -22f);
+        Image shell = card.gameObject.AddComponent<Image>();
+        shell.sprite = GetRoundedSprite();
+        shell.type = Image.Type.Sliced;
+        shell.color = new Color(.025f, .075f, .16f, .94f);
+        shell.raycastTarget = false;
+        Outline rim = card.gameObject.AddComponent<Outline>();
+        rim.effectColor = new Color(.33f, .88f, 1f, .55f);
+        rim.effectDistance = new Vector2(2f, -2f);
+
+        Image bubble = CreateImage(card, "AirBubbleIcon", Vector2.zero, new Vector2(66f, 66f),
+            new Color(.18f, .91f, 1f), true);
+        bubble.rectTransform.anchorMin = bubble.rectTransform.anchorMax = new Vector2(0f, .5f);
+        bubble.rectTransform.anchoredPosition = new Vector2(54f, 0f);
+        Image glint = CreateImage(bubble.transform, "Highlight", new Vector2(-13f, 14f),
+            new Vector2(17f, 11f), new Color(1f, 1f, 1f, .9f), true);
+        glint.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 35f);
+
+        TMP_Text status = CreateText(card, "HudAirStatus", "AIR", Vector2.zero,
+            new Vector2(260f, 46f), 30f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left);
+        status.rectTransform.anchorMin = status.rectTransform.anchorMax = new Vector2(0f, 1f);
+        status.rectTransform.pivot = new Vector2(0f, 1f);
+        status.rectTransform.anchoredPosition = new Vector2(106f, -14f);
+        TMP_Text value = CreateText(card, "HudAirPercentage", "100%", Vector2.zero,
+            new Vector2(160f, 48f), 38f, Color.white, FontStyles.Normal, TextAlignmentOptions.Right);
+        value.rectTransform.anchorMin = value.rectTransform.anchorMax = Vector2.one;
+        value.rectTransform.pivot = Vector2.one;
+        value.rectTransform.anchoredPosition = new Vector2(-24f, -10f);
+
+        Image track = CreateImage(card, "AirTrack", Vector2.zero, Vector2.zero,
+            new Color(.015f, .035f, .08f), false);
+        track.rectTransform.anchorMin = Vector2.zero;
+        track.rectTransform.anchorMax = new Vector2(1f, 0f);
+        track.rectTransform.offsetMin = new Vector2(106f, 22f);
+        track.rectTransform.offsetMax = new Vector2(-24f, 54f);
+        track.gameObject.AddComponent<Mask>().showMaskGraphic = true;
+        Image trail = CreateImage(track.transform, "AirDamageTrail", Vector2.zero, Vector2.zero,
+            new Color(1f, .91f, .55f, .65f), false);
+        Stretch(trail.rectTransform);
+        Image fill = CreateImage(track.transform, "AirFill", Vector2.zero, Vector2.zero,
+            new Color(.20f, .96f, .82f), false);
+        Stretch(fill.rectTransform);
+        card.gameObject.AddComponent<BalloonDogAirHud>().Configure(
+            FindAnyObjectByType<AirController>(), fill, trail, shell, value, status);
     }
 
     private void BuildToast()
