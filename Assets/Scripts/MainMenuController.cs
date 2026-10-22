@@ -742,7 +742,7 @@ public sealed class MainMenuController : MonoBehaviour
             rootRect.anchorMax = new Vector2(0.5f, 0f);
             rootRect.pivot = new Vector2(0.5f, 0.5f);
             rootRect.anchoredPosition = new Vector2(0f, 115f);
-            rootRect.sizeDelta = new Vector2(170f, 170f);
+            rootRect.sizeDelta = new Vector2(420f, 180f);
             rootRect.localScale = Vector3.one;
         }
 
@@ -750,9 +750,11 @@ public sealed class MainMenuController : MonoBehaviour
             shrinkButton.GetComponent<Image>() ??
             shrinkButton.AddComponent<Image>();
 
-        background.sprite = GetCircleSprite();
+        background.sprite = GetShrinkIconSprite();
+        background.preserveAspect = true;
+        background.material = null;
         background.type = Image.Type.Simple;
-        background.color = new Color(0.06f, 0.68f, 0.92f, 0.98f);
+        background.color = Color.white;
         background.raycastTarget = true;
 
         Button button = shrinkButton.GetComponent<Button>();
@@ -780,47 +782,19 @@ public sealed class MainMenuController : MonoBehaviour
             }
         }
 
+        // The supplied artwork includes the entire button, including its label.
+        // Keep the former icon hidden so it cannot cover the new face.
         Transform iconTransform =
             shrinkButton.transform.Find("ShrinkTransformIcon");
-
-        Image icon;
-
-        if (iconTransform == null)
+        if (iconTransform != null)
         {
-            GameObject iconObject = new GameObject(
-                "ShrinkTransformIcon",
-                typeof(RectTransform),
-                typeof(CanvasRenderer),
-                typeof(Image));
-
-            iconObject.transform.SetParent(shrinkButton.transform, false);
-            icon = iconObject.GetComponent<Image>();
-        }
-        else
-        {
-            icon = iconTransform.GetComponent<Image>() ??
-                   iconTransform.gameObject.AddComponent<Image>();
+            iconTransform.gameObject.SetActive(false);
         }
 
-        icon.sprite = GetShrinkIconSprite();
-        icon.preserveAspect = true;
-        icon.raycastTarget = false;
-        icon.color = Color.white;
-
-        RectTransform iconRect = icon.rectTransform;
-        iconRect.anchorMin = new Vector2(0.10f, 0.10f);
-        iconRect.anchorMax = new Vector2(0.90f, 0.90f);
-        iconRect.offsetMin = Vector2.zero;
-        iconRect.offsetMax = Vector2.zero;
-        iconRect.localScale = Vector3.one;
-
-        Outline outline =
-            background.GetComponent<Outline>() ??
-            background.gameObject.AddComponent<Outline>();
-
-        outline.effectColor = new Color(0.01f, 0.18f, 0.32f, 0.75f);
-        outline.effectDistance = new Vector2(5f, -5f);
-        BalloonDogMenuArtwork.ApplyButtonBackground(background, false);
+        foreach (Shadow effect in background.GetComponents<Shadow>())
+        {
+            effect.enabled = false;
+        }
     }
 
     private static Sprite GetShrinkIconSprite()
