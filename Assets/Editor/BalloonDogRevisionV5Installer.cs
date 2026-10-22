@@ -315,10 +315,10 @@ public static class BalloonDogRevisionV5Installer
         NearMissSensor sensor = sensorObject.AddComponent<NearMissSensor>();
         sensor.Configure(player.transform, combo);
 
-        BuildPlayerTrail(player.transform, visual, root);
+        RemovePlayerTrails(player.transform);
     }
 
-    private static void BuildPlayerTrail(Transform player, Transform visual, Transform root)
+    private static void RemovePlayerTrails(Transform player)
     {
         Transform existing = player.Find("V5BalloonTrail");
         if (existing != null)
@@ -326,17 +326,10 @@ public static class BalloonDogRevisionV5Installer
             Object.DestroyImmediate(existing.gameObject);
         }
 
-        GameObject trailObject = new GameObject("V5BalloonTrail");
-        trailObject.transform.SetParent(player, false);
-        trailObject.transform.localPosition = new Vector3(0f, 0.55f, -0.62f);
-        TrailRenderer trail = trailObject.AddComponent<TrailRenderer>();
-        trail.time = 0.36f;
-        trail.startWidth = 0.18f;
-        trail.endWidth = 0.015f;
-        trail.minVertexDistance = 0.08f;
-        trail.startColor = new Color(0.2f, 0.88f, 1f, 0.55f);
-        trail.endColor = new Color(0.2f, 0.88f, 1f, 0f);
-        trail.material = GetOrCreateMaterial("BDV5_Trail", Color.white, true, true);
+        foreach (TrailRenderer trail in player.GetComponentsInChildren<TrailRenderer>(true))
+        {
+            Object.DestroyImmediate(trail);
+        }
     }
 
     private static void ConfigurePickups()

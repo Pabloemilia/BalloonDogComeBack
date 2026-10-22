@@ -11,22 +11,23 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
     public const string TutorialKey = "BalloonDog.Endless.TutorialComplete.v1";
     public const int ChunkCount = 6;
     public const float ChunkLength = 56f;
-    public const float RowSpacing = 14f;
+    public const int RowsPerChunk = 5;
+    public const float RowSpacing = ChunkLength / RowsPerChunk;
     public const float FirstObstacleDistance = 14f;
 
     [Header("Progressive Run Speed")]
     [SerializeField, Min(0f)] private float startingRunSpeed = 5f;
-    [SerializeField, Min(0f)] private float maximumRunSpeed = 11f;
-    [SerializeField, Min(0f)] private float speedIncreasePerSecond = .05f;
+    [SerializeField, Min(0f)] private float maximumRunSpeed = 13f;
+    [SerializeField, Min(.01f)] private float secondsToMaximumSpeed = 120f;
     private float activeRunSeconds;
 
     private sealed class Chunk
     {
         public Transform root;
         public double start;
-        public readonly BalloonDogEndlessContact[] traps = new BalloonDogEndlessContact[4];
-        public readonly BalloonDogEndlessContact[] companions = new BalloonDogEndlessContact[4];
-        public readonly BalloonDogEndlessContact[] air = new BalloonDogEndlessContact[4];
+        public readonly BalloonDogEndlessContact[] traps = new BalloonDogEndlessContact[RowsPerChunk];
+        public readonly BalloonDogEndlessContact[] companions = new BalloonDogEndlessContact[RowsPerChunk];
+        public readonly BalloonDogEndlessContact[] air = new BalloonDogEndlessContact[RowsPerChunk];
     }
     private readonly List<Chunk> chunks = new List<Chunk>();
     private readonly List<BalloonDogEndlessContact> trapPool = new List<BalloonDogEndlessContact>();
@@ -115,7 +116,7 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
             floor.GetComponent<MeshFilter>().sharedMesh = mesh;
             floor.GetComponent<MeshRenderer>().sharedMaterial = material;
             floor.GetComponent<BoxCollider>().size = Vector3.one;
-            for(int row=0;row<4;row++)
+            for(int row=0;row<RowsPerChunk;row++)
             {
                 c.air[row] = CreateAir(c.root);
             }
@@ -135,13 +136,13 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
     private void Populate(Chunk c)
     {
         // Wide mechanisms keep their authored position. Only measured narrow
-        // traps may pair up at opposite edges with a clear central corridor.
-        for(int row=0;row<4;row++)
+        // traps may pair up, leaving a player-sized corridor.
+        for(int row=0;row<RowsPerChunk;row++)
         {
             ReleaseTrap(c.traps[row]);ReleaseTrap(c.companions[row]);
             c.traps[row]=null;c.companions[row]=null;
         }
-        for(int row=0;row<4;row++)
+        for(int row=0;row<RowsPerChunk;row++)
         {
             double distance=c.start+FirstObstacleDistance+row*RowSpacing;
             var trap=TakeTrap();c.traps[row]=trap;
@@ -153,7 +154,7 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
             trap.transform.localPosition=profile.Position(roadCenter,floorY,
                 FirstObstacleDistance+row*RowSpacing,width,reference,right);
             int clearLane=1;
-            if(!tutorial && distance>=endlessStartDistance+80 && random.NextDouble()<.45
+            if(!tutorial && distance>=endlessStartDistance+56 && random.NextDouble()<.75
                 && sweptBounds.ContainsKey(trap))
             {
                 var companion=TakeCompanion(trap);
@@ -162,7 +163,8 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
                     c.companions[row]=companion;
                     companion.transform.SetParent(c.root,false);
                     var otherProfile=placements[companion];
-                    clearLane=random.Next(3);
+                    // Change the route without demanding an instant edge-to-edge turn.
+                    clearLane=routeLane==1 ? random.Next(2)*2 : 1;
                     Vector2 pair=BalloonDogTrapPlacement.PairX(sweptBounds[trap],sweptBounds[companion],roadCenter,width,clearLane,right);
                     companion.transform.localPosition=new Vector3(pair.y,
                         floorY+otherProfile.position.y,trap.transform.localPosition.z);
@@ -253,8 +255,8 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
             return;
         }
         activeRunSeconds += Mathf.Max(0f, deltaTime);
-        float speed = Mathf.Min(Mathf.Max(startingRunSpeed, maximumRunSpeed),
-            startingRunSpeed + activeRunSeconds * speedIncreasePerSecond);
+        float speed = Mathf.Lerp(startingRunSpeed, Mathf.Max(startingRunSpeed, maximumRunSpeed),
+            Mathf.Clamp01(activeRunSeconds / Mathf.Max(.01f, secondsToMaximumSpeed)));
         runner.ConfigureForwardSpeed(speed);
     }
 
@@ -293,7 +295,6 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
         score?.ShiftOrigin(amount);
         foreach(var camera in FindObjectsByType<RunnerCameraFollow>(FindObjectsSortMode.None))
             camera.ApplyWorldShift(runner.transform,shift);
-        foreach(var trail in runner.GetComponentsInChildren<TrailRenderer>()) trail.Clear();
         Physics.SyncTransforms();
         body.interpolation=interpolation;
     }

@@ -24,6 +24,10 @@ public sealed class PlayerRunner : MonoBehaviour
     private void Awake()
     {
         playerRigidbody = GetComponent<Rigidbody>();
+        if (GetComponent<PlayerTrailCleanupRuntime>() == null)
+        {
+            gameObject.AddComponent<PlayerTrailCleanupRuntime>();
+        }
 
         // Eski sahnelerde bu değer 1.12 olarak serialize edilmiş olabilir.
         // Küçük form normalden yalnızca biraz daha hızlı ilerler.

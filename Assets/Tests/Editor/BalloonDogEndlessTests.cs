@@ -26,15 +26,15 @@ public sealed class BalloonDogEndlessTests
             advance.Invoke(endless, new object[] { 0f });
             Assert.That((float)speed.GetValue(runner), Is.EqualTo(5f));
             advance.Invoke(endless, new object[] { 60f });
-            Assert.That((float)speed.GetValue(runner), Is.EqualTo(8f).Within(.001f));
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(9f).Within(.001f));
             player.transform.position = Vector3.forward * 1200f;
             player.transform.position -= Vector3.forward * 896f;
             advance.Invoke(endless, new object[] { 0f });
-            Assert.That((float)speed.GetValue(runner), Is.EqualTo(8f).Within(.001f));
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(9f).Within(.001f));
             advance.Invoke(endless, new object[] { 60f });
-            Assert.That((float)speed.GetValue(runner), Is.EqualTo(11f).Within(.001f));
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(13f).Within(.001f));
             advance.Invoke(endless, new object[] { 3600f });
-            Assert.That((float)speed.GetValue(runner), Is.EqualTo(11f).Within(.001f));
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(13f).Within(.001f));
         }
         finally { UnityEngine.Object.DestroyImmediate(host); UnityEngine.Object.DestroyImmediate(player); }
     }
@@ -312,6 +312,34 @@ public sealed class BalloonDogEndlessTests
         Assert.That(roads,Is.EqualTo(6));
         Component menu=UnityEngine.Object.FindAnyObjectByType(Runtime("MainMenuController")) as Component;
         Assert.That(menu,Is.Not.Null,"Retiring level progress must not disable the shared menu canvas");
+        Component player=UnityEngine.Object.FindAnyObjectByType(Runtime("PlayerRunner")) as Component;
+        Assert.That(player.GetComponentsInChildren<TrailRenderer>(true),Is.Empty,"The scene must contain no dog trail");
+        Assert.That(player.GetComponent(Runtime("PlayerTrailCleanupRuntime")),Is.Not.Null);
+        // A skin created later must lose its trail without losing its mesh/object.
+        var lateSkin=new GameObject("LateSkin",typeof(MeshRenderer),typeof(TrailRenderer));
+        lateSkin.transform.SetParent(player.transform,false);
+        var hiddenTrail=new GameObject("InactiveNestedTrail",typeof(TrailRenderer));
+        hiddenTrail.transform.SetParent(lateSkin.transform,false);
+        hiddenTrail.SetActive(false);
+        yield return null;
+        yield return null;
+        Assert.That(player.GetComponentsInChildren<TrailRenderer>(true),Is.Empty);
+        Assert.That(lateSkin.GetComponent<MeshRenderer>(),Is.Not.Null);
+        Assert.That(lateSkin.activeSelf,Is.True);
+        UnityEngine.Object.Destroy(lateSkin);
+        // A newly spawned runner also receives the permanent guard.
+        var spawned=new GameObject("RespawnTrailCheck");
+        spawned.SetActive(false);
+        spawned.AddComponent<TrailRenderer>();
+        var spawnedRunner=(Behaviour)spawned.AddComponent(Runtime("PlayerRunner"));
+        spawnedRunner.enabled=false;
+        spawned.GetComponent<Rigidbody>().isKinematic=true;
+        spawned.SetActive(true);
+        yield return null;
+        yield return null;
+        Assert.That(spawned.GetComponent(Runtime("PlayerTrailCleanupRuntime")),Is.Not.Null);
+        Assert.That(spawned.GetComponentsInChildren<TrailRenderer>(true),Is.Empty);
+        UnityEngine.Object.Destroy(spawned);
         var types=new System.Collections.Generic.HashSet<string>();
         foreach(Transform child in runtime.GetComponentsInChildren<Transform>(true))
         {
@@ -343,30 +371,43 @@ public sealed class BalloonDogEndlessTests
         foreach(var animator in runtime.GetComponentsInChildren<Animator>(true))
         { Assert.That(animator.enabled,Is.True);Assert.That(animator.applyRootMotion,Is.False); }
         int traps=runtime.GetComponentsInChildren(Runtime("BalloonDogEndlessContact"),true).Length;
-        Assert.That(traps,Is.EqualTo(104));
+        Assert.That(traps,Is.EqualTo(110));
         // Recycle through many ring revolutions without building more objects.
         var list=(IList)runtime.GetType().GetField("chunks",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(runtime);
         MethodInfo place=runtime.GetType().GetMethod("Place",BindingFlags.Instance|BindingFlags.NonPublic);
         runtime.GetType().GetField("tutorial",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(runtime,false);
+        runtime.GetType().GetField("random",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(runtime,new System.Random(7301));
+        var footprints=(IDictionary)runtime.GetType().GetField("sweptBounds",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(runtime);
+        float roadWidth=(float)runtime.GetType().GetField("width",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(runtime);
+        float center=(float)runtime.GetType().GetField("roadCenter",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(runtime);
+        int pairCount=0;
         for(int cycle=0;cycle<100;cycle++) foreach(var chunk in list)
         {
             place.Invoke(runtime,new[]{chunk});
             var rows=(Array)chunk.GetType().GetField("traps").GetValue(chunk);
             var unique=new System.Collections.Generic.HashSet<Component>();
-            Assert.That(rows.Length,Is.EqualTo(4));
+            Assert.That(rows.Length,Is.EqualTo(5));
             for(int row=0;row<rows.Length;row++)
             {
                 var trap=(Component)rows.GetValue(row);
                 Assert.That(unique.Add(trap),Is.True,"Every row must own a different pooled trap");
-                Assert.That(trap.transform.localPosition.z,Is.EqualTo(14+row*14));
+                Assert.That(trap.transform.localPosition.z,Is.EqualTo(14+row*11.2f).Within(.001f));
                 var companions=(Array)chunk.GetType().GetField("companions").GetValue(chunk);
                 if(companions.GetValue(row) is Component companion)
                 {
+                    pairCount++;
                     Assert.That(unique.Add(companion),Is.True);
                     Assert.That(companion.transform.localPosition.z,Is.EqualTo(trap.transform.localPosition.z));
+                    var a=(Bounds)footprints[trap];var b=(Bounds)footprints[companion];
+                    a.center+=trap.transform.localPosition;b.center+=companion.transform.localPosition;
+                    float corridor=Mathf.Max(Mathf.Min(a.min.x,b.min.x)-(center-roadWidth*.5f+.2f),
+                        center+roadWidth*.5f-.2f-Mathf.Max(a.max.x,b.max.x),
+                        Mathf.Max(a.min.x,b.min.x)-Mathf.Min(a.max.x,b.max.x));
+                    Assert.That(corridor,Is.GreaterThanOrEqualTo(1.399f),"Denser pairs must retain the full swept escape corridor");
                 }
             }
         }
+        Assert.That(pairCount,Is.GreaterThan(0),"Eligible narrow traps must actually generate pairs");
         var owners=new System.Collections.Generic.HashSet<Component>();
         foreach(var chunk in list)
         {

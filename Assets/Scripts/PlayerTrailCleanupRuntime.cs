@@ -1,61 +1,29 @@
-using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
+// Every runner owns this guard, including runners created after a scene reload.
+// Keep it alive so newly selected skins cannot reintroduce a trail.
+[DisallowMultipleComponent]
+[DefaultExecutionOrder(32001)]
 public sealed class PlayerTrailCleanupRuntime : MonoBehaviour
 {
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void CreateCleanup()
+    private readonly List<TrailRenderer> trails = new List<TrailRenderer>();
+
+    private void OnEnable() => RemoveTrails();
+    private void LateUpdate() => RemoveTrails();
+
+    private void RemoveTrails()
     {
-        GameObject cleanupObject =
-            new GameObject("__PlayerTrailCleanupV13");
-
-        cleanupObject.AddComponent<PlayerTrailCleanupRuntime>();
-    }
-
-    private IEnumerator Start()
-    {
-        for (int index = 0; index < 6; index++)
-        {
-            yield return null;
-        }
-
-        PlayerRunner runner =
-            FindAnyObjectByType<PlayerRunner>();
-
-        if (runner == null)
-        {
-            Destroy(gameObject);
-            yield break;
-        }
-
-        TrailRenderer[] trails =
-            runner.GetComponentsInChildren<TrailRenderer>(true);
-
+        GetComponentsInChildren<TrailRenderer>(true, trails);
         foreach (TrailRenderer trail in trails)
         {
-            if (trail == null)
-            {
-                continue;
-            }
-
+            if (trail == null) continue;
             trail.emitting = false;
-            trail.Clear();
             trail.enabled = false;
-
-            if (trail.gameObject.name.Contains("Trail"))
-            {
-                trail.gameObject.SetActive(false);
-            }
+            trail.Clear();
+            // Remove only the renderer: a skin may share this object with its mesh.
+            Destroy(trail);
         }
-
-        Transform namedTrail =
-            runner.transform.Find("V5BalloonTrail");
-
-        if (namedTrail != null)
-        {
-            namedTrail.gameObject.SetActive(false);
-        }
-
-        Destroy(gameObject);
+        trails.Clear();
     }
 }
