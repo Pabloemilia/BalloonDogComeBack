@@ -65,14 +65,6 @@ public sealed class HelicopterBarrierKnockback : MonoBehaviour
 
         CameraShakeController.ShakeGlobal(0.16f, 0.06f);
 
-        RuntimeVfx.SpawnBurst(
-            body.position + Vector3.up * 0.7f,
-            new Color(1f, 0.48f, 0.12f, 1f),
-            12,
-            2.2f,
-            0.08f,
-            0.28f);
-
         yield return new WaitForSeconds(recoveryDelay);
 
         if (runner != null)

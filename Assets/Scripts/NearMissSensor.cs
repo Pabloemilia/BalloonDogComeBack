@@ -63,13 +63,6 @@ public sealed class NearMissSensor : MonoBehaviour
         if (player != null && obstacle.position.z < player.position.z + 0.8f)
         {
             comboController?.RegisterSuccess(1, 75);
-            RuntimeVfx.SpawnBurst(
-                player.position + Vector3.up * 1.2f,
-                new Color(1f, 0.82f, 0.18f, 1f),
-                10,
-                2.1f,
-                0.09f,
-                0.42f);
         }
     }
 

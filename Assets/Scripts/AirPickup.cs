@@ -76,13 +76,6 @@ public sealed class AirPickup : MonoBehaviour
         comboController?.RegisterSuccess(1, 60);
         GameAudioController.PlayPickup();
 
-        RuntimeVfx.SpawnBurst(
-            transform.position,
-            new Color(0.2f, 0.82f, 1f, 1f),
-            22,
-            3.2f,
-            0.15f,
-            0.65f);
         CameraShakeController.ShakeGlobal(0.08f, 0.025f);
         Destroy(gameObject);
     }
