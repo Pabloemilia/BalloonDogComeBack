@@ -793,6 +793,11 @@ public sealed class MainMenuController : MonoBehaviour
         {
             effect.enabled = false;
         }
+        Outline contour = background.GetComponent<Outline>() ?? background.gameObject.AddComponent<Outline>();
+        contour.effectColor = Color.black;
+        contour.effectDistance = new Vector2(3f, -3f);
+        contour.useGraphicAlpha = true;
+        contour.enabled = true;
     }
 
     private static Sprite GetShrinkIconSprite()

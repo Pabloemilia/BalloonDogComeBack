@@ -2628,13 +2628,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         rim.effectColor = new Color(.33f, .88f, 1f, .55f);
         rim.effectDistance = new Vector2(2f, -2f);
 
-        Image bubble = CreateImage(card, "AirBubbleIcon", Vector2.zero, new Vector2(66f, 66f),
-            new Color(.18f, .91f, 1f), true);
-        bubble.rectTransform.anchorMin = bubble.rectTransform.anchorMax = new Vector2(0f, .5f);
-        bubble.rectTransform.anchoredPosition = new Vector2(54f, 0f);
-        Image glint = CreateImage(bubble.transform, "Highlight", new Vector2(-13f, 14f),
-            new Vector2(17f, 11f), new Color(1f, 1f, 1f, .9f), true);
-        glint.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 35f);
+        Image wind = CreateImage(card, "AirWindIcon", Vector2.zero, new Vector2(78f, 78f), Color.white, false);
+        wind.sprite = BalloonDogMenuArtwork.Get("air_wind_icon");
+        wind.type = Image.Type.Simple;
+        wind.preserveAspect = true;
+        wind.rectTransform.anchorMin = wind.rectTransform.anchorMax = new Vector2(0f, .5f);
+        wind.rectTransform.anchoredPosition = new Vector2(54f, 0f);
 
         TMP_Text status = CreateText(card, "HudAirStatus", "AIR", Vector2.zero,
             new Vector2(260f, 46f), 30f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left);

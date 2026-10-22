@@ -18,6 +18,7 @@ public sealed class PlayerHorizontalController : MonoBehaviour
     private Rigidbody playerRigidbody;
     private float targetX;
     private bool wasPointerPressed;
+    private bool wasKeyboardPressed;
     private Vector2 previousPointerPosition;
 
     public void ConfigureRoadLimit(float limit)
@@ -53,17 +54,33 @@ public sealed class PlayerHorizontalController : MonoBehaviour
 
         targetX = Mathf.Clamp(playerRigidbody.position.x, -horizontalLimit, horizontalLimit);
         wasPointerPressed = false;
+        wasKeyboardPressed = false;
+        StopHorizontalMotion();
     }
 
     private void Update()
     {
-        HandleKeyboard();
+        if (Time.timeScale <= 0f)
+        {
+            StopHorizontalMotion();
+            wasPointerPressed = wasKeyboardPressed = false;
+            return;
+        }
+
+        bool keyboardPressed = HandleKeyboard();
 
         if (!TryGetPointerPosition(out Vector2 pointerPosition))
         {
+            if (!keyboardPressed && (wasPointerPressed || wasKeyboardPressed))
+            {
+                StopHorizontalMotion();
+            }
+            wasKeyboardPressed = keyboardPressed;
             wasPointerPressed = false;
             return;
         }
+
+        wasKeyboardPressed = keyboardPressed;
 
         if (!wasPointerPressed)
         {
@@ -85,26 +102,45 @@ public sealed class PlayerHorizontalController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        float distanceToTarget = targetX - playerRigidbody.position.x;
-        float targetHorizontalSpeed = Mathf.Clamp(
-            distanceToTarget / Mathf.Max(Time.fixedDeltaTime, 0.0001f),
-            -maxHorizontalSpeed,
-            maxHorizontalSpeed);
-
         Vector3 velocity = playerRigidbody.linearVelocity;
-        velocity.x = Mathf.MoveTowards(
-            velocity.x,
-            targetHorizontalSpeed,
-            horizontalAcceleration * Time.fixedDeltaTime);
-
+        velocity.x = CalculateHorizontalSpeed(playerRigidbody.position.x, velocity.x, Time.fixedDeltaTime);
         playerRigidbody.linearVelocity = velocity;
     }
 
-    private void HandleKeyboard()
+    private float CalculateHorizontalSpeed(float currentX, float currentSpeed, float step)
+    {
+        step = Mathf.Max(step, .0001f);
+        targetX = Mathf.Clamp(targetX, -horizontalLimit, horizontalLimit);
+        float distance = targetX - currentX;
+        if (Mathf.Abs(distance) <= .001f) return 0f;
+
+        float direction = Mathf.Sign(distance);
+        // Direction changes cancel the old sideways momentum immediately.
+        if (currentSpeed * direction < 0f) currentSpeed = 0f;
+        float acceleration = Mathf.Max(.1f, horizontalAcceleration);
+        float stoppingSpeed = Mathf.Sqrt(2f * acceleration * Mathf.Abs(distance));
+        float desiredSpeed = direction * Mathf.Min(maxHorizontalSpeed, stoppingSpeed);
+        float speed = Mathf.MoveTowards(currentSpeed, desiredSpeed, acceleration * step);
+        // Never cross the target or road edge, even during a fast drag.
+        float travel = Mathf.Min(Mathf.Max(0f, speed * direction) * step, Mathf.Abs(distance));
+        float nextX = Mathf.Clamp(currentX + direction * travel, -horizontalLimit, horizontalLimit);
+        return (nextX - currentX) / step;
+    }
+
+    private void StopHorizontalMotion()
+    {
+        if (playerRigidbody == null) return;
+        targetX = Mathf.Clamp(playerRigidbody.position.x, -horizontalLimit, horizontalLimit);
+        Vector3 velocity = playerRigidbody.linearVelocity;
+        velocity.x = 0f;
+        playerRigidbody.linearVelocity = velocity;
+    }
+
+    private bool HandleKeyboard()
     {
         if (Keyboard.current == null)
         {
-            return;
+            return false;
         }
 
         float input = 0f;
@@ -120,10 +156,12 @@ public sealed class PlayerHorizontalController : MonoBehaviour
         if (Mathf.Abs(input) > 0.01f)
         {
             targetX = Mathf.Clamp(
-                targetX + input * keyboardSpeed * Time.unscaledDeltaTime,
+                targetX + input * keyboardSpeed * Time.deltaTime,
                 -horizontalLimit,
                 horizontalLimit);
+            return true;
         }
+        return false;
     }
 
     private static bool TryGetPointerPosition(out Vector2 pointerPosition)
@@ -147,12 +185,16 @@ public sealed class PlayerHorizontalController : MonoBehaviour
 
     private void OnDisable()
     {
-        wasPointerPressed = false;
-        if (playerRigidbody != null)
+        wasPointerPressed = wasKeyboardPressed = false;
+        StopHorizontalMotion();
+    }
+
+    private void OnApplicationFocus(bool focused)
+    {
+        if (!focused)
         {
-            Vector3 velocity = playerRigidbody.linearVelocity;
-            velocity.x = 0f;
-            playerRigidbody.linearVelocity = velocity;
+            wasPointerPressed = wasKeyboardPressed = false;
+            StopHorizontalMotion();
         }
     }
 }
