@@ -348,6 +348,9 @@ public sealed class BalloonDogEndlessTests
             var body=child.GetComponent<Rigidbody>();
             Assert.That(body,Is.Not.Null);Assert.That(body.isKinematic,Is.True);
             int id=int.Parse(child.name.Split('_')[1]);
+            Component contactOwner=child.GetComponent(Runtime("BalloonDogEndlessContact"));
+            bool heavy=(bool)contactOwner.GetType().GetField("heavyImpact",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(contactOwner);
+            Assert.That(heavy,Is.EqualTo(id==8 || id==22),"Only verified hammers use heavy-impact damage, across all variants");
             var profileType=Runtime("BalloonDogTrapPlacement");
             object profile=profileType.GetMethod("For").Invoke(null,new object[]{id});
             Transform mount=child.Find("AuthoredTransform");

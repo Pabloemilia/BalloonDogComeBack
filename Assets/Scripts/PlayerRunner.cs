@@ -14,6 +14,8 @@ public sealed class PlayerRunner : MonoBehaviour
     private float slowMultiplier = 1f;
     private float difficultyMultiplier = 1f;
     private bool movementEnabled = true;
+    private float knockbackRemaining;
+    private float knockbackSpeed;
 
     public float CurrentForwardSpeed => movementEnabled
         ? forwardSpeed * slowMultiplier * difficultyMultiplier
@@ -58,7 +60,23 @@ public sealed class PlayerRunner : MonoBehaviour
             speed *= smallBalloonSpeedMultiplier;
         }
 
-        velocity.z = speed;
+        if (knockbackRemaining > 0f)
+        {
+            velocity.z = -knockbackSpeed;
+            knockbackRemaining = Mathf.Max(0f, knockbackRemaining - Time.fixedDeltaTime);
+        }
+        else velocity.z = speed;
+        playerRigidbody.linearVelocity = velocity;
+    }
+
+    public void ApplyKnockback(float backwardSpeed, float duration)
+    {
+        if (!movementEnabled || playerRigidbody == null) return;
+        knockbackSpeed = Mathf.Max(0f, backwardSpeed);
+        knockbackRemaining = Mathf.Max(0f, duration);
+        if (knockbackRemaining <= 0f) return;
+        Vector3 velocity = playerRigidbody.linearVelocity;
+        velocity.z = -knockbackSpeed;
         playerRigidbody.linearVelocity = velocity;
     }
 
@@ -79,6 +97,7 @@ public sealed class PlayerRunner : MonoBehaviour
 
         if (!enabled && playerRigidbody != null)
         {
+            knockbackRemaining = 0f;
             Vector3 velocity = playerRigidbody.linearVelocity;
             velocity.x = 0f;
             velocity.z = 0f;
@@ -91,6 +110,7 @@ public sealed class PlayerRunner : MonoBehaviour
         if (slowCoroutine != null) StopCoroutine(slowCoroutine);
         slowCoroutine = null;
         slowMultiplier = 1f;
+        knockbackRemaining = 0f;
         SetMovementEnabled(true);
         if (playerRigidbody != null) playerRigidbody.linearVelocity = Vector3.zero;
     }
@@ -123,6 +143,7 @@ public sealed class PlayerRunner : MonoBehaviour
 
     private void OnDisable()
     {
+        knockbackRemaining = 0f;
         slowMultiplier = 1f;
         difficultyMultiplier = 1f;
         movementEnabled = true;

@@ -8,7 +8,16 @@ public sealed class ScoreController : MonoBehaviour
     private float startingZ;
     private int bonusScore;
     private double originDistance;
-    public double DistanceTravelled => System.Math.Max(0d, originDistance + transform.position.z - startingZ);
+    private double furthestDistance;
+    public double DistanceTravelled
+    {
+        get
+        {
+            // Recoil cannot remove score or award the same road metres twice.
+            furthestDistance = System.Math.Max(furthestDistance, originDistance + transform.position.z - startingZ);
+            return furthestDistance;
+        }
+    }
     public void ShiftOrigin(float distance) { originDistance += distance; }
     private int lastReportedScore = -1;
 

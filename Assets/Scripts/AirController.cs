@@ -20,6 +20,7 @@ public sealed class AirController : MonoBehaviour
     public float MaxAir => maxAir;
     public float NormalizedAir => maxAir <= 0f ? 0f : currentAir / maxAir;
     public bool IsEmpty => currentAir <= 0f;
+    public bool IsDamageProtected => Time.time < continueProtectionUntil;
 
     public event Action<float, float> AirChanged;
 
