@@ -13,6 +13,13 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
     public const float ChunkLength = 56f;
     public const float RowSpacing = 14f;
     public const float FirstObstacleDistance = 14f;
+
+    [Header("Progressive Run Speed")]
+    [SerializeField, Min(0f)] private float startingRunSpeed = 5f;
+    [SerializeField, Min(0f)] private float maximumRunSpeed = 11f;
+    [SerializeField, Min(0f)] private float speedIncreasePerSecond = .04f;
+    private float activeRunSeconds;
+
     private sealed class Chunk
     {
         public Transform root;
@@ -93,6 +100,8 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
         }
         horizontal?.ConfigureRoadLimit(width * .5f - .6f);
         runner.SetDifficultyMultiplier(1f);
+        activeRunSeconds = 0f;
+        AdvanceRunSpeed(0f);
         nextStart = -ChunkLength;
         for (int i=0; i<ChunkCount; i++)
         {
@@ -207,12 +216,26 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
         if(tutorialCanvas!=null) tutorialCanvas.gameObject.SetActive(tutorial && running);
         if(!running) return;
         if(tutorial) AdvanceTutorial();
-        double distance=score!=null ? score.DistanceTravelled : origin+runner.transform.position.z;
-        runner.ConfigureForwardSpeed(tutorial ? 3.5f : 5f+4f*(1f-Mathf.Exp(-(float)Math.Max(0,distance-endlessStartDistance)/1500f)));
+        AdvanceRunSpeed(Time.deltaTime);
         runner.SetDifficultyMultiplier(1f);
         foreach(Chunk c in chunks)
             if(c.start+ChunkLength < origin+runner.transform.position.z-24) Place(c);
         if(runner.transform.position.z>1024) ShiftOrigin(896);
+    }
+
+    private void AdvanceRunSpeed(float deltaTime)
+    {
+        // Update calls this only during active play. Tutorial, menus, ads and
+        // pauses do not build up speed; origin shifts and continues keep it.
+        if (tutorial)
+        {
+            runner.ConfigureForwardSpeed(3.5f);
+            return;
+        }
+        activeRunSeconds += Mathf.Max(0f, deltaTime);
+        float speed = Mathf.Min(Mathf.Max(startingRunSpeed, maximumRunSpeed),
+            startingRunSpeed + activeRunSeconds * speedIncreasePerSecond);
+        runner.ConfigureForwardSpeed(speed);
     }
 
     private void ShiftOrigin(float amount)

@@ -9,6 +9,60 @@ using UnityEngine;
 public sealed class BalloonDogEndlessTests
 {
     private static Type Runtime(string name) => Type.GetType(name+", Assembly-CSharp", true);
+
+    [Test]
+    public void RunSpeedBuildsGraduallyAndStaysCappedAcrossOriginShifts()
+    {
+        var player = new GameObject("ProgressiveSpeedPlayer");
+        var host = new GameObject("ProgressiveSpeedTest");
+        try
+        {
+            Component runner = player.AddComponent(Runtime("PlayerRunner"));
+            Component endless = host.AddComponent(Runtime("BalloonDogEndlessRunner"));
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            endless.GetType().GetField("runner", flags).SetValue(endless, runner);
+            MethodInfo advance = endless.GetType().GetMethod("AdvanceRunSpeed", flags);
+            PropertyInfo speed = runner.GetType().GetProperty("CurrentForwardSpeed");
+            advance.Invoke(endless, new object[] { 0f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(5f));
+            advance.Invoke(endless, new object[] { 60f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(7.4f).Within(.001f));
+            player.transform.position = Vector3.forward * 1200f;
+            player.transform.position -= Vector3.forward * 896f;
+            advance.Invoke(endless, new object[] { 0f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(7.4f).Within(.001f));
+            advance.Invoke(endless, new object[] { 90f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(11f).Within(.001f));
+            advance.Invoke(endless, new object[] { 3600f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(11f).Within(.001f));
+        }
+        finally { UnityEngine.Object.DestroyImmediate(host); UnityEngine.Object.DestroyImmediate(player); }
+    }
+
+    [Test]
+    public void TutorialTimeDoesNotMakeTheFirstRealObstaclesArriveAtHighSpeed()
+    {
+        var player = new GameObject("TutorialSpeedPlayer");
+        var host = new GameObject("TutorialSpeedTest");
+        try
+        {
+            Component runner = player.AddComponent(Runtime("PlayerRunner"));
+            Component endless = host.AddComponent(Runtime("BalloonDogEndlessRunner"));
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            endless.GetType().GetField("runner", flags).SetValue(endless, runner);
+            FieldInfo tutorial = endless.GetType().GetField("tutorial", flags);
+            MethodInfo advance = endless.GetType().GetMethod("AdvanceRunSpeed", flags);
+            PropertyInfo speed = runner.GetType().GetProperty("CurrentForwardSpeed");
+            tutorial.SetValue(endless, true);
+            advance.Invoke(endless, new object[] { 300f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(3.5f));
+            tutorial.SetValue(endless, false);
+            advance.Invoke(endless, new object[] { 0f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(5f));
+        }
+        finally { UnityEngine.Object.DestroyImmediate(host); UnityEngine.Object.DestroyImmediate(player); }
+    }
+
     [Test]
     public void OriginShiftPreservesDistanceAndScore()
     {
