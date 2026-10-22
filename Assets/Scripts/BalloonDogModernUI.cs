@@ -2618,7 +2618,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         card.pivot = new Vector2(0f, 1f);
         card.offsetMin = new Vector2(24f, -150f);
         card.offsetMax = new Vector2(-160f, -22f);
-        card.localScale = Vector3.one * .5f;
+        card.localScale = Vector3.one;
         Image shell = card.gameObject.AddComponent<Image>();
         shell.sprite = GetRoundedSprite();
         shell.type = Image.Type.Sliced;
@@ -2647,18 +2647,32 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         value.rectTransform.anchoredPosition = new Vector2(-24f, -10f);
 
         Image track = CreateImage(card, "AirTrack", Vector2.zero, Vector2.zero,
-            new Color(.015f, .035f, .08f), false);
+            new Color(0f, .14f, .22f), false);
         track.rectTransform.anchorMin = Vector2.zero;
         track.rectTransform.anchorMax = new Vector2(1f, 0f);
-        track.rectTransform.offsetMin = new Vector2(106f, 22f);
-        track.rectTransform.offsetMax = new Vector2(-24f, 54f);
+        track.rectTransform.offsetMin = new Vector2(106f, 18f);
+        track.rectTransform.offsetMax = new Vector2(-24f, 66f);
+        Outline tubeRim = track.gameObject.AddComponent<Outline>();
+        tubeRim.effectColor = new Color(.035f, .36f, .43f, .9f);
+        tubeRim.effectDistance = new Vector2(2f, -2f);
         track.gameObject.AddComponent<Mask>().showMaskGraphic = true;
         Image trail = CreateImage(track.transform, "AirDamageTrail", Vector2.zero, Vector2.zero,
             new Color(1f, .91f, .55f, .65f), false);
         Stretch(trail.rectTransform);
         Image fill = CreateImage(track.transform, "AirFill", Vector2.zero, Vector2.zero,
-            new Color(.20f, .96f, .82f), false);
+            Color.white, false);
         Stretch(fill.rectTransform);
+        // Filled Images clip the full-width artwork instead of compressing it.
+        // The seven chambers stay fixed while even a fraction of one empties.
+        Sprite tube = BalloonDogMenuArtwork.Get("air_tube_fill");
+        foreach (Image layer in new[] { trail, fill })
+        {
+            layer.sprite = tube;
+            layer.type = Image.Type.Filled;
+            layer.fillMethod = Image.FillMethod.Horizontal;
+            layer.fillOrigin = (int)Image.OriginHorizontal.Left;
+            layer.fillAmount = 1f;
+        }
         card.gameObject.AddComponent<BalloonDogAirHud>().Configure(
             FindAnyObjectByType<AirController>(), fill, trail, shell, value, status);
     }

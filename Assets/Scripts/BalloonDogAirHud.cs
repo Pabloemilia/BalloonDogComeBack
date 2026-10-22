@@ -74,14 +74,15 @@ public sealed class BalloonDogAirHud : MonoBehaviour
         bool low = target <= .25f;
         if (fill != null)
         {
-            fill.rectTransform.anchorMax = new Vector2(displayed, 1f);
+            fill.fillAmount = displayed;
             fill.enabled = displayed > .001f;
-            fill.color = low ? new Color(1f, .31f, .22f) :
-                Color.Lerp(new Color(1f, .76f, .24f), new Color(.20f, .96f, .82f), Mathf.InverseLerp(.25f, 1f, target));
+            // The approved tube sprite already carries its mint shading and
+            // specular highlights. Keep its colors intact during normal play.
+            fill.color = low ? new Color(1f, .62f, .48f) : Color.white;
         }
         if (trail != null)
         {
-            trail.rectTransform.anchorMax = new Vector2(Mathf.Max(trailing, displayed), 1f);
+            trail.fillAmount = Mathf.Max(trailing, displayed);
             trail.enabled = trailing > .001f;
         }
         if (percentage != null) percentage.text = Mathf.RoundToInt(target * 100f) + "%";

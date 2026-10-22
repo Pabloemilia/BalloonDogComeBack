@@ -24,6 +24,7 @@ public static class BalloonDogMenuArtwork
             case "butonyesil": frame = new Rect(50f, 80f, 1954f, 511f); break;
             case "best_button": frame = new Rect(94f, 68f, 1873f, 500f); break;
             case "air_wind_icon": frame = new Rect(265f, 251f, 729f, 700f); break;
+            case "air_tube_fill": frame = new Rect(287f, 259f, 1654f, 130f); break;
             default: return Sprites[name] = source;
         }
         bool button = name == "butonmavi" || name == "butonyesil" || name == "best_button";
