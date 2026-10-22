@@ -37,7 +37,7 @@ public sealed class BalloonDogHammerImpactTests
         Call(runner, "Awake");
         hammer = new GameObject("HammerImpactContact");
         contact = hammer.AddComponent(Runtime("BalloonDogEndlessContact"));
-        Call(contact, "ConfigureHeavyImpact");
+        Call(contact, "ConfigureObstacle", 8);
     }
 
     [TearDown]
@@ -58,7 +58,9 @@ public sealed class BalloonDogHammerImpactTests
         Call(contact, "ApplyVisibleHit", collider);
         Assert.That(Get<float>(air, "CurrentAir"), Is.EqualTo(after).Within(.0001f));
         Assert.That(hammer.activeSelf, Is.True);
-        Assert.That(body.linearVelocity, Is.EqualTo(new Vector3(2f, -1f, -6f)));
+        Assert.That(body.linearVelocity.x, Is.EqualTo(2f));
+        Assert.That(body.linearVelocity.y, Is.EqualTo(-1f));
+        Assert.That(body.linearVelocity.z, Is.EqualTo(-2f / .3f).Within(.0001f));
         Assert.That(Get<bool>(runner, "MovementEnabled"), Is.True,
             "Recoil must keep the endless road and gameplay running.");
 
@@ -87,7 +89,7 @@ public sealed class BalloonDogHammerImpactTests
         Set(air, "continueProtectionUntil", Time.time - 1f);
         Call(contact, "ApplyVisibleHit", collider);
         Assert.That(Get<float>(air, "CurrentAir"), Is.EqualTo(20f).Within(.0001f));
-        Assert.That(body.linearVelocity.z, Is.EqualTo(-6f));
+        Assert.That(body.linearVelocity.z, Is.EqualTo(-2f / .3f).Within(.0001f));
     }
 
     [TestCase(30)]
@@ -97,7 +99,7 @@ public sealed class BalloonDogHammerImpactTests
     {
         Time.fixedDeltaTime = 1f / frequency;
         body.linearVelocity = new Vector3(2f, -1f, 5f);
-        Call(runner, "ApplyKnockback", 6f, .3f);
+        Call(runner, "ApplyKnockbackDistance", 2f, .3f);
         float distance = 0f;
         int backwardsSteps = 0;
         for (int i = 0; i < frequency; i++)
@@ -113,7 +115,7 @@ public sealed class BalloonDogHammerImpactTests
             Assert.That(body.linearVelocity.y, Is.EqualTo(-1f));
         }
         Assert.That(backwardsSteps, Is.GreaterThan(1));
-        Assert.That(distance, Is.InRange(1.799f, 1.801f + 6f / frequency));
+        Assert.That(distance, Is.EqualTo(2f).Within(.0001f));
         Assert.That(body.linearVelocity.z, Is.EqualTo(13f));
         Assert.That(Get<bool>(runner, "MovementEnabled"), Is.True);
     }

@@ -350,7 +350,9 @@ public sealed class BalloonDogEndlessTests
             int id=int.Parse(child.name.Split('_')[1]);
             Component contactOwner=child.GetComponent(Runtime("BalloonDogEndlessContact"));
             bool heavy=(bool)contactOwner.GetType().GetField("heavyImpact",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(contactOwner);
-            Assert.That(heavy,Is.EqualTo(id==8 || id==22),"Only verified hammers use heavy-impact damage, across all variants");
+            Assert.That(heavy,Is.EqualTo(id==4 || id==8 || id==22 || id==25),"All four variants must use the requested heavy-impact group");
+            bool lethal=(bool)contactOwner.GetType().GetField("lethalImpact",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(contactOwner);
+            Assert.That(lethal,Is.EqualTo(id!=4 && id!=8 && id!=22 && id!=25 && id!=28),"All other classified active traps must kill on contact");
             int flames=child.GetComponentsInChildren(Runtime("BalloonDogFlameHazard"),true).Length;
             Assert.That(flames,Is.EqualTo(id==28 ? 1 : 0),"Every active flame variant must have lethal VFX contact");
             var profileType=Runtime("BalloonDogTrapPlacement");

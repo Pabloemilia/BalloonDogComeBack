@@ -62,8 +62,11 @@ public sealed class PlayerRunner : MonoBehaviour
 
         if (knockbackRemaining > 0f)
         {
-            velocity.z = -knockbackSpeed;
-            knockbackRemaining = Mathf.Max(0f, knockbackRemaining - Time.fixedDeltaTime);
+            // Clamp the final physics step so the requested recoil distance
+            // stays exact at any fixed-update frequency instead of overshooting.
+            float step = Mathf.Min(knockbackRemaining, Time.fixedDeltaTime);
+            velocity.z = -knockbackSpeed * step / Time.fixedDeltaTime;
+            knockbackRemaining = Mathf.Max(0f, knockbackRemaining - step);
         }
         else velocity.z = speed;
         playerRigidbody.linearVelocity = velocity;
@@ -78,6 +81,12 @@ public sealed class PlayerRunner : MonoBehaviour
         Vector3 velocity = playerRigidbody.linearVelocity;
         velocity.z = -knockbackSpeed;
         playerRigidbody.linearVelocity = velocity;
+    }
+
+    public void ApplyKnockbackDistance(float distance, float duration)
+    {
+        if (duration <= 0f || distance <= 0f) return;
+        ApplyKnockback(distance / duration, duration);
     }
 
 

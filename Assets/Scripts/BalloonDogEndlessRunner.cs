@@ -344,7 +344,7 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
     {
         var root=new GameObject("PooledTrap");root.transform.SetParent(parent,false);
         var contact=root.AddComponent<BalloonDogEndlessContact>();
-        if(artId==8 || artId==22) contact.ConfigureHeavyImpact();
+        contact.ConfigureObstacle(artId);
         var ownerBody=root.AddComponent<Rigidbody>();
         ownerBody.isKinematic=true;ownerBody.useGravity=false;
         root.name="PooledTrap_"+artId+"_V"+variant;
