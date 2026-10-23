@@ -17,6 +17,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
     private float nextRefreshTime;
     private static Sprite roundedUiSprite;
     private static Sprite coinIconSprite;
+    private static Sprite counterCoinIconSprite;
     private static Sprite gearIconSprite;
     private static Sprite marketIconSprite;
     private static Sprite skinsIconSprite;
@@ -256,7 +257,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             coinCard.anchoredPosition = new Vector2(18f, -14f);
             EnsurePillBackground(coinCard, new Color(0.91f, 0.86f, 0.63f, 0.96f), new Color(1f, 1f, 1f, 0.03f));
             BalloonDogMenuArtwork.Apply(coinCard, "coin_panel_background");
-            SetPillIcon(coinCard, GetCoinIconSprite(), Color.white, 62f, 44f);
+            SetPillIcon(coinCard, GetCounterCoinIconSprite(), Color.white, 62f, 44f);
             RectTransform icon = coinCard.Find("ThemePillIcon") as RectTransform;
             if (icon != null) icon.anchoredPosition = new Vector2(44f, 6f);
         }
@@ -434,7 +435,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
                 new Color(0.91f, 0.86f, 0.63f, 0.96f),
                 new Color(1f, 1f, 1f, 0.03f));
             BalloonDogMenuArtwork.Apply(coinCard, "coin_panel_background");
-            SetPillIcon(coinCard, GetCoinIconSprite(), Color.white, 44f, 34f);
+            SetPillIcon(coinCard, objectName == "MarketTokens" ? GetCounterCoinIconSprite() : GetCoinIconSprite(), Color.white, 44f, 34f);
         }
 
         if (coin == null)
@@ -1035,6 +1036,13 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
             if (icon != null)
             {
                 icon.SetParent(coins, false);
+                Image coinImage = icon.GetComponent<Image>();
+                if (coinImage != null)
+                {
+                    coinImage.sprite = GetCounterCoinIconSprite();
+                    coinImage.color = Color.white;
+                    coinImage.preserveAspect = true;
+                }
                 icon.anchorMin = icon.anchorMax = new Vector2(0f, .5f);
                 icon.anchoredPosition = new Vector2(42f, 0f);
                 icon.sizeDelta = new Vector2(44f, 44f);
@@ -1400,6 +1408,15 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         topRect.offsetMax = Vector2.zero;
     }
 
+
+    private static Sprite GetCounterCoinIconSprite()
+    {
+        // Match the supplied COINS card's ring-shaped gold logo in the two
+        // requested counters, reusing the existing transparent asset verbatim.
+        if (counterCoinIconSprite == null)
+            counterCoinIconSprite = Resources.Load<Sprite>("MarketUI/Extras/Icon_Coins");
+        return counterCoinIconSprite != null ? counterCoinIconSprite : GetCoinIconSprite();
+    }
 
     private static Sprite GetCoinIconSprite()
     {
