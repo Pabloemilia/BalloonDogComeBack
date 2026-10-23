@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,10 +14,14 @@ public sealed class BalloonDogEconomyTests
     private const string Gems = "BalloonDog.Gems";
     private const string Best = "BalloonDog.BestScore";
     private const string Reset = "BalloonDog.BestScore.EndlessEconomy.v1";
+    private const string CaseReset = "BalloonDog.Skins.CaseEconomy.v1";
+    private const string Cases = "BalloonDog.Cases.Opened.v1";
+    private const string LegacySelection = "BalloonDog.SelectedSkin.V5";
     private const BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Instance;
     private readonly Dictionary<string, int> savedInts = new Dictionary<string, int>();
     private readonly HashSet<string> presentKeys = new HashSet<string>();
     private string equipped;
+    private string legacySelection;
     private float previousTimeScale;
     private GameObject player;
     private GameObject host;
@@ -27,6 +32,8 @@ public sealed class BalloonDogEconomyTests
     private static Type Runtime(string name) => Type.GetType(name + ", Assembly-CSharp", true);
     private static object Economy(string method, params object[] args) => Runtime("BalloonDogEconomy").GetMethod(method).Invoke(null, args);
     private static int Balance(string property) => (int)Runtime("BalloonDogEconomy").GetProperty(property).GetValue(null);
+    private static Array Skins => (Array)Runtime("BalloonDogEconomy").GetProperty("Skins").GetValue(null);
+    private static string SkinId(object skin) => (string)skin.GetType().GetProperty("Id").GetValue(skin);
     private static object Call(Component target, string method, params object[] args) =>
         target.GetType().GetMethod(method, BindingFlags.Public | BindingFlags.Static | Private).Invoke(target, args);
     private static void Set(Component target, string field, object value) => target.GetType().GetField(field, Private).SetValue(target, value);
@@ -39,13 +46,19 @@ public sealed class BalloonDogEconomyTests
     [SetUp]
     public void SetUp()
     {
-        foreach (string key in new[] { Init, Coins, Gems, Best, Reset, "BalloonDog.Skin.Owned.classic" })
+        var keys = new HashSet<string> { Init, Coins, Gems, Best, Reset, CaseReset, Cases };
+        foreach (object skin in Skins) keys.Add("BalloonDog.Skin.Owned." + SkinId(skin));
+        foreach (string id in new[] { "mint", "sunset", "royal", "midnight", "candy" })
+            keys.Add("BalloonDog.Skin.Owned." + id);
+        foreach (string key in keys)
         {
             if (PlayerPrefs.HasKey(key)) presentKeys.Add(key);
             savedInts[key] = PlayerPrefs.GetInt(key, 0);
         }
         if (PlayerPrefs.HasKey("BalloonDog.Skin.Equipped")) presentKeys.Add("BalloonDog.Skin.Equipped");
         equipped = PlayerPrefs.GetString("BalloonDog.Skin.Equipped", "classic");
+        if (PlayerPrefs.HasKey(LegacySelection)) presentKeys.Add(LegacySelection);
+        legacySelection = PlayerPrefs.GetString(LegacySelection, string.Empty);
         previousTimeScale = Time.timeScale;
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         PlayerPrefs.SetInt(Init, 1);
@@ -53,6 +66,11 @@ public sealed class BalloonDogEconomyTests
         PlayerPrefs.SetInt(Gems, 0);
         PlayerPrefs.SetInt(Best, 0);
         PlayerPrefs.SetInt(Reset, 1);
+        PlayerPrefs.SetInt(CaseReset, 1);
+        PlayerPrefs.SetInt(Cases, 0);
+        foreach (object skin in Skins)
+            PlayerPrefs.SetInt("BalloonDog.Skin.Owned." + SkinId(skin), SkinId(skin) == "classic" ? 1 : 0);
+        PlayerPrefs.SetString("BalloonDog.Skin.Equipped", "classic");
         player = new GameObject("EconomyRunPlayer");
         score = player.AddComponent(Runtime("ScoreController"));
         Call(score, "Awake");
@@ -76,6 +94,8 @@ public sealed class BalloonDogEconomyTests
             else PlayerPrefs.DeleteKey(pair.Key);
         if (presentKeys.Contains("BalloonDog.Skin.Equipped")) PlayerPrefs.SetString("BalloonDog.Skin.Equipped", equipped);
         else PlayerPrefs.DeleteKey("BalloonDog.Skin.Equipped");
+        if (presentKeys.Contains(LegacySelection)) PlayerPrefs.SetString(LegacySelection, legacySelection);
+        else PlayerPrefs.DeleteKey(LegacySelection);
         PlayerPrefs.Save();
         savedInts.Clear();
         presentKeys.Clear();
@@ -203,6 +223,145 @@ public sealed class BalloonDogEconomyTests
         Call(manager, "SettleBeforeLeaving");
         Assert.That(Balance("Coins"), Is.EqualTo(100));
         Assert.That(Balance("Gems"), Is.Zero);
+    }
+
+    [TestCase(-1, 50)]
+    [TestCase(0, 50)]
+    [TestCase(1, 100)]
+    [TestCase(2, 150)]
+    [TestCase(10, 550)]
+    [TestCase(11, 600)]
+    [TestCase(12, 600)]
+    [TestCase(int.MaxValue, 600)]
+    public void CasePriceIncreasesByFiftyAndNeverExceedsSixHundred(int opened, int expected)
+    {
+        Assert.That((int)Economy("CalculateCasePrice", opened), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void CasesUnlockAllFifteenModelSkinsWithoutDuplicatesAndSaveTheNextPrice()
+    {
+        Economy("AddRewards", 10000, 5);
+        var seen = new HashSet<string>();
+        int spent = 0;
+        Assert.That(Skins.Length, Is.EqualTo(16), "One starter plus the fifteen scene model skins.");
+        for (int count = 0; count < Skins.Length - 1; count++)
+        {
+            int price = Math.Min(600, (count + 1) * 50);
+            Assert.That(Balance("CasePrice"), Is.EqualTo(price));
+            object[] args = { price, null };
+            Assert.That((bool)Economy("TryUnlockNextSkin", args), Is.True);
+            string id = SkinId(args[1]);
+            Assert.That(seen.Add(id), Is.True, "Each case must unlock a new model.");
+            Assert.That((bool)Economy("IsOwned", id), Is.True);
+            Assert.That(PlayerPrefs.GetString("BalloonDog.Skin.Equipped"), Is.EqualTo(id));
+            spent += price;
+            Assert.That(Balance("Coins"), Is.EqualTo(10000 - spent));
+            Assert.That(Balance("CasesOpened"), Is.EqualTo(count + 1));
+        }
+        Assert.That(spent, Is.EqualTo(5700));
+        Assert.That(Balance("Gems"), Is.EqualTo(5));
+        Assert.That(Balance("CasePrice"), Is.EqualTo(600));
+        object[] completed = { 600, null };
+        Assert.That((bool)Economy("TryUnlockNextSkin", completed), Is.False);
+        Assert.That(Balance("Coins"), Is.EqualTo(4300));
+        Assert.That(Balance("CasesOpened"), Is.EqualTo(15));
+    }
+
+    [Test]
+    public void InsufficientBalanceOrStalePriceNeverSpendsOrAdvancesTheCase()
+    {
+        Economy("AddCoins", 49);
+        object[] insufficient = { 50, null };
+        Assert.That((bool)Economy("TryUnlockNextSkin", insufficient), Is.False);
+        Economy("AddCoins", 951);
+        foreach (int quote in new[] { -1, 0, 49, 100 })
+        {
+            object[] invalid = { quote, null };
+            Assert.That((bool)Economy("TryUnlockNextSkin", invalid), Is.False);
+        }
+        Assert.That(Balance("Coins"), Is.EqualTo(1000));
+        Assert.That(Balance("CasesOpened"), Is.Zero);
+        object[] first = { 50, null };
+        Assert.That((bool)Economy("TryUnlockNextSkin", first), Is.True);
+        object[] stale = { 50, null };
+        Assert.That((bool)Economy("TryUnlockNextSkin", stale), Is.False);
+        Assert.That(Balance("Coins"), Is.EqualTo(950));
+        Assert.That(Balance("CasePrice"), Is.EqualTo(100));
+        Assert.That((bool)Economy("Equip", SkinId(Skins.GetValue(2))), Is.False, "Locked model selection stays blocked.");
+    }
+
+    [Test]
+    public void CollectionResetRunsOncePreservesWalletAndBestAndKeepsFutureUnlocks()
+    {
+        foreach (object skin in Skins) PlayerPrefs.SetInt("BalloonDog.Skin.Owned." + SkinId(skin), 1);
+        PlayerPrefs.SetInt("BalloonDog.Skin.Owned.mint", 1);
+        PlayerPrefs.SetInt(Coins, 1000);
+        PlayerPrefs.SetInt(Gems, 7);
+        PlayerPrefs.SetInt(Best, 1234);
+        PlayerPrefs.SetInt(Cases, 9);
+        PlayerPrefs.SetString("BalloonDog.Skin.Equipped", SkinId(Skins.GetValue(15)));
+        PlayerPrefs.SetString(LegacySelection, SkinId(Skins.GetValue(15)));
+        PlayerPrefs.DeleteKey(CaseReset);
+        Assert.That(Balance("CasePrice"), Is.EqualTo(50));
+        foreach (object skin in Skins)
+            Assert.That((bool)Economy("IsOwned", SkinId(skin)), Is.EqualTo(SkinId(skin) == "classic"));
+        Assert.That(PlayerPrefs.HasKey("BalloonDog.Skin.Owned.mint"), Is.False);
+        Assert.That(PlayerPrefs.HasKey(LegacySelection), Is.False);
+        Assert.That(PlayerPrefs.GetString("BalloonDog.Skin.Equipped"), Is.EqualTo("classic"));
+        Assert.That(Balance("Coins"), Is.EqualTo(1000));
+        Assert.That(Balance("Gems"), Is.EqualTo(7));
+        Assert.That(PlayerPrefs.GetInt(Best), Is.EqualTo(1234));
+        object[] opening = { 50, null };
+        Assert.That((bool)Economy("TryUnlockNextSkin", opening), Is.True);
+        Assert.That(Balance("CasePrice"), Is.EqualTo(100));
+        Assert.That((bool)Economy("IsOwned", SkinId(opening[1])), Is.True);
+        Assert.That(PlayerPrefs.GetString("BalloonDog.Skin.Equipped"), Is.EqualTo(SkinId(opening[1])));
+    }
+
+    [Test]
+    public void ModelSkinCatalogMatchesExistingPrefabsAndLockedSelectionCannotBypassCases()
+    {
+        Component switcher = player.AddComponent(Runtime("BalloonDogSkinSwitcher"));
+        GameObject starter = new GameObject("default");
+        starter.transform.SetParent(player.transform, false);
+        Set(switcher, "starterVisual", starter);
+        var prefabs = new List<GameObject>();
+        foreach (object skin in Skins)
+        {
+            string id = SkinId(skin);
+            if (id == "classic") continue;
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Skins/" + id + ".prefab");
+            Assert.That(prefab, Is.Not.Null, id);
+            prefabs.Add(prefab);
+        }
+        Set(switcher, "skinPrefabs", prefabs);
+        for (int i = 0; i < Skins.Length; i++)
+            Assert.That((string)Call(switcher, "EconomySkinId", i), Is.EqualTo(SkinId(Skins.GetValue(i))));
+        Call(switcher, "SelectSkin", 1);
+        Assert.That(PlayerPrefs.GetString("BalloonDog.Skin.Equipped"), Is.EqualTo("classic"));
+        Assert.That((int)switcher.GetType().GetProperty("CurrentSkinIndex").GetValue(switcher), Is.EqualTo(-1));
+        Assert.That(Balance("CasesOpened"), Is.Zero);
+    }
+
+    [Test]
+    public void CaseButtonShowsCoinLogoAndLivePriceOnTheMovingOrangeFace()
+    {
+        wallet = new GameObject("CasePriceUITest", typeof(RectTransform));
+        Component machine = wallet.AddComponent(Runtime("BalloonDogCaseOpening"));
+        Call(machine, "Build");
+        Call(machine, "OnEnable");
+        Transform price = wallet.transform.Find("CaseMachine/OpenCase/OrangeFace/CasePrice");
+        Assert.That(price, Is.Not.Null);
+        Assert.That(price.Find("CoinIcon").GetComponent<Image>().sprite,
+            Is.SameAs(Resources.Load<Sprite>("MarketUI/Extras/Icon_Coins")));
+        Type textType = Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro", true);
+        Component text = price.Find("Amount").GetComponent(textType);
+        Assert.That((string)textType.GetProperty("text").GetValue(text), Is.EqualTo("50"));
+        Economy("AddCoins", 1000);
+        object[] first = { 50, null };
+        Assert.That((bool)Economy("TryUnlockNextSkin", first), Is.True);
+        Assert.That((string)textType.GetProperty("text").GetValue(text), Is.EqualTo("100"));
     }
 
     [Test]

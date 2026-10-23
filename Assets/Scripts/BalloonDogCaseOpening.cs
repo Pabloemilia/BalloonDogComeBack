@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public sealed class BalloonDogCaseOpening : MonoBehaviour
 {
     private const string Art = "MarketUI/SkinCase/";
-    private const int Cost = 300;
+    private static int Cost => BalloonDogEconomy.CasePrice;
     private const float Step = 184f;
     private static readonly string[] Rarities = { "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY" };
     private readonly List<Sprite> ownedSprites = new List<Sprite>();
@@ -18,6 +18,8 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
     private RectTransform selector;
     private Button open;
     private TMP_Text status;
+    private TMP_Text priceLabel;
+    private int openingCost;
     private bool spinning;
     private bool built;
     private string resultMessage;
@@ -59,11 +61,15 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         open.navigation = new Navigation { mode = Navigation.Mode.None };
         open.transition = Selectable.Transition.None;
         open.onClick.AddListener(OpenCase);
-        TMP_Text openLabel = Label(faceRect, "OPEN CASE", new Vector2(0f, -20f),
-            new Vector2(650f, 150f), 70f);
-        ((BalloonDogCaseFaceButton)open).Configure(face, openLabel.rectTransform);
-        openLabel.outlineColor = new Color32(91, 35, 62, 255);
-        openLabel.outlineWidth = 0.18f;
+        RectTransform price = CreateRect("CasePrice", faceRect, new Vector2(0f, -20f), new Vector2(340f, 150f));
+        Image coin = Artwork(price, "CoinIcon", Resources.Load<Sprite>("MarketUI/Extras/Icon_Coins"),
+            new Vector2(-105f, 0f), new Vector2(90f, 90f));
+        coin.preserveAspect = true;
+        priceLabel = Label(price, Cost.ToString("N0"), new Vector2(50f, 0f), new Vector2(210f, 150f), 78f);
+        priceLabel.name = "Amount";
+        priceLabel.outlineColor = new Color32(91, 35, 62, 255);
+        priceLabel.outlineWidth = 0.18f;
+        ((BalloonDogCaseFaceButton)open).Configure(face, price);
         status = Label(machine, "", new Vector2(0f, -549f), new Vector2(780f, 59f), 25f);
         ShowIdle();
         Refresh();
@@ -71,6 +77,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
 
     private void OnEnable()
     {
+        BalloonDogEconomy.Changed -= Refresh;
         BalloonDogEconomy.Changed += Refresh;
         if (built) { resultMessage = null; ShowIdle(); Refresh(); }
     }
@@ -89,6 +96,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         if (!built || status == null || open == null) return;
         bool complete = BalloonDogEconomy.AllSkinsOwned;
         bool enough = BalloonDogEconomy.Coins >= Cost;
+        priceLabel.text = (spinning ? openingCost : Cost).ToString("N0");
         // Keep tactile feedback available even when no purchase is possible.
         // OpenCase separately guards ownership and coin balance before spending.
         open.interactable = !spinning;
@@ -136,6 +144,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
     {
         if (spinning || BalloonDogEconomy.AllSkinsOwned || BalloonDogEconomy.Coins < Cost) return;
         resultMessage = null;
+        openingCost = Cost;
         spinning = true;
         Refresh();
         StartCoroutine(Spin());
@@ -174,7 +183,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         }
         reel.anchoredPosition = new Vector2(-winningIndex * Step, 0f);
         bool sameReward = BalloonDogEconomy.PeekNextLockedSkin().Id == reward.Id;
-        if (sameReward && BalloonDogEconomy.TryUnlockNextSkin(Cost, out BalloonDogSkinDefinition unlocked))
+        if (sameReward && BalloonDogEconomy.TryUnlockNextSkin(openingCost, out BalloonDogSkinDefinition unlocked))
         {
             BalloonDogSkinSystem.ApplySelectedSkin();
             winningMark.text = "!";

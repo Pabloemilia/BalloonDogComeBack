@@ -20,7 +20,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         "__PauseButtonSettingsLayoutV2";
     private const string MasterVolumeKey = "BalloonDog.MasterVolume";
     private const string SoundPreferenceKey = "BalloonDog.SoundEnabled";
-    private const int WheelTokenCost = 300;
+    private static int WheelTokenCost => BalloonDogEconomy.CasePrice;
 
     private static readonly Color Ink = new Color(0.035f, 0.025f, 0.085f, 1f);
     private static readonly Color InkSoft = new Color(0.075f, 0.055f, 0.15f, 1f);
@@ -3361,6 +3361,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private IEnumerator AnimateWheelUnlock()
     {
+        int quotedCost = WheelTokenCost;
+        string expectedSkin = BalloonDogEconomy.PeekNextLockedSkin().Id;
         wheelSpinning = true;
         if (wheelButton != null)
         {
@@ -3406,7 +3408,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             caseSelectionFrame.localScale = Vector3.one;
         }
 
-        if (BalloonDogEconomy.TryUnlockNextSkin(WheelTokenCost, out BalloonDogSkinDefinition unlocked))
+        if (BalloonDogEconomy.PeekNextLockedSkin().Id == expectedSkin &&
+            BalloonDogEconomy.TryUnlockNextSkin(quotedCost, out BalloonDogSkinDefinition unlocked))
         {
             BalloonDogSkinSystem.ApplySelectedSkin();
             ShowToast(unlocked.DisplayName + " UNLOCKED + EQUIPPED");

@@ -63,6 +63,14 @@ public sealed class BalloonDogSkinSystem : MonoBehaviour
             return;
         }
 
+        BalloonDogSkinSwitcher switcher = player.GetComponent<BalloonDogSkinSwitcher>();
+        if (switcher != null)
+        {
+            switcher.ApplyEquippedSkin();
+            // Preserve each model skin's authored materials and multiple colors.
+            if (switcher.CurrentSkinIndex != 0) return;
+        }
+
         Transform modelRoot = FindChildRecursive(player.transform, "BalloonDogModel");
         if (modelRoot == null)
         {

@@ -64,18 +64,27 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
             return;
         }
 
-        int startIndex = 0;
-        if (rememberSelection && PlayerPrefs.HasKey(playerPrefsKey))
-        {
-            int savedIndex = FindSkinIndex(
-                PlayerPrefs.GetString(playerPrefsKey, string.Empty));
-            if (savedIndex >= 0)
-            {
-                startIndex = savedIndex;
-            }
-        }
+        ApplyEquippedSkin();
+    }
 
-        ApplySkinInternal(startIndex, false, true);
+    // The saved economy selection is authoritative, even when the legacy
+    // rememberSelection field is disabled in the scene.
+    public void ApplyEquippedSkin()
+    {
+        int index = FindSkinIndex(BalloonDogEconomy.EquippedSkinId);
+        if (!IsValidIndex(index) || !BalloonDogEconomy.IsOwned(EconomySkinId(index))) index = 0;
+        ApplySkinInternal(index, false, currentSkinIndex < 0);
+    }
+
+    private string EconomySkinId(int index)
+    {
+        if (!IsValidIndex(index)) return string.Empty;
+        if (HasStarterVisual && index == 0) return "classic";
+        string name = CleanSkinName(GetSkinName(index));
+        foreach (BalloonDogSkinDefinition skin in BalloonDogEconomy.Skins)
+            if (skin.Id != "classic" && string.Equals(CleanSkinName(skin.Id), name, StringComparison.OrdinalIgnoreCase))
+                return skin.Id;
+        return string.Empty;
     }
 
     private void LateUpdate()
@@ -89,6 +98,9 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
     // 0 = kirmizi default, 1 = Caramel, sonrasi diger prefablar.
     public void SelectSkin(int index)
     {
+        string id = EconomySkinId(index);
+        if (string.IsNullOrEmpty(id) || !BalloonDogEconomy.IsOwned(id)) return;
+        if (BalloonDogEconomy.EquippedSkinId != id) BalloonDogEconomy.Equip(id);
         ApplySkinInternal(index, true, false);
     }
 
@@ -101,7 +113,7 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
             return;
         }
 
-        ApplySkinInternal(index, true, false);
+        SelectSkin(index);
     }
 
     [ContextMenu("Sonraki Skin")]
@@ -112,26 +124,24 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
             return;
         }
 
-        int nextIndex = currentSkinIndex < 0
-            ? 0
-            : (currentSkinIndex + 1) % SkinCount;
-
-        ApplySkinInternal(nextIndex, true, false);
+        SelectOwnedSkin(1);
     }
 
     [ContextMenu("Onceki Skin")]
     public void PreviousSkin()
     {
-        if (SkinCount == 0)
+        SelectOwnedSkin(-1);
+    }
+
+    private void SelectOwnedSkin(int direction)
+    {
+        for (int step = 1; step <= SkinCount; step++)
         {
+            int index = (Mathf.Max(0, currentSkinIndex) + direction * step + SkinCount) % SkinCount;
+            if (!BalloonDogEconomy.IsOwned(EconomySkinId(index))) continue;
+            SelectSkin(index);
             return;
         }
-
-        int previousIndex = currentSkinIndex <= 0
-            ? SkinCount - 1
-            : currentSkinIndex - 1;
-
-        ApplySkinInternal(previousIndex, true, false);
     }
 
     [ContextMenu("Kayitli Secimi Sil ve Kirmizi Default'a Don")]
@@ -139,6 +149,7 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
     {
         PlayerPrefs.DeleteKey(playerPrefsKey);
         PlayerPrefs.Save();
+        BalloonDogEconomy.Equip("classic");
 
         if (Application.isPlaying && SkinCount > 0)
         {
@@ -513,7 +524,8 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
 
     private bool IsStarterName(string value)
     {
-        return string.Equals(value, StarterSavedId, StringComparison.OrdinalIgnoreCase) ||
+        return string.Equals(value, "classic", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(value, StarterSavedId, StringComparison.OrdinalIgnoreCase) ||
                string.Equals(value, "default", StringComparison.OrdinalIgnoreCase) ||
                string.Equals(value, "starter", StringComparison.OrdinalIgnoreCase) ||
                string.Equals(value, "baslangic", StringComparison.OrdinalIgnoreCase) ||
