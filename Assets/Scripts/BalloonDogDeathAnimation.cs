@@ -20,11 +20,20 @@ public sealed class BalloonDogDeathAnimation : MonoBehaviour
         public Quaternion rotation;
         public float size, spin;
     }
+    private sealed class AirPuff
+    {
+        public Transform transform;
+        public MeshRenderer renderer;
+        public MaterialPropertyBlock properties;
+        public Vector3 velocity;
+        public float size, opacity;
+    }
     private readonly List<HiddenVisual> originals = new List<HiddenVisual>();
     private readonly List<Fragment> fragments = new List<Fragment>();
+    private readonly List<AirPuff> airPuffs = new List<AirPuff>();
     private readonly List<Mesh> ownedMeshes = new List<Mesh>();
     private Transform effects, pose;
-    private Material fragmentMaterial;
+    private Material fragmentMaterial, airMaterial;
     private Action completed;
     private Bounds bounds;
     private Color color;
@@ -115,6 +124,13 @@ public sealed class BalloonDogDeathAnimation : MonoBehaviour
                 fragment.transform.localRotation = Quaternion.AngleAxis(fragment.spin * age, fragment.axis) * fragment.rotation;
                 fragment.transform.localScale = Vector3.one * (fragment.size * Mathf.Sqrt(remaining));
             }
+            foreach (AirPuff puff in airPuffs)
+            {
+                puff.transform.localPosition = puff.velocity * age;
+                puff.transform.localScale = Vector3.one * (puff.size * Mathf.Lerp(.3f, 1.5f, 1f - remaining));
+                puff.properties.SetColor("_BaseColor", new Color(.88f, .97f, 1f, puff.opacity * remaining * remaining));
+                puff.renderer.SetPropertyBlock(puff.properties);
+            }
         }
         if (elapsed >= Duration) Finish();
     }
@@ -124,6 +140,7 @@ public sealed class BalloonDogDeathAnimation : MonoBehaviour
         popped = true;
         pose.gameObject.SetActive(false);
         GameAudioController.PlayDeath();
+        CreateAirPuffs();
         Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
         if (shader == null) return;
         fragmentMaterial = new Material(shader) { name = "TransientBalloonFragments" };
@@ -165,6 +182,53 @@ public sealed class BalloonDogDeathAnimation : MonoBehaviour
         }
     }
 
+    private void CreateAirPuffs()
+    {
+        // A Resources reference keeps the transparent shader in mobile builds.
+        Shader shader = Resources.Load<Shader>("BalloonDogAirPuff");
+        if (shader == null) return;
+        airMaterial = new Material(shader) { name = "TransientBalloonAir" };
+        var mesh = new Mesh { name = "BalloonAirQuad" };
+        mesh.vertices = new[]
+        {
+            new Vector3(-.5f, -.5f, 0f), new Vector3(.5f, -.5f, 0f),
+            new Vector3(.5f, .5f, 0f), new Vector3(-.5f, .5f, 0f)
+        };
+        mesh.uv = new[] { Vector2.zero, Vector2.right, Vector2.one, Vector2.up };
+        mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+        mesh.RecalculateBounds();
+        ownedMeshes.Add(mesh);
+        Camera camera = Camera.main;
+        Quaternion facing = camera != null ? camera.transform.rotation : Quaternion.identity;
+        float size = Mathf.Clamp(bounds.size.magnitude, .5f, 3f);
+        // Six small wisps and one hollow ring leave the fragments visible through the air.
+        for (int i = 0; i < 7; i++)
+        {
+            bool ring = i == 6;
+            var cloud = new GameObject("BalloonAirPuff_" + i, typeof(MeshFilter), typeof(MeshRenderer));
+            cloud.layer = originals[0].renderer != null ? originals[0].renderer.gameObject.layer : 0;
+            cloud.transform.SetParent(effects, false);
+            cloud.transform.rotation = facing;
+            cloud.GetComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = cloud.GetComponent<MeshRenderer>();
+            renderer.sharedMaterial = airMaterial;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            var properties = new MaterialPropertyBlock();
+            properties.SetFloat("_Ring", ring ? 1f : 0f);
+            float angle = i * Mathf.PI * 2f / 6f + .2f;
+            airPuffs.Add(new AirPuff
+            {
+                transform = cloud.transform,
+                renderer = renderer,
+                properties = properties,
+                velocity = ring ? Vector3.zero : facing * new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * (size * .85f),
+                size = size * (ring ? 1.1f : .36f),
+                opacity = ring ? .28f : .38f
+            });
+        }
+    }
+
     public void Finish()
     {
         if (!IsPlaying) return;
@@ -190,10 +254,13 @@ public sealed class BalloonDogDeathAnimation : MonoBehaviour
         if (effects != null) { effects.gameObject.SetActive(false); Dispose(effects.gameObject); }
         effects = pose = null;
         fragments.Clear();
+        airPuffs.Clear();
         foreach (Mesh mesh in ownedMeshes) Dispose(mesh);
         ownedMeshes.Clear();
         if (fragmentMaterial != null) Dispose(fragmentMaterial);
         fragmentMaterial = null;
+        if (airMaterial != null) Dispose(airMaterial);
+        airMaterial = null;
     }
 
     private static void Dispose(UnityEngine.Object value)
