@@ -142,7 +142,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private bool economySubscribed;
     private bool menuLaunchInProgress;
     public bool IsReady { get; private set; }
-    public int PreparedSceneHandle { get; private set; } = -1;
+    // Keep the Scene itself: current Unity versions forbid implicit
+    // conversions between their typed SceneHandle and int.
+    public Scene PreparedScene { get; private set; }
 
     private static Sprite roundedSprite;
     private static Sprite circleSprite;
@@ -196,7 +198,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private IEnumerator RebuildForCurrentScene()
     {
         IsReady = false;
-        PreparedSceneHandle = -1;
+        PreparedScene = default;
         // The lightweight boot scene has no game UI to construct.
         if (FindAnyObjectByType<PlayerRunner>() == null) yield break;
         if (gameManager != null)
@@ -249,7 +251,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
 
         rebuildRoutine = null;
-        PreparedSceneHandle = SceneManager.GetActiveScene().handle;
+        PreparedScene = SceneManager.GetActiveScene();
         IsReady = true;
     }
 

@@ -155,7 +155,7 @@ public sealed class BalloonDogSceneFlow : MonoBehaviour
             var course = FindAnyObjectByType<BalloonDogEndlessRunner>();
             var ui = FindAnyObjectByType<BalloonDogModernUI>();
             bool uiReady = ui != null && ui.IsReady &&
-                           ui.PreparedSceneHandle == SceneManager.GetActiveScene().handle;
+                           ui.PreparedScene == SceneManager.GetActiveScene();
             bool courseReady = course != null && course.IsInitialized;
             if (reportProgress)
                 SetProgress(PreparationProgress(course != null ? course.InitializationProgress : 0f, uiReady));

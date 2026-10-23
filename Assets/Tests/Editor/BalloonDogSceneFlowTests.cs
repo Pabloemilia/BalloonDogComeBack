@@ -86,6 +86,8 @@ public sealed class BalloonDogSceneFlowTests
                 Assert.That((bool)course.GetType().GetProperty("IsInitialized").GetValue(course), Is.True);
                 Component ui = UnityEngine.Object.FindAnyObjectByType(Runtime("BalloonDogModernUI")) as Component;
                 Assert.That((bool)ui.GetType().GetProperty("IsReady").GetValue(ui), Is.True);
+                Assert.That((Scene)ui.GetType().GetProperty("PreparedScene").GetValue(ui),
+                    Is.EqualTo(SceneManager.GetActiveScene()));
             }
             yield return null;
         }
@@ -112,14 +114,14 @@ public sealed class BalloonDogSceneFlowTests
         float alpha = (float)flow.GetType().GetProperty("CoverAlpha").GetValue(flow);
         Assert.That(Busy, Is.True);
         Assert.That(alpha, Is.LessThan(1f), "The first frame must start a fade, not jump straight to black.");
-        Assert.That(SceneManager.GetActiveScene().handle, Is.EqualTo(original.handle));
+        Assert.That(SceneManager.GetActiveScene(), Is.EqualTo(original));
         Call(manager.GetType(), manager, "ReturnToMainMenu"); // Repeated input is ignored.
         bool observedBlack = false;
         for (int frame = 0; frame < 1200 && Busy; frame++)
         {
             alpha = (float)flow.GetType().GetProperty("CoverAlpha").GetValue(flow);
             observedBlack |= alpha >= .999f;
-            if (SceneManager.GetActiveScene().handle == original.handle)
+            if (SceneManager.GetActiveScene() == original)
                 Assert.That(Time.timeScale, Is.Zero);
             else
             {
@@ -133,7 +135,7 @@ public sealed class BalloonDogSceneFlowTests
         }
         Assert.That(Busy, Is.False);
         Assert.That(observedBlack, Is.True);
-        Assert.That(SceneManager.GetActiveScene().handle, Is.Not.EqualTo(original.handle));
+        Assert.That(SceneManager.GetActiveScene(), Is.Not.EqualTo(original));
         Assert.That(GameObject.Find("ModernMainScreen"), Is.Not.Null);
         Assert.That(UnityEngine.Object.FindObjectsByType(Runtime("BalloonDogSceneFlow"), FindObjectsSortMode.None).Length, Is.EqualTo(1));
         Assert.That((bool)Runtime("MainMenuController").GetProperty("StartImmediatelyOnNextSceneLoad").GetValue(null), Is.False);
@@ -153,7 +155,7 @@ public sealed class BalloonDogSceneFlowTests
         bool observedPreparedReplay = false;
         for (int frame = 0; frame < 1200 && Busy; frame++)
         {
-            if (SceneManager.GetActiveScene().handle != original.handle)
+            if (SceneManager.GetActiveScene() != original)
             {
                 observedPreparedReplay = true;
                 Component countdown = UnityEngine.Object.FindAnyObjectByType(Runtime("StartCountdownController")) as Component;
