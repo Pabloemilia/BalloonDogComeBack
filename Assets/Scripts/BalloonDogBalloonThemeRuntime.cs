@@ -246,41 +246,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
     private void FixCoinAndSettings()
     {
-        RectTransform coinCard = FindRect("MainTokens");
-        TMP_Text coin = FindComponent<TMP_Text>("MainTokens");
-        if (coinCard != null)
-        {
-            coinCard.anchorMin = new Vector2(0f, 1f);
-            coinCard.anchorMax = new Vector2(0f, 1f);
-            coinCard.pivot = new Vector2(0f, 1f);
-            coinCard.sizeDelta = new Vector2(290f, 96f);
-            coinCard.anchoredPosition = new Vector2(18f, -14f);
-            EnsurePillBackground(coinCard, new Color(0.91f, 0.86f, 0.63f, 0.96f), new Color(1f, 1f, 1f, 0.03f));
-            BalloonDogMenuArtwork.Apply(coinCard, "coin_panel_background");
-            SetPillIcon(coinCard, GetCounterCoinIconSprite(), Color.white, 62f, 44f);
-            RectTransform icon = coinCard.Find("ThemePillIcon") as RectTransform;
-            if (icon != null) icon.anchoredPosition = new Vector2(44f, 6f);
-        }
-
-        if (coin != null)
-        {
-            coin.text = BalloonDogEconomy.Coins.ToString("N0");
-            coin.fontSize = 46f;
-            coin.fontSizeMin = 20f;
-            coin.fontSizeMax = 46f;
-            coin.fontStyle = FontStyles.Normal;
-            coin.fontWeight = FontWeight.Bold;
-            coin.alignment = TextAlignmentOptions.MidlineLeft;
-            coin.color = new Color(0.32f, 0.18f, 0.02f, 1f);
-            coin.enableWordWrapping = false;
-            ApplySmoothLowPolyText(coin, 1.2f);
-            RectTransform labelRect = coin.rectTransform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = new Vector2(88f, 18f);
-            labelRect.offsetMax = new Vector2(-18f, -6f);
-            coin.margin = Vector4.zero;
-        }
+        StyleWalletCounter(FindRect("MainTokens"), FindComponent<TMP_Text>("MainTokens"), false);
 
         RectTransform settings = FindRect("MainSettingsButton");
         if (settings != null)
@@ -316,6 +282,8 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         StyleSecondaryCoin("SettingsTokens");
         StyleSecondaryCoin("SkinsTokens");
         StyleSecondaryCoin("MarketTokens");
+        StyleGemCounter("MainGems");
+        StyleGemCounter("MarketGems");
 
         StyleSecondaryTopButton("SettingsTopButton", true);
         StyleSecondaryTopButton("SkinsTopButton", false);
@@ -423,6 +391,11 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
     {
         RectTransform coinCard = FindRect(objectName);
         TMP_Text coin = FindComponent<TMP_Text>(objectName);
+        if (objectName == "MarketTokens")
+        {
+            StyleWalletCounter(coinCard, coin, false);
+            return;
+        }
         if (coinCard != null)
         {
             coinCard.anchorMin = new Vector2(0f, 1f);
@@ -458,6 +431,43 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         labelRect.offsetMin = Vector2.zero;
         labelRect.offsetMax = Vector2.zero;
         coin.margin = new Vector4(76f, 0f, 18f, 0f);
+    }
+
+    private static void StyleGemCounter(string name)
+    {
+        StyleWalletCounter(FindRect(name), FindComponent<TMP_Text>(name), true);
+    }
+
+    /// <summary>Identical readable coin/gem counters on main and market screens.</summary>
+    public static void StyleWalletCounter(RectTransform card, TMP_Text label, bool gems)
+    {
+        if (card == null) return;
+        card.anchorMin = card.anchorMax = new Vector2(0f, 1f);
+        card.pivot = new Vector2(0f, 1f);
+        card.anchoredPosition = new Vector2(gems ? 326f : 18f, -14f);
+        card.sizeDelta = new Vector2(290f, 96f);
+        EnsurePillBackground(card, Color.white, new Color(1f, 1f, 1f, .03f));
+        BalloonDogMenuArtwork.Apply(card, "coin_panel_background");
+        Sprite icon = gems ? Resources.Load<Sprite>("MarketUI/Extras/Icon_Gems") : GetCounterCoinIconSprite();
+        SetPillIcon(card, icon, Color.white, 62f, 44f);
+        Transform iconTransform = card.Find("ThemePillIcon");
+        if (iconTransform != null) ((RectTransform)iconTransform).anchoredPosition = new Vector2(44f, 6f);
+        if (label == null) return;
+        label.text = (gems ? BalloonDogEconomy.Gems : BalloonDogEconomy.Coins).ToString("N0");
+        label.enableAutoSizing = true;
+        label.fontSize = label.fontSizeMax = 46f;
+        label.fontSizeMin = 20f;
+        label.fontStyle = FontStyles.Normal;
+        label.fontWeight = FontWeight.Bold;
+        label.alignment = TextAlignmentOptions.MidlineLeft;
+        label.color = gems ? new Color(.02f, .22f, .45f) : new Color(.32f, .18f, .02f);
+        label.textWrappingMode = TextWrappingModes.NoWrap;
+        ApplySmoothLowPolyText(label, 1.2f);
+        label.margin = Vector4.zero;
+        label.rectTransform.anchorMin = Vector2.zero;
+        label.rectTransform.anchorMax = Vector2.one;
+        label.rectTransform.offsetMin = new Vector2(88f, 18f);
+        label.rectTransform.offsetMax = new Vector2(-18f, -6f);
     }
 
     private static void StyleSecondaryTopButton(string objectName, bool closeButton)
@@ -1046,6 +1056,29 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
                 icon.anchorMin = icon.anchorMax = new Vector2(0f, .5f);
                 icon.anchoredPosition = new Vector2(42f, 0f);
                 icon.sizeDelta = new Vector2(44f, 44f);
+            }
+            RectTransform gems = root.Find("Gems") as RectTransform;
+            if (gems == null)
+            {
+                gems = Object.Instantiate(coins, root, false);
+                gems.name = "Gems";
+            }
+            gems.anchorMin = gems.anchorMax = new Vector2(0f, 1f);
+            gems.pivot = new Vector2(0f, 1f);
+            gems.anchoredPosition = new Vector2(326f, -14f);
+            gems.sizeDelta = coins.sizeDelta;
+            Text gemLabel = gems.GetComponentInChildren<Text>(true);
+            if (gemLabel != null)
+            {
+                gemLabel.name = "GemsLabel";
+                gemLabel.text = BalloonDogEconomy.Gems.ToString("N0");
+            }
+            Transform gemIcon = gems.Find("CoinIcon") ?? gems.Find("GemIcon");
+            if (gemIcon != null)
+            {
+                gemIcon.name = "GemIcon";
+                gemIcon.GetComponent<Image>().sprite = Resources.Load<Sprite>("MarketUI/Extras/Icon_Gems");
+                gemIcon.GetComponent<Image>().color = Color.white;
             }
         }
         RectTransform settings = root.Find("Settings") as RectTransform;

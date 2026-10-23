@@ -5,6 +5,7 @@ using UnityEngine;
 public sealed class GameManager : MonoBehaviour
 {
     public const string BestScorePreferenceKey = "BalloonDog.BestScore";
+    private const string EndlessBestResetKey = "BalloonDog.BestScore.EndlessEconomy.v1";
 
     [Header("Optional UI References")]
     [SerializeField] private GameObject endPanel;
@@ -13,14 +14,34 @@ public sealed class GameManager : MonoBehaviour
 
     private bool isGameOver;
     private BalloonDogContinuePrompt continuePrompt;
+    private bool runStarted;
+    private bool rewardsSettled;
+    private bool doubleRewardClaimed;
     public bool IsContinuePending { get; private set; }
     public bool IsResultFinalized => isGameOver && !IsContinuePending;
 
     public static GameManager Instance { get; private set; }
-    public static int BestScore => PlayerPrefs.GetInt(BestScorePreferenceKey, 0);
+    public static int BestScore
+    {
+        get
+        {
+            // Reset the prototype record once, never on every launch or replay.
+            if (PlayerPrefs.GetInt(EndlessBestResetKey, 0) != 1)
+            {
+                PlayerPrefs.SetInt(BestScorePreferenceKey, 0);
+                PlayerPrefs.SetInt(EndlessBestResetKey, 1);
+                PlayerPrefs.Save();
+            }
+            return Mathf.Max(0, PlayerPrefs.GetInt(BestScorePreferenceKey, 0));
+        }
+    }
     public bool IsGameOver => isGameOver;
     public bool LastRunCompleted { get; private set; }
     public int LastScore { get; private set; }
+    public double LastDistance { get; private set; }
+    public int LastCoinsReward { get; private set; }
+    public int LastGemsReward { get; private set; }
+    public bool IsDoubleRewardClaimed => doubleRewardClaimed;
     public string LastEndReason { get; private set; } = string.Empty;
     public string LastEndTitle { get; private set; } = string.Empty;
     public string LastEndSummary { get; private set; } = string.Empty;
@@ -67,12 +88,11 @@ public sealed class GameManager : MonoBehaviour
         }
 
         isGameOver = true;
-        int score = ResolveCurrentScore();
+        SnapshotRun();
         LastRunCompleted = false;
-        LastScore = score;
         LastEndReason = reason;
         LastEndTitle = "GAME OVER";
-        LastEndSummary = $"{reason}\nScore: {score}\nBest: {BestScore}";
+        LastEndSummary = $"{reason}\nScore: {LastScore}\nBest: {BestScore}";
         IsContinuePending = true;
         Time.timeScale = 0f;
         CameraShakeController.ShakeGlobal(0.32f, 0.18f);
@@ -92,6 +112,7 @@ public sealed class GameManager : MonoBehaviour
         IsContinuePending = false;
         if (continuePrompt != null) continuePrompt.Close();
         SaveBestScore(LastScore);
+        SettleRunRewards();
         LastEndSummary = $"{LastEndReason}\nScore: {LastScore}\nBest: {BestScore}";
         ShowEndPanel(LastEndTitle, LastEndSummary);
         Time.timeScale = 0f;
@@ -116,18 +137,49 @@ public sealed class GameManager : MonoBehaviour
 
     public void RestartGame()
     {
+        SettleBeforeLeaving();
         BalloonDogSceneFlow.ReloadGame(true);
     }
 
     public void ReturnToMainMenu()
     {
+        SettleBeforeLeaving();
         BalloonDogSceneFlow.ReloadGame(false);
     }
 
-    private int ResolveCurrentScore()
+    public void BeginRun() => runStarted = true;
+
+    private void SnapshotRun()
     {
         ScoreController scoreController = FindAnyObjectByType<ScoreController>();
-        return scoreController != null ? scoreController.CurrentScore : 0;
+        LastScore = scoreController != null ? scoreController.CurrentScore : 0;
+        LastDistance = scoreController != null ? scoreController.DistanceTravelled : 0d;
+    }
+
+    private void SettleRunRewards()
+    {
+        if (rewardsSettled) return;
+        rewardsSettled = true;
+        LastCoinsReward = BalloonDogEconomy.CalculateRunCoins(LastDistance);
+        LastGemsReward = BalloonDogEconomy.CalculateRunGems(LastDistance);
+        BalloonDogEconomy.AddRewards(LastCoinsReward, LastGemsReward);
+    }
+
+    private void SettleBeforeLeaving()
+    {
+        if (rewardsSettled || !runStarted && !isGameOver) return;
+        if (!isGameOver) SnapshotRun();
+        SaveBestScore(LastScore);
+        SettleRunRewards();
+    }
+
+    public bool TryClaimDoubleRunReward()
+    {
+        if (!IsResultFinalized || !rewardsSettled || doubleRewardClaimed
+            || LastCoinsReward == 0 && LastGemsReward == 0) return false;
+        doubleRewardClaimed = true;
+        BalloonDogEconomy.AddRewards(LastCoinsReward, LastGemsReward);
+        return true;
     }
 
     private static void SaveBestScore(int score)

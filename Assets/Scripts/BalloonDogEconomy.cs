@@ -26,13 +26,15 @@ public readonly struct BalloonDogSkinDefinition
 }
 
 /// <summary>
-/// Keeps the prototype economy deliberately local and deterministic.
-/// Coins, ownership and the equipped skin are stored with PlayerPrefs.
+/// Local persistent coins, gems, ownership and equipped skin.
 /// </summary>
 public static class BalloonDogEconomy
 {
     private const string InitializedKey = "BalloonDog.Economy.Initialized";
     private const string CoinsKey = "BalloonDog.Coins";
+    private const string GemsKey = "BalloonDog.Gems";
+    public const double MetresPerCoin = 10d;
+    public const double MetresPerGem = 500d;
     private const string EquippedSkinKey = "BalloonDog.Skin.Equipped";
     private const string OwnedSkinPrefix = "BalloonDog.Skin.Owned.";
 
@@ -73,8 +75,13 @@ public static class BalloonDogEconomy
         get
         {
             EnsureInitialized();
-            return PlayerPrefs.GetInt(CoinsKey, 0);
+            return Mathf.Max(0, PlayerPrefs.GetInt(CoinsKey, 0));
         }
+    }
+
+    public static int Gems
+    {
+        get { EnsureInitialized(); return Mathf.Max(0, PlayerPrefs.GetInt(GemsKey, 0)); }
     }
 
     public static string EquippedSkinId
@@ -208,21 +215,42 @@ public static class BalloonDogEconomy
 
     public static void AddCoins(int amount)
     {
-        EnsureInitialized();
-        if (amount <= 0)
-        {
-            return;
-        }
+        AddRewards(amount, 0);
+    }
 
-        PlayerPrefs.SetInt(CoinsKey, Mathf.Max(0, Coins + amount));
+    public static void AddGems(int amount) => AddRewards(0, amount);
+
+    public static void AddRewards(int coins, int gems)
+    {
+        EnsureInitialized();
+        coins = Mathf.Max(0, coins);
+        gems = Mathf.Max(0, gems);
+        if (coins == 0 && gems == 0) return;
+        PlayerPrefs.SetInt(CoinsKey, (int)Math.Min(int.MaxValue, (long)Coins + coins));
+        PlayerPrefs.SetInt(GemsKey, (int)Math.Min(int.MaxValue, (long)Gems + gems));
         PlayerPrefs.Save();
         Changed?.Invoke();
     }
 
-    public static int CalculateRunReward(int score, bool completed)
+    public static bool TrySpendCoins(int amount) => TrySpend(CoinsKey, Coins, amount);
+    public static bool TrySpendGems(int amount) => TrySpend(GemsKey, Gems, amount);
+
+    private static bool TrySpend(string key, int balance, int amount)
     {
-        int distanceReward = Mathf.Clamp(Mathf.RoundToInt(score / 45f), 20, 180);
-        return distanceReward + (completed ? 75 : 0);
+        if (amount < 0 || amount > balance) return false;
+        if (amount == 0) return true;
+        PlayerPrefs.SetInt(key, balance - amount);
+        PlayerPrefs.Save();
+        Changed?.Invoke();
+        return true;
+    }
+
+    public static int CalculateRunCoins(double metres) => DistanceReward(metres, MetresPerCoin);
+    public static int CalculateRunGems(double metres) => DistanceReward(metres, MetresPerGem);
+    private static int DistanceReward(double metres, double interval)
+    {
+        if (double.IsNaN(metres) || double.IsInfinity(metres) || metres <= 0d) return 0;
+        return (int)Math.Min(int.MaxValue, Math.Floor(metres / interval));
     }
 
     private static void EnsureInitialized()
@@ -233,9 +261,10 @@ public static class BalloonDogEconomy
         }
 
         PlayerPrefs.SetInt(InitializedKey, 1);
-        PlayerPrefs.SetInt(CoinsKey, 500);
+        if (!PlayerPrefs.HasKey(CoinsKey)) PlayerPrefs.SetInt(CoinsKey, 0);
+        if (!PlayerPrefs.HasKey(GemsKey)) PlayerPrefs.SetInt(GemsKey, 0);
         PlayerPrefs.SetInt(OwnedSkinPrefix + "classic", 1);
-        PlayerPrefs.SetString(EquippedSkinKey, "classic");
+        if (!PlayerPrefs.HasKey(EquippedSkinKey)) PlayerPrefs.SetString(EquippedSkinKey, "classic");
         PlayerPrefs.Save();
     }
 }

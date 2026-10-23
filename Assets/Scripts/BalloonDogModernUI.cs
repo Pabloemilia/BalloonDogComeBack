@@ -122,6 +122,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private Button collectionNextButton;
     private readonly List<Image> menuPreviewParts = new List<Image>();
     private int lastKnownCoins = -1;
+    private int lastKnownGems = -1;
     private string lastKnownSkin = string.Empty;
     private Button resultBonusButton;
     private TMP_Text resultBonusHint;
@@ -132,6 +133,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         new System.Collections.Concurrent.ConcurrentQueue<System.Action>();
     private bool resultRewardGranted;
     private int lastRunReward;
+    private int lastRunGems;
+    private TMP_Text resultGemRewardText;
+    private bool gemAdPending;
+    private int gemAdGeneration;
     private RectTransform wheelTransform;
     private Button wheelButton;
     private RectTransform caseSelectionFrame;
@@ -311,9 +316,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         pauseAnimator = null;
         toastTimer = 0f;
         lastKnownCoins = -1;
+        lastKnownGems = -1;
         lastKnownSkin = string.Empty;
         resultRewardGranted = false;
         lastRunReward = 0;
+        lastRunGems = 0;
+        resultGemRewardText = null;
+        gemAdPending = false;
+        gemAdGeneration++;
     }
 
     private void Update()
@@ -342,8 +352,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
 
         int coins = BalloonDogEconomy.Coins;
+        int gems = BalloonDogEconomy.Gems;
         string skinId = BalloonDogEconomy.EquippedSkinId;
-        if (coins != lastKnownCoins || skinId != lastKnownSkin)
+        if (coins != lastKnownCoins || gems != lastKnownGems || skinId != lastKnownSkin)
         {
             RefreshPersistentViews();
         }
@@ -454,6 +465,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Vector2(290f, 92f),
             new Color(0.25f, 0.03f, 0.67f, 0.95f),
             Gold);
+        BalloonDogBalloonThemeRuntime.StyleWalletCounter((RectTransform)coinText.transform.parent, coinText, false);
+        CreateGemCounter(mainScreen.transform, "MainGems");
 
         CreateButton(
             mainScreen.transform,
@@ -990,7 +1003,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         if (cardResource == "Card_Coins" || cardResource == "Card_Gems")
             cardButton.onClick.AddListener(() => ShowCurrencyPacks(cardResource == "Card_Gems"));
         else if (isWatchAd)
-            cardButton.onClick.AddListener(() => ShowToast("REWARDED AD NOT AVAILABLE YET"));
+            cardButton.onClick.AddListener(WatchAdForGems);
         else
             cardButton.onClick.AddListener(
                 () => ShowToast(title + " PURCHASE COMING SOON"));
@@ -1711,12 +1724,19 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultRewardText = CreateResultStatCard(
             content,
             "ResultTokenCard",
-            "•  TOKENS  •",
+            "•  COINS  •",
             new Vector2(0f, -80f),
-            "CustomCoin",
+            "MarketUI/Extras/Icon_Coins",
             true,
             new Color(0.32f, 0.84f, 1f, 1f),
             new Color(0.02f, 0.80f, 1f, 1f));
+        resultGemRewardText = CreatePauseText(
+            resultRewardText.transform.parent, "RunGemReward", "+0 GEMS",
+            new Vector2(0f, -122f), new Vector2(540f, 45f), 30f,
+            Color.white, TextAlignmentOptions.Center);
+        Image gemRewardIcon = CreateResourceImage(resultGemRewardText.transform,
+            "GemIcon", "MarketUI/Extras/Icon_Gems", new Vector2(-150f, 0f), new Vector2(44f, 44f));
+        gemRewardIcon.preserveAspect = true;
         resultBestText = CreateResultStatCard(
             content,
             "ResultBestCard",
@@ -1923,10 +1943,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 resultBonusPending = false;
                 if (success)
                 {
-                    resultBonusClaimed = true;
-                    BalloonDogEconomy.AddCoins(lastRunReward);
-                    resultRewardText.text = "+" + (lastRunReward * 2).ToString("N0");
-                    if (resultBonusHint != null) resultBonusHint.text = "2X REWARD CLAIMED";
+                    resultBonusClaimed = gameManager != null && gameManager.TryClaimDoubleRunReward();
+                    RefreshResultRewardValues();
+                    if (resultBonusHint != null) resultBonusHint.text = resultBonusClaimed ? "2X REWARD CLAIMED" : "REWARD ALREADY CLAIMED";
                 }
                 else
                 {
@@ -2753,14 +2772,20 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void CreateTopBar(Transform parent, string screenName, UnityAction rightAction)
     {
-        CreatePillText(
+        TMP_Text counter = CreatePillText(
             parent,
             screenName + "Tokens",
             BalloonDogEconomy.Coins.ToString("N0"),
             new Vector2(-365f, 1030f),
             new Vector2(290f, 92f),
             MenuCream,
-            new Color(0.31f, 0.18f, 0.02f, 1f)).gameObject.AddComponent<BalloonDogCoinLabel>();
+            new Color(0.31f, 0.18f, 0.02f, 1f));
+        counter.gameObject.AddComponent<BalloonDogCoinLabel>();
+        if (screenName == "Market")
+        {
+            BalloonDogBalloonThemeRuntime.StyleWalletCounter((RectTransform)counter.transform.parent, counter, false);
+            CreateGemCounter(parent, "MarketGems");
+        }
 
         CreateButton(
             parent,
@@ -2772,6 +2797,14 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             Color.white,
             rightAction,
             46f);
+    }
+
+    private void CreateGemCounter(Transform parent, string name)
+    {
+        TMP_Text label = CreatePillText(parent, name, BalloonDogEconomy.Gems.ToString("N0"),
+            Vector2.zero, new Vector2(290f, 96f), Color.white);
+        label.gameObject.AddComponent<BalloonDogGemLabel>();
+        BalloonDogBalloonThemeRuntime.StyleWalletCounter((RectTransform)label.transform.parent, label, true);
     }
 
     private static void CreateRibbon(Transform parent, string title, Vector2 position)
@@ -2920,6 +2953,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultRewardGranted = false;
         lastRunReward = 0;
         pauseActionInProgress = false;
+        lastRunGems = 0;
         GameAudioController.SetPaused(false);
         HideAllScreens();
         gameplayOverlay.SetActive(true);
@@ -3225,11 +3259,15 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         if (!resultRewardGranted)
         {
-            lastRunReward = BalloonDogEconomy.CalculateRunReward(
-                gameManager.LastScore,
-                false);
-            BalloonDogEconomy.AddCoins(lastRunReward);
+            // The manager settles and saves the run once, independently of UI rebuilds.
+            lastRunReward = gameManager.LastCoinsReward;
+            lastRunGems = gameManager.LastGemsReward;
+            resultBonusClaimed = gameManager.IsDoubleRewardClaimed;
             resultRewardGranted = true;
+            bool hasReward = lastRunReward > 0 || lastRunGems > 0;
+            if (resultBonusButton != null) resultBonusButton.interactable = hasReward && !resultBonusClaimed;
+            if (resultBonusClaimed && resultBonusHint != null) resultBonusHint.text = "2X REWARD CLAIMED";
+            if (!hasReward && resultBonusHint != null) resultBonusHint.text = "RUN TO EARN REWARDS";
         }
 
         if (resultTitleArtwork != null) resultTitleArtwork.gameObject.SetActive(true);
@@ -3241,7 +3279,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
         resultScoreText.text = gameManager.LastScore.ToString("N0");
         resultBestText.text = GameManager.BestScore.ToString("N0");
-        resultRewardText.text = "+" + lastRunReward.ToString("N0");
+        RefreshResultRewardValues();
 
         HideAllScreens();
         gameplayOverlay.SetActive(false);
@@ -3249,6 +3287,39 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultScreen.transform.SetAsLastSibling();
         Time.timeScale = 0f;
         RefreshPersistentViews();
+    }
+
+    private void RefreshResultRewardValues()
+    {
+        long multiplier = resultBonusClaimed ? 2L : 1L;
+        if (resultRewardText != null) resultRewardText.text = "+" + (lastRunReward * multiplier).ToString("N0");
+        if (resultGemRewardText != null) resultGemRewardText.text = "+" + (lastRunGems * multiplier).ToString("N0") + " GEMS";
+    }
+
+    private void WatchAdForGems()
+    {
+        if (gemAdPending) return;
+        if (BalloonDogContinuePrompt.ShowRewardedAd == null) { ShowToast("AD NOT AVAILABLE"); return; }
+        gemAdPending = true;
+        int request = ++gemAdGeneration;
+        try
+        {
+            BalloonDogContinuePrompt.ShowRewardedAd(success => resultAdCallbacks.Enqueue(() =>
+            {
+                if (request != gemAdGeneration || !gemAdPending) return;
+                gemAdPending = false;
+                gemAdGeneration++;
+                if (success) { BalloonDogEconomy.AddGems(5); ShowToast("+5 GEMS"); }
+                else ShowToast("AD NOT COMPLETED");
+            }));
+        }
+        catch (System.Exception error)
+        {
+            gemAdPending = false;
+            gemAdGeneration++;
+            ShowToast("AD NOT AVAILABLE");
+            Debug.LogWarning("Gem reward ad failed: " + error.Message, this);
+        }
     }
 
     private void HandleSkinAction(string skinId, bool marketMode)
@@ -3415,8 +3486,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private void RefreshPersistentViews()
     {
         int coins = BalloonDogEconomy.Coins;
+        int gems = BalloonDogEconomy.Gems;
         BalloonDogSkinDefinition equipped = BalloonDogEconomy.EquippedSkin;
         lastKnownCoins = coins;
+        lastKnownGems = gems;
         lastKnownSkin = equipped.Id;
 
         if (coinText != null)
@@ -3460,6 +3533,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 text.text = coins.ToString("N0");
             }
         }
+
+        if (safeRoot != null)
+            foreach (BalloonDogGemLabel label in safeRoot.GetComponentsInChildren<BalloonDogGemLabel>(true))
+            {
+                TMP_Text text = label.GetComponent<TMP_Text>();
+                if (text != null) text.text = gems.ToString("N0");
+            }
 
         RefreshWheelView();
         RefreshSettingsViews();
@@ -4155,6 +4235,11 @@ public sealed class BalloonDogSafeArea : MonoBehaviour
 
 /// <summary>Marker used to refresh coin labels created in screen headers.</summary>
 public sealed class BalloonDogCoinLabel : MonoBehaviour
+{
+}
+
+/// <summary>Marker for persistent gem balances in screen headers.</summary>
+public sealed class BalloonDogGemLabel : MonoBehaviour
 {
 }
 

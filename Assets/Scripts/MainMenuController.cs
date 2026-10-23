@@ -59,6 +59,7 @@ public sealed class MainMenuController : MonoBehaviour
 
     public void StartGame()
     {
+        GameManager.Instance?.BeginRun();
         pauseStateCaptured = false;
         airController?.ResetToFull();
         sizeController?.SnapToCurrentAir();
