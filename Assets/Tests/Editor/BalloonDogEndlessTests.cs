@@ -321,7 +321,7 @@ public sealed class BalloonDogEndlessTests
             new Vector3(2.3f,1.6f,2),new Vector3(2,2,2),new Vector3(1.2f,1,1),Vector3.one,
             new Vector3(2,1.5f,2),Vector3.one,Vector3.one,Vector3.one,Vector3.one,Vector3.one,
             new Vector3(1.5f,1.3f,1.5f),new Vector3(1.7f,1.4f,1.4f),Vector3.one,new Vector3(2,1.3f,1),Vector3.one};
-        float[] xs={0,1.478f,0,0,0,-.02f,0,0,0,0,0,0,0,0,0,0,0,2.792f,0,-2.762f};
+        float[] xs={0,0,0,0,0,-.02f,0,0,0,0,0,0,0,0,0,0,0,2.792f,0,-2.762f};
         float[] ys={.074f,0,-1,-1.5f,-.011f,-.001f,0,0,0,0,0,-.317f,.022f,0,0,0,-.165f,-.178f,0,0};
         for(int index=0;index<AllowedIds.Length;index++)
         {
@@ -359,11 +359,12 @@ public sealed class BalloonDogEndlessTests
     {
         Type type=Runtime("BalloonDogTrapPlacement");
         var bounds=new Bounds(new Vector3(.2f,1,0),new Vector3(2,2,1));
-        foreach(int id in new[]{8,13,22,28}) foreach(bool right in new[]{false,true})
+        foreach(int id in new[]{3,8,13,22,28}) foreach(bool right in new[]{false,true})
         {
             object profile=type.GetMethod("For").Invoke(null,new object[]{id});
             Vector3 position=(Vector3)type.GetMethod("Position").Invoke(profile,new object[]{0f,0f,14f,6f,bounds,right});
-            if(id==13 || id==8 && right) Assert.That(position.x+bounds.max.x,Is.EqualTo(3).Within(.001f));
+            if(id==3) Assert.That(position.x+bounds.center.x,Is.EqualTo(0).Within(.001f));
+            else if(id==13 || id==8 && right) Assert.That(position.x+bounds.max.x,Is.EqualTo(3).Within(.001f));
             else if(id==8) Assert.That(position.x+bounds.min.x,Is.EqualTo(-3).Within(.001f));
             else Assert.That(position.x,Is.EqualTo(id==22 ? 2.792f : -2.762f));
             Assert.That(position.z,Is.EqualTo(14));

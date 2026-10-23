@@ -79,9 +79,10 @@ public sealed class BalloonDogTrapPlacement
     public Vector3 Position(float roadCenter,float floorY,float rowZ,float width,Bounds reference,bool right)
     {
         float x=position.x;
-        // Align the outside of the fixed support/resting model to the road edge.
+        // Align the fixed support/resting model to the road center or edge.
         // Bounds are measured after the exact authored rotation and scale.
-        if(alignment=="right" || alignment=="either" && right) x=width*.5f-reference.max.x;
+        if(alignment=="center") x=-reference.center.x;
+        else if(alignment=="right" || alignment=="either" && right) x=width*.5f-reference.max.x;
         else if(alignment=="either") x=-width*.5f-reference.min.x;
         return new Vector3(roadCenter+x,floorY+position.y,rowZ+position.z);
     }
