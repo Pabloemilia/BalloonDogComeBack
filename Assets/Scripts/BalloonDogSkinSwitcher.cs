@@ -31,6 +31,9 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
     private GameObject activeSkinInstance;
     private Bounds starterLocalBounds;
     private bool starterBoundsReady;
+    private BalloonSizeController sizeController;
+    private CapsuleCollider playerCollider;
+    private Renderer[] activeSkinRenderers = Array.Empty<Renderer>();
 
     private bool HasStarterVisual => starterVisual != null;
     private int PrefabIndexOffset => HasStarterVisual ? 1 : 0;
@@ -45,6 +48,8 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
 
     private void Awake()
     {
+        sizeController = GetComponent<BalloonSizeController>();
+        playerCollider = GetComponent<CapsuleCollider>();
         LockSkinRootToPlayer();
         starterBoundsReady = TryGetBoundsRelativeToPlayer(
             starterVisual,
@@ -92,6 +97,34 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
         // Kosu/juice kodlari ne yaparsa yapsin prefab pozunun referansi degismez.
         // Skin player ile hareket eder; BalloonDogModel'in bob/lean transformunu almaz.
         LockSkinRootToPlayer();
+        ApplySkinSizeAndGrounding();
+    }
+
+    private void ApplySkinSizeAndGrounding()
+    {
+        if (activeSkinInstance == null || activeSkinInstance == starterVisual || skinRoot == null) return;
+
+        // Each prefab is fitted to the starter at full air once. Apply the same
+        // visible size ratio as the red dog without rescaling its fitted pose.
+        float ratio = sizeController != null
+            ? sizeController.VisibleSizeMultiplier / Mathf.Max(.0001f, sizeController.MaximumSizeMultiplier)
+            : 1f;
+        skinRoot.localScale = Vector3.one * ratio;
+
+        if (playerCollider == null || !playerCollider.enabled) return;
+        float bottom = float.PositiveInfinity;
+        foreach (Renderer renderer in activeSkinRenderers)
+        {
+            if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy ||
+                renderer is ParticleSystemRenderer || renderer is TrailRenderer || renderer is LineRenderer) continue;
+            bottom = Mathf.Min(bottom, renderer.bounds.min.y);
+        }
+        if (float.IsPositiveInfinity(bottom)) return;
+
+        // The shrinking collider lowers the physics body. Follow its real foot
+        // height so different prefab pivots never push the dog into the road.
+        float correction = playerCollider.bounds.min.y + .03f - bottom;
+        skinRoot.position += Vector3.up * correction;
     }
 
     // Cark veya UI Button OnClick olayindan cagrilir.
@@ -225,6 +258,8 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
         }
 
         currentSkinIndex = index;
+        activeSkinRenderers = activeSkinInstance.GetComponentsInChildren<Renderer>(true);
+        ApplySkinSizeAndGrounding();
 
         if (rememberSelection && saveSelection)
         {
@@ -248,8 +283,8 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
             skinRoot.SetParent(transform, false);
         }
 
-        // Bu degerler bilincli olarak her kare kilitlenir. Prefablarin kendi local
-        // transformu yalnizca bu sabit referansa gore calisir.
+        // Reset the reference pose before applying air size and foot alignment.
+        // Prefabs keep their fitted local transforms, with no cumulative drift.
         skinRoot.localPosition = Vector3.zero;
         skinRoot.localRotation = Quaternion.identity;
         skinRoot.localScale = Vector3.one;
@@ -374,6 +409,8 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
 
         foreach (Renderer visualRenderer in renderers)
         {
+            if (!visualRenderer.enabled || visualRenderer is ParticleSystemRenderer ||
+                visualRenderer is TrailRenderer || visualRenderer is LineRenderer) continue;
             Bounds worldBounds = visualRenderer.bounds;
             Vector3 center = worldBounds.center;
             Vector3 extents = worldBounds.extents;
@@ -449,6 +486,7 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
         }
 
         activeSkinInstance = null;
+        activeSkinRenderers = Array.Empty<Renderer>();
     }
 
     private static void DestroyGeneratedObject(GameObject target)

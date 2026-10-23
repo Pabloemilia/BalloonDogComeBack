@@ -38,6 +38,8 @@ public sealed class BalloonSizeController : MonoBehaviour
         0.35f);
 
     public float CurrentSizeMultiplier => currentSizeMultiplier;
+    // The visible model keeps the existing minimum independently of collider size.
+    public float VisibleSizeMultiplier => Mathf.Max(currentSizeMultiplier, 0.66f);
     public float MaximumSizeMultiplier => maximumSizeMultiplier;
     public bool IsShrinkRequested => forcedSmall;
     public bool IsForcedSmall => forcedSmall;
@@ -247,7 +249,7 @@ public sealed class BalloonSizeController : MonoBehaviour
         {
             // Çok küçük ölçekte modelin pivotu zeminin altında kalıyordu.
             // Görseli küçültürken yerel Y konumunu da orantılı biçimde yukarı al.
-            float visibleMultiplier = Mathf.Max(currentSizeMultiplier, 0.66f);
+            float visibleMultiplier = VisibleSizeMultiplier;
             float positionRatio = maximumSizeMultiplier > 0.0001f
                 ? visibleMultiplier / maximumSizeMultiplier
                 : 1f;
