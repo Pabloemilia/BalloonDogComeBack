@@ -43,13 +43,15 @@ public sealed class MainMenuController : MonoBehaviour
         LoadPreferences();
     }
 
-    private void Start()
+    private IEnumerator Start()
     {
         if (StartImmediatelyOnNextSceneLoad)
         {
+            // A replay countdown starts only when the new scene is revealed.
+            while (BalloonDogSceneFlow.IsBusy) yield return null;
             StartImmediatelyOnNextSceneLoad = false;
             StartGame();
-            return;
+            yield break;
         }
 
         ShowMainMenu();

@@ -304,7 +304,7 @@ public sealed class BalloonDogEndlessTests
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Game.unity",OpenSceneMode.Single);
         yield return new EnterPlayMode();
-        for(int i=0;i<15;i++) yield return null;
+        yield return BalloonDogSceneFlowTestUtility.WaitForReady();
         Component runtime=UnityEngine.Object.FindAnyObjectByType(Runtime("BalloonDogEndlessRunner")) as Component;
         Assert.That(runtime,Is.Not.Null);
         int roads=0;

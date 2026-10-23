@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -54,11 +55,16 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
     private TMP_Text instruction;
     private Canvas tutorialCanvas;
     private float nextTutorialStepAt;
+    public bool IsInitialized { get; private set; }
+    public bool InitializationFailed { get; private set; }
+    public float InitializationProgress { get; private set; }
 
-    private void Start()
+    private IEnumerator Start()
     {
+        // Let the startup cover render before preparing the reusable course.
+        yield return null;
         runner = FindAnyObjectByType<PlayerRunner>();
-        if (runner == null) { enabled = false; return; }
+        if (runner == null) { InitializationFailed = true; enabled = false; yield break; }
         score = runner.GetComponent<ScoreController>();
         air = runner.GetComponent<AirController>();
         horizontal = runner.GetComponent<PlayerHorizontalController>();
@@ -78,7 +84,7 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
         if (road == null || road.GetComponent<MeshRenderer>() == null)
         {
             Debug.LogError("Endless requires the scene's Road mesh.", this);
-            enabled = false; return;
+            InitializationFailed = true; enabled = false; yield break;
         }
         Bounds bounds = road.GetComponent<Renderer>().bounds;
         width = bounds.size.x; floorY = bounds.max.y; roadCenter = bounds.center.x;
@@ -88,12 +94,18 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
         random = new System.Random(Guid.NewGuid().GetHashCode());
         poolRoot=new GameObject("TrapPool").transform;
         poolRoot.SetParent(transform,false);
+        int prepared = 0;
+        int preparationCount = BalloonDogTrapPlacement.All.Length * 4 + ChunkCount;
         // All four color/model variants of each allowed trap are reusable.
         foreach(var profile in BalloonDogTrapPlacement.All)
             for(int variant=1;variant<=4;variant++)
             {
                 var trap=CreateTrap(poolRoot,profile.id,variant);
                 trap.ResetContact(false);trapPool.Add(trap);
+                InitializationProgress = (float)++prepared / preparationCount;
+                // Keep rendering actual completed work instead of freezing on
+                // the expensive mesh/animation preparation for all 80 models.
+                if(variant==4) yield return null;
             }
         for(int i=trapPool.Count-1;i>0;i--)
         {
@@ -121,9 +133,13 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
                 c.air[row] = CreateAir(c.root);
             }
             Place(c); chunks.Add(c);
+            InitializationProgress = (float)++prepared / preparationCount;
+            yield return null;
         }
         road.SetActive(false);
         if(tutorial) BuildTutorial();
+        InitializationProgress = 1f;
+        IsInitialized = true;
     }
 
     private void Place(Chunk c)
@@ -212,7 +228,7 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
 
     private void Update()
     {
-        if(runner==null || chunks.Count==0) return;
+        if(!IsInitialized || runner==null || chunks.Count==0) return;
         bool running=IsRunActive();
         if(tutorialCanvas!=null) tutorialCanvas.gameObject.SetActive(tutorial && running);
         if(!running) return;
@@ -227,7 +243,7 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if(chunks.Count==0 || !IsRunActive()) return;
+        if(!IsInitialized || chunks.Count==0 || !IsRunActive()) return;
         Rigidbody body=runner.GetComponent<Rigidbody>();
         // Use the physical pose, never the interpolated render pose, to decide
         // which road is behind us. Move the world before the next physics step.

@@ -141,6 +141,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private Coroutine rebuildRoutine;
     private bool economySubscribed;
     private bool menuLaunchInProgress;
+    public bool IsReady { get; private set; }
+    public int PreparedSceneHandle { get; private set; } = -1;
 
     private static Sprite roundedSprite;
     private static Sprite circleSprite;
@@ -193,6 +195,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private IEnumerator RebuildForCurrentScene()
     {
+        IsReady = false;
+        PreparedSceneHandle = -1;
+        // The lightweight boot scene has no game UI to construct.
+        if (FindAnyObjectByType<PlayerRunner>() == null) yield break;
         if (gameManager != null)
         {
             gameManager.GameEnded -= HandleGameEnded;
@@ -200,10 +206,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         if (canvas != null)
         {
+            canvas.gameObject.SetActive(false);
             Destroy(canvas.gameObject);
         }
         if (pauseCanvas != null)
         {
+            pauseCanvas.gameObject.SetActive(false);
             Destroy(pauseCanvas.gameObject);
         }
 
@@ -241,6 +249,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
 
         rebuildRoutine = null;
+        PreparedSceneHandle = SceneManager.GetActiveScene().handle;
+        IsReady = true;
     }
 
     private void ResetRuntimeReferences()
@@ -306,6 +316,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void Update()
     {
+        if (!IsReady) return;
         while (resultAdCallbacks.TryDequeue(out System.Action adCallback)) adCallback();
         if (gameManager == null)
         {
@@ -3593,6 +3604,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private static bool DetectGameplayState()
     {
+        if (MainMenuController.StartImmediatelyOnNextSceneLoad) return true;
         GameObject legacyMain = FindNamedSceneObject("MainMenuPanel");
         if (legacyMain != null && legacyMain.activeSelf)
         {

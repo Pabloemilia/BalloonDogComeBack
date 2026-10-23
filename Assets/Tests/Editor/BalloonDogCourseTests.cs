@@ -124,7 +124,7 @@ public sealed class BalloonDogCourseTests
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Game.unity", OpenSceneMode.Single);
         yield return new EnterPlayMode();
-        for (int i = 0; i < 15; i++) yield return null;
+        yield return BalloonDogSceneFlowTestUtility.WaitForReady();
         Component manager = UnityEngine.Object.FindAnyObjectByType(RuntimeType("GameManager")) as Component;
         Type type = manager.GetType();
         int ended = 0;
@@ -165,7 +165,7 @@ public sealed class BalloonDogCourseTests
     {
         EditorSceneManager.OpenScene("Assets/Scenes/Game.unity", OpenSceneMode.Single);
         yield return new EnterPlayMode();
-        for (int i = 0; i < 15; i++) yield return null;
+        yield return BalloonDogSceneFlowTestUtility.WaitForReady();
         Component manager = UnityEngine.Object.FindAnyObjectByType(RuntimeType("GameManager")) as Component;
         Type type = manager.GetType();
         Call(type, manager, "TriggerGameOver", "TEST DEATH");

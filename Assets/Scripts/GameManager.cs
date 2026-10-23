@@ -1,7 +1,6 @@
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public sealed class GameManager : MonoBehaviour
 {
@@ -37,7 +36,7 @@ public sealed class GameManager : MonoBehaviour
         }
 
         Instance = this;
-        Time.timeScale = 1f;
+        Time.timeScale = BalloonDogSceneFlow.IsBusy ? 0f : 1f;
 
         if (endPanel != null)
         {
@@ -117,14 +116,12 @@ public sealed class GameManager : MonoBehaviour
 
     public void RestartGame()
     {
-        MainMenuController.StartImmediatelyOnNextSceneLoad = true;
-        ReloadCurrentScene();
+        BalloonDogSceneFlow.ReloadGame(true);
     }
 
     public void ReturnToMainMenu()
     {
-        MainMenuController.StartImmediatelyOnNextSceneLoad = false;
-        ReloadCurrentScene();
+        BalloonDogSceneFlow.ReloadGame(false);
     }
 
     private int ResolveCurrentScore()
@@ -142,27 +139,6 @@ public sealed class GameManager : MonoBehaviour
 
         PlayerPrefs.SetInt(BestScorePreferenceKey, score);
         PlayerPrefs.Save();
-    }
-
-    private void ReloadCurrentScene()
-    {
-        Time.timeScale = 1f;
-        isGameOver = false;
-        IsContinuePending = false;
-        if (continuePrompt != null) continuePrompt.Close();
-
-        Scene currentScene = SceneManager.GetActiveScene();
-
-        if (!string.IsNullOrWhiteSpace(currentScene.name))
-        {
-            SceneManager.LoadScene(currentScene.name, LoadSceneMode.Single);
-            return;
-        }
-
-        if (currentScene.buildIndex >= 0)
-        {
-            SceneManager.LoadScene(currentScene.buildIndex, LoadSceneMode.Single);
-        }
     }
 
     private void ShowEndPanel(string title, string summary)
