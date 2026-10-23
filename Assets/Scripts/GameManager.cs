@@ -14,6 +14,7 @@ public sealed class GameManager : MonoBehaviour
 
     private bool isGameOver;
     private BalloonDogContinuePrompt continuePrompt;
+    private BalloonDogDeathAnimation deathAnimation;
     private bool runStarted;
     private bool rewardsSettled;
     private bool doubleRewardClaimed;
@@ -97,7 +98,25 @@ public sealed class GameManager : MonoBehaviour
         CameraShakeController.ShakeGlobal(0.32f, 0.18f);
         continuePrompt = GetComponent<BalloonDogContinuePrompt>();
         if (continuePrompt == null) continuePrompt = gameObject.AddComponent<BalloonDogContinuePrompt>();
-        continuePrompt.Show(this);
+        deathAnimation = GetComponent<BalloonDogDeathAnimation>();
+        if (deathAnimation == null) deathAnimation = gameObject.AddComponent<BalloonDogDeathAnimation>();
+        PlayerRunner player = FindAnyObjectByType<PlayerRunner>();
+        bool animated = false;
+        try
+        {
+            animated = player != null && deathAnimation.Play(player.transform, () =>
+            {
+                // A restart, early result or revive must never open a stale offer.
+                if (IsContinuePending) continuePrompt.Show(this);
+            });
+        }
+        catch (Exception error)
+        {
+            // A visual-only failure must never leave the frozen run without UI.
+            deathAnimation.Restore();
+            Debug.LogWarning("Death animation skipped: " + error.Message, this);
+        }
+        if (!animated) continuePrompt.Show(this);
     }
 
     // Legacy scene/editor integrations may still call these methods. Endless
@@ -109,6 +128,7 @@ public sealed class GameManager : MonoBehaviour
     {
         if (!IsContinuePending) return;
         IsContinuePending = false;
+        deathAnimation?.Finish();
         if (continuePrompt != null) continuePrompt.Close();
         SaveBestScore(LastScore);
         SettleRunRewards();
@@ -131,17 +151,21 @@ public sealed class GameManager : MonoBehaviour
         if (endPanel != null) endPanel.SetActive(false);
         air.RestoreAfterContinue();
         runner.RestoreAfterContinue();
+        runner.GetComponent<BalloonSizeController>()?.SnapToCurrentAir();
+        deathAnimation?.Restore();
         Time.timeScale = 1f;
     }
 
     public void RestartGame()
     {
+        deathAnimation?.Restore();
         SettleBeforeLeaving();
         BalloonDogSceneFlow.ReloadGame(true);
     }
 
     public void ReturnToMainMenu()
     {
+        deathAnimation?.Restore();
         SettleBeforeLeaving();
         BalloonDogSceneFlow.ReloadGame(false);
     }

@@ -135,9 +135,16 @@ public sealed class BalloonDogCourseTests
         Assert.That((bool)type.GetProperty("IsResultFinalized").GetValue(manager), Is.False);
         Assert.That(ended, Is.Zero);
         Assert.That(Time.timeScale, Is.Zero);
+        Component death = manager.GetComponent(RuntimeType("BalloonDogDeathAnimation"));
+        if ((bool)death.GetType().GetProperty("IsPlaying").GetValue(death))
+        {
+            Assert.That(GameObject.Find("ContinueOfferCanvas"), Is.Null, "The death pose must be visible before the offer covers it.");
+            Call(death.GetType(), death, "Advance", .65f);
+        }
         Component prompt = manager.GetComponent(RuntimeType("BalloonDogContinuePrompt"));
         Type promptType = prompt.GetType();
         Assert.That(GameObject.Find("ContinueOfferCanvas"), Is.Not.Null);
+        Assert.That((float)promptType.GetProperty("RemainingSeconds").GetValue(prompt), Is.EqualTo(4f));
         // Duplicate fatal contacts cannot reset the four-second offer.
         Call(promptType, prompt, "Advance", 2f);
         Call(type, manager, "TriggerGameOver", "SECOND CONTACT");
@@ -169,6 +176,8 @@ public sealed class BalloonDogCourseTests
         Component manager = UnityEngine.Object.FindAnyObjectByType(RuntimeType("GameManager")) as Component;
         Type type = manager.GetType();
         Call(type, manager, "TriggerGameOver", "TEST DEATH");
+        Component death = manager.GetComponent(RuntimeType("BalloonDogDeathAnimation"));
+        Call(death.GetType(), death, "Advance", .65f);
         Component prompt = manager.GetComponent(RuntimeType("BalloonDogContinuePrompt"));
         Type pt = prompt.GetType();
         Action<bool> reward = null;
@@ -188,8 +197,11 @@ public sealed class BalloonDogCourseTests
         Assert.That(Time.timeScale, Is.EqualTo(1f));
         Component air = UnityEngine.Object.FindAnyObjectByType(RuntimeType("AirController")) as Component;
         Assert.That((float)air.GetType().GetProperty("NormalizedAir").GetValue(air), Is.EqualTo(1f));
+        Assert.That((bool)death.GetType().GetProperty("IsPlaying").GetValue(death), Is.False);
+        Assert.That(GameObject.Find("BalloonDogDeathEffects"), Is.Null);
         // A duplicate callback must not revive a different, subsequent death offer.
         Call(type, manager, "TriggerGameOver", "NEXT DEATH");
+        Call(death.GetType(), death, "Advance", .65f);
         reward(true);
         Call(pt, prompt, "Advance", 0f);
         Assert.That((bool)type.GetProperty("IsContinuePending").GetValue(manager), Is.True);

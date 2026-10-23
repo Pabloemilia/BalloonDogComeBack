@@ -12,6 +12,7 @@ public sealed class GameAudioController : MonoBehaviour
     private AudioClip hitClip;
     private AudioClip transformClip;
     private AudioClip finishClip;
+    private AudioClip deathClip;
 
     private void Awake()
     {
@@ -34,12 +35,30 @@ public sealed class GameAudioController : MonoBehaviour
         hitClip = BuildTone("Hit", 120f, 0.16f, 0.24f, 0.55f);
         transformClip = BuildTone("Transform", 320f, 0.2f, 0.2f, 1.8f);
         finishClip = BuildTone("Finish", 520f, 0.32f, 0.2f, 1.7f);
+        deathClip = BuildPop();
     }
 
     public static void PlayPickup() => Play(instance != null ? instance.pickupClip : null, 0.65f);
     public static void PlayHit() => Play(instance != null ? instance.hitClip : null, 0.75f);
     public static void PlayTransform() => Play(instance != null ? instance.transformClip : null, 0.65f);
     public static void PlayFinish() => Play(instance != null ? instance.finishClip : null, 0.8f);
+    public static void PlayDeath() => Play(instance != null ? instance.deathClip : null, .65f);
+
+    private static AudioClip BuildPop()
+    {
+        const int rate = 22050;
+        var samples = new float[(int)(rate * .13f)];
+        var random = new System.Random(19);
+        for (int i = 0; i < samples.Length; i++)
+        {
+            float t = (float)i / samples.Length;
+            float envelope = Mathf.Min(1f, t * 50f) * (1f - t) * (1f - t);
+            samples[i] = ((float)random.NextDouble() * 2f - 1f) * envelope * .35f;
+        }
+        AudioClip clip = AudioClip.Create("BalloonPop", samples.Length, 1, rate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
 
     public static void SetPaused(bool paused)
     {
@@ -87,6 +106,7 @@ public sealed class GameAudioController : MonoBehaviour
         }
 
         AudioListener.pause = false;
+        if (deathClip != null) Destroy(deathClip);
         instance = null;
     }
 }
