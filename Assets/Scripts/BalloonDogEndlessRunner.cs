@@ -24,6 +24,27 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
     [SerializeField, Min(.01f)] private float secondsToMaximumSpeed = 110f;
     private float activeRunSeconds;
 
+    [Header("Obstacle Palette Cycle")]
+    [SerializeField, Min(0f)] private float paletteCycleSpeed = 10f;
+    [SerializeField, Min(1f)] private float secondsPerPalette = 20f;
+    private float paletteRunSeconds;
+    public int CurrentPalette { get; private set; } = 1;
+
+    private sealed class PaletteBinding
+    {
+        public MeshFilter target;
+        public Mesh[] meshes;
+        public BalloonDogTrapHitbox hitbox;
+        public void Apply(int palette)
+        {
+            target.sharedMesh = meshes[palette - 1];
+            hitbox?.RefreshGeometry(target.sharedMesh);
+        }
+    }
+    private readonly List<PaletteBinding> paletteBindings = new List<PaletteBinding>();
+    private readonly Dictionary<int, Dictionary<string, Mesh[]>> paletteMeshes =
+        new Dictionary<int, Dictionary<string, Mesh[]>>();
+
     private sealed class Chunk
     {
         public Transform root;
@@ -236,6 +257,7 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
         if(!running) return;
         if(tutorial) AdvanceTutorial();
         AdvanceRunSpeed(Time.deltaTime);
+        AdvancePalette(Time.deltaTime);
         runner.SetDifficultyMultiplier(1f);
     }
 
@@ -279,6 +301,54 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
             : Mathf.Lerp(startingRunSpeed, Mathf.Max(startingRunSpeed, maximumRunSpeed),
                 Mathf.Clamp01(activeRunSeconds / Mathf.Max(.01f, secondsToMaximumSpeed)));
         runner.ConfigureForwardSpeed(speed);
+    }
+
+    private void AdvancePalette(float deltaTime)
+    {
+        // Update only calls this during active play. Continue, pause and world
+        // rebasing retain the same palette and do not advance its timer.
+        if (tutorial || runner == null || runner.CurrentForwardSpeed < paletteCycleSpeed) return;
+        paletteRunSeconds += Mathf.Max(0f, deltaTime);
+        int next = 1 + Mathf.FloorToInt(paletteRunSeconds / Mathf.Max(1f, secondsPerPalette)) % 4;
+        if (next == CurrentPalette) return;
+        CurrentPalette = next;
+        // Update visible AND pooled traps together, including companion traps.
+        // Mesh swaps preserve transforms, animator phase and contact consumption.
+        foreach (var binding in paletteBindings) binding.Apply(CurrentPalette);
+    }
+
+    private Dictionary<string, Mesh[]> GetPaletteMeshes(int artId)
+    {
+        if (paletteMeshes.TryGetValue(artId, out var parts)) return parts;
+        parts = new Dictionary<string, Mesh[]>();
+        for (int variant = 1; variant <= 4; variant++)
+        {
+            var prefab = Resources.Load<GameObject>(BalloonDogTrapPlacement.ResourcePath(artId, variant));
+            if (prefab == null) throw new InvalidOperationException("Missing trap palette: " + artId + " V" + variant);
+            foreach (var filter in prefab.GetComponentsInChildren<MeshFilter>(true))
+            {
+                string path = PalettePartPath(filter.transform, prefab.transform);
+                if (!parts.TryGetValue(path, out var meshes))
+                {
+                    meshes = new Mesh[4];
+                    parts.Add(path, meshes);
+                }
+                meshes[variant - 1] = filter.sharedMesh;
+            }
+        }
+        foreach (var pair in parts)
+            foreach (var mesh in pair.Value)
+                if (mesh == null) throw new InvalidOperationException("Incomplete trap palette: " + artId + "/" + pair.Key);
+        paletteMeshes.Add(artId, parts);
+        return parts;
+    }
+
+    private static string PalettePartPath(Transform part, Transform root)
+    {
+        string path = string.Empty;
+        for (Transform current = part; current != root; current = current.parent)
+            path = path.Length == 0 ? current.name : current.name + "/" + path;
+        return path;
     }
 
     private void ShiftOrigin(float amount)
@@ -415,13 +485,28 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
         }
         // Contact boxes follow the actual animated parts, not an invisible solid
         // rectangle spanning the entire animation's empty space.
+        var palettes = GetPaletteMeshes(artId);
         foreach(var mesh in view.GetComponentsInChildren<MeshFilter>(true))
         {
-            if(mesh.sharedMesh==null || mesh.GetComponent<MeshRenderer>()==null
-                || !profile.CanDamage(mesh.transform,view.transform)) continue;
-            var proxy=new GameObject("Damage_"+mesh.name);
-            proxy.transform.SetParent(root.transform,false);
-            proxy.AddComponent<BalloonDogTrapHitbox>().Configure(mesh,contact);
+            if(mesh.sharedMesh==null || mesh.GetComponent<MeshRenderer>()==null) continue;
+            BalloonDogTrapHitbox hitbox = null;
+            if (profile.CanDamage(mesh.transform,view.transform))
+            {
+                var proxy=new GameObject("Damage_"+mesh.name);
+                proxy.transform.SetParent(root.transform,false);
+                hitbox = proxy.AddComponent<BalloonDogTrapHitbox>();
+                hitbox.Configure(mesh,contact);
+            }
+            // This asset pack encodes V1-V4 colors in the mesh UVs, while all
+            // variants share one atlas material. A material tint cannot select them.
+            var binding = new PaletteBinding
+            {
+                target = mesh,
+                meshes = palettes[PalettePartPath(mesh.transform, view.transform)],
+                hitbox = hitbox
+            };
+            binding.Apply(CurrentPalette);
+            paletteBindings.Add(binding);
         }
         // VFX particles are not meshes and need their own emission-aware contact.
         BalloonDogFlameHazard.Install(view);

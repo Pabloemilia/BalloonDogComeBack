@@ -13,10 +13,10 @@ public sealed class BalloonDogEndlessContact : MonoBehaviour
         heavyImpact = false;
         lethalImpact = false;
         // Only the currently enabled catalog IDs are classified here.
-        // Unused traps 3, 9, 12 and 23 are not added to the course.
+        // Obstacle 3 replaces obstacle 2; unused traps stay out of the course.
         switch(artId)
         {
-            case 1: case 2: case 5: case 6: case 7: case 10: case 11:
+            case 1: case 3: case 5: case 6: case 7: case 10: case 11:
             case 13: case 14: case 16: case 17: case 18: case 19: case 20: case 21:
                 lethalImpact = true;
                 break;

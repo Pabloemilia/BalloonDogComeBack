@@ -11,6 +11,133 @@ public sealed class BalloonDogEndlessTests
     private static Type Runtime(string name) => Type.GetType(name+", Assembly-CSharp", true);
 
     [Test]
+    public void ObstaclePalettesWaitForSpeedThenCycleInOrderWithoutUsingTutorialTime()
+    {
+        var player = new GameObject("PaletteSpeedPlayer");
+        var host = new GameObject("PaletteSpeedTest");
+        try
+        {
+            Component runner = player.AddComponent(Runtime("PlayerRunner"));
+            Component endless = host.AddComponent(Runtime("BalloonDogEndlessRunner"));
+            Type type = endless.GetType();
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            type.GetField("runner", flags).SetValue(endless, runner);
+            MethodInfo advance = type.GetMethod("AdvancePalette", flags);
+            MethodInfo speed = runner.GetType().GetMethod("ConfigureForwardSpeed");
+            PropertyInfo palette = type.GetProperty("CurrentPalette");
+            speed.Invoke(runner, new object[] { 9.99f });
+            advance.Invoke(endless, new object[] { 200f });
+            Assert.That(palette.GetValue(endless), Is.EqualTo(1));
+            speed.Invoke(runner, new object[] { 10f });
+            type.GetField("tutorial", flags).SetValue(endless, true);
+            advance.Invoke(endless, new object[] { 200f });
+            Assert.That(palette.GetValue(endless), Is.EqualTo(1));
+            type.GetField("tutorial", flags).SetValue(endless, false);
+            advance.Invoke(endless, new object[] { 19f });
+            Assert.That(palette.GetValue(endless), Is.EqualTo(1));
+            advance.Invoke(endless, new object[] { 1f });
+            Assert.That(palette.GetValue(endless), Is.EqualTo(2));
+            advance.Invoke(endless, new object[] { 20f });
+            Assert.That(palette.GetValue(endless), Is.EqualTo(3));
+            advance.Invoke(endless, new object[] { 20f });
+            Assert.That(palette.GetValue(endless), Is.EqualTo(4));
+            advance.Invoke(endless, new object[] { 20f });
+            Assert.That(palette.GetValue(endless), Is.EqualTo(1));
+        }
+        finally { UnityEngine.Object.DestroyImmediate(host); UnityEngine.Object.DestroyImmediate(player); }
+    }
+
+    [Test]
+    public void PaletteSwitchUpdatesActiveAndPooledTrapsWithoutResettingAnimationOrConsumedHits()
+    {
+        var player = new GameObject("PalettePoolPlayer");
+        var host = new GameObject("PalettePoolTest");
+        try
+        {
+            Component runner = player.AddComponent(Runtime("PlayerRunner"));
+            runner.GetType().GetMethod("ConfigureForwardSpeed").Invoke(runner, new object[] { 10f });
+            Component endless = host.AddComponent(Runtime("BalloonDogEndlessRunner"));
+            Type type = endless.GetType();
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            type.GetField("runner", flags).SetValue(endless, runner);
+            type.GetField("random", flags).SetValue(endless, new System.Random(7));
+            MethodInfo create = type.GetMethod("CreateTrap", flags);
+            MethodInfo advance = type.GetMethod("AdvancePalette", flags);
+            var traps = new System.Collections.Generic.List<Component>();
+            foreach (int id in new[] { 1, 3, 25 })
+                foreach (int variant in new[] { 1, 4 })
+                {
+                    var trap = (Component)create.Invoke(endless, new object[] { host.transform, id, variant });
+                    trap.GetType().GetField("consumed", flags).SetValue(trap, true);
+                    trap.gameObject.SetActive(variant == 1);
+                    traps.Add(trap);
+                }
+            foreach (int expected in new[] { 2, 3, 4, 1 })
+            {
+                var times = new System.Collections.Generic.Dictionary<Animator, float>();
+                foreach (var trap in traps)
+                    foreach (var animator in trap.GetComponentsInChildren<Animator>())
+                        times[animator] = animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+                advance.Invoke(endless, new object[] { 20f });
+                foreach (var trap in traps)
+                {
+                    string[] name = trap.name.Split('_');
+                    int id = int.Parse(name[1]);
+                    Assert.That(trap.gameObject.activeSelf, Is.EqualTo(name[2] == "V1"));
+                    Assert.That(trap.GetType().GetField("consumed", flags).GetValue(trap), Is.True);
+                    GameObject source = Resources.Load<GameObject>("Endless/Trap" + id + (expected == 1 ? "" : "V" + expected));
+                    var sourceParts = source.GetComponentsInChildren<MeshFilter>(true);
+                    foreach (var mesh in trap.GetComponentsInChildren<MeshFilter>(true))
+                        Assert.That(mesh.sharedMesh, Is.SameAs(Array.Find(sourceParts, p => p.name == mesh.name).sharedMesh));
+                }
+                foreach (var time in times)
+                    Assert.That(time.Key.GetCurrentAnimatorStateInfo(0).normalizedTime, Is.EqualTo(time.Value).Within(.0001f));
+            }
+        }
+        finally { UnityEngine.Object.DestroyImmediate(host); UnityEngine.Object.DestroyImmediate(player); }
+    }
+
+    [Test]
+    public void PaletteMeshReplacementRefreshesTheActualContactSurface()
+    {
+        var root = new GameObject("PaletteGeometryTest");
+        Mesh replacement = null;
+        try
+        {
+            var visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            visual.transform.SetParent(root.transform, false);
+            var filter = visual.GetComponent<MeshFilter>();
+            Component owner = root.AddComponent(Runtime("BalloonDogEndlessContact"));
+            var proxy = new GameObject("DamageProxy");
+            proxy.transform.SetParent(root.transform, false);
+            Component hitbox = proxy.AddComponent(Runtime("BalloonDogTrapHitbox"));
+            hitbox.GetType().GetMethod("Configure").Invoke(hitbox, new object[] { filter, owner });
+            var probe = new GameObject("Probe", typeof(SphereCollider));
+            probe.transform.SetParent(root.transform, false);
+            var sphere = probe.GetComponent<SphereCollider>();
+            sphere.radius = .2f;
+            probe.transform.position = new Vector3(0f, 0f, .5f);
+            MethodInfo touches = hitbox.GetType().GetMethod("TouchesVisibleGeometry");
+            Assert.That(touches.Invoke(hitbox, new object[] { sphere }), Is.True);
+            replacement = UnityEngine.Object.Instantiate(filter.sharedMesh);
+            Vector3[] vertices = replacement.vertices;
+            for (int i = 0; i < vertices.Length; i++) vertices[i] += Vector3.right * 10f;
+            replacement.vertices = vertices;
+            replacement.RecalculateBounds();
+            filter.sharedMesh = replacement;
+            hitbox.GetType().GetMethod("RefreshGeometry").Invoke(hitbox, new object[] { replacement });
+            Assert.That(touches.Invoke(hitbox, new object[] { sphere }), Is.False);
+            probe.transform.position = new Vector3(10f, 0f, .5f);
+            Assert.That(touches.Invoke(hitbox, new object[] { sphere }), Is.True);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+            if (replacement != null) UnityEngine.Object.DestroyImmediate(replacement);
+        }
+    }
+
+    [Test]
     public void RunSpeedBuildsGraduallyAndStepsUpAtFiveActiveMinutesAcrossOriginShifts()
     {
         var player = new GameObject("ProgressiveSpeedPlayer");
@@ -183,7 +310,7 @@ public sealed class BalloonDogEndlessTests
         }
         finally { UnityEngine.Object.DestroyImmediate(go); }
     }
-    private static readonly int[] AllowedIds={1,2,4,5,6,7,8,10,11,13,14,16,17,18,19,20,21,22,25,28};
+    private static readonly int[] AllowedIds={1,3,4,5,6,7,8,10,11,13,14,16,17,18,19,20,21,22,25,28};
     [Test]
     public void CatalogContainsOnlyAllowedTrapsAndPreservesAuthoredTransforms()
     {
@@ -203,14 +330,14 @@ public sealed class BalloonDogEndlessTests
             Assert.That((Vector3)type.GetField("position").GetValue(profile),Is.EqualTo(new Vector3(xs[index],ys[index],0)),"position "+id);
             Assert.That((float)type.GetField("yaw").GetValue(profile),Is.EqualTo(id==13 ? 270f : id==8 || id==22 || id==28 ? 90f : 0f));
         }
-        foreach(int id in new[]{3,9,12,15,23,24,26,27,29})
+        foreach(int id in new[]{2,9,12,15,23,24,26,27,29})
             Assert.Throws<TargetInvocationException>(()=>type.GetMethod("For").Invoke(null,new object[]{id}));
     }
     [Test]
     public void SupportPartsHaveNoDamageAndPartTwoScaleIsBakedInEveryVariant()
     {
         Type type=Runtime("BalloonDogTrapPlacement");
-        foreach(int id in new[]{2,21,25}) for(int variant=1;variant<=4;variant++)
+        foreach(int id in new[]{3,21,25}) for(int variant=1;variant<=4;variant++)
         {
             var prefab=Resources.Load<GameObject>("Endless/Trap"+id+(variant==1 ? "" : "V"+variant));
             var profile=type.GetMethod("For").Invoke(null,new object[]{id});
@@ -218,7 +345,12 @@ public sealed class BalloonDogEndlessTests
             {
                 bool damage=(bool)type.GetMethod("CanDamage").Invoke(profile,new object[]{mesh.transform,prefab.transform});
                 Assert.That(damage,Is.EqualTo(mesh.name=="O"+id+" Part "+(id==21 ? 2 : 1)));
-                if(id==2 && mesh.name=="O2 Part 2") Assert.That(mesh.transform.localScale,Is.EqualTo(new Vector3(3.5f,1,1)));
+                if(id==3 && mesh.name=="O3 Part 2")
+                {
+                    Assert.That(mesh.transform.localScale,Is.EqualTo(new Vector3(2f,1,1)));
+                    Assert.That(mesh.transform.localPosition,Is.EqualTo(new Vector3(.67f,0,0)));
+                }
+                Assert.That(mesh.sharedMesh.isReadable, Is.True, "Palette contacts require readable mesh geometry.");
             }
         }
     }
@@ -371,7 +503,7 @@ public sealed class BalloonDogEndlessTests
                 if(!box.enabled) continue;
                 Assert.That(box.GetComponent(Runtime("BalloonDogTrapHitbox")),Is.Not.Null,"Every damage proxy must verify visible geometry");
                 Assert.That(box.attachedRigidbody,Is.SameAs(body),"Moving part must report damage to its pooled contact owner");
-                if(id==2 || id==21 || id==25)
+                if(id==3 || id==21 || id==25)
                     Assert.That(box.name,Is.EqualTo("Damage_O"+id+" Part "+(id==21 ? 2 : 1)),"Support must never receive a damage trigger");
             }
         }

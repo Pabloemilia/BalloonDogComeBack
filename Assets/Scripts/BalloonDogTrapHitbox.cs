@@ -16,13 +16,20 @@ public sealed class BalloonDogTrapHitbox : MonoBehaviour
     private BalloonDogEndlessContact owner;
     private BoxCollider broadphase;
     private Geometry geometry;
+    private Mesh geometrySource;
     private Vector3[] worldVertices;
 
     public void Configure(MeshFilter mesh,BalloonDogEndlessContact contact)
     {
         owner=contact;meshTransform=mesh.transform;visual=mesh.GetComponent<MeshRenderer>();
         broadphase=gameObject.AddComponent<BoxCollider>();broadphase.isTrigger=true;
-        Mesh source=mesh.sharedMesh;
+        RefreshGeometry(mesh.sharedMesh);
+    }
+    public void RefreshGeometry(Mesh source)
+    {
+        if (source == geometrySource && geometry != null) return;
+        geometrySource = source;
+        geometry = null;
         if(source!=null && source.isReadable)
         {
             if(!cache.TryGetValue(source,out geometry))
@@ -30,9 +37,10 @@ public sealed class BalloonDogTrapHitbox : MonoBehaviour
                 geometry=new Geometry { vertices=source.vertices,triangles=source.triangles };
                 cache.Add(source,geometry);
             }
-            worldVertices=new Vector3[geometry.vertices.Length];
+            if (worldVertices == null || worldVertices.Length != geometry.vertices.Length)
+                worldVertices=new Vector3[geometry.vertices.Length];
         }
-        else Debug.LogWarning("Disabled trap contact without readable visible geometry: "+mesh.name,mesh);
+        else Debug.LogWarning("Disabled trap contact without readable visible geometry", this);
         Refresh();
     }
     public void Refresh()

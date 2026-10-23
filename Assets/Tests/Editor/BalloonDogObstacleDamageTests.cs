@@ -8,9 +8,9 @@ using UnityEngine.TestTools;
 public sealed class BalloonDogObstacleDamageTests
 {
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
-    private static readonly int[] LethalIds = { 1, 2, 5, 6, 7, 10, 11, 13, 14, 16, 17, 18, 19, 20, 21 };
+    private static readonly int[] LethalIds = { 1, 3, 5, 6, 7, 10, 11, 13, 14, 16, 17, 18, 19, 20, 21 };
     private static readonly int[] HeavyIds = { 4, 8, 22, 25 };
-    private static readonly int[] ClassifiedIds = { 1, 2, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 17, 18, 19, 20, 21, 22, 25 };
+    private static readonly int[] ClassifiedIds = { 1, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 17, 18, 19, 20, 21, 22, 25 };
     private static Type Runtime(string name) => Type.GetType(name + ", Assembly-CSharp", true);
     private static object Call(Component target, string name, params object[] args) =>
         target.GetType().GetMethod(name, BindingFlags.Public | Private).Invoke(target, args);
