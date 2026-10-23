@@ -11,7 +11,7 @@ public sealed class BalloonDogEndlessTests
     private static Type Runtime(string name) => Type.GetType(name+", Assembly-CSharp", true);
 
     [Test]
-    public void RunSpeedBuildsGraduallyAndStaysCappedAcrossOriginShifts()
+    public void RunSpeedBuildsGraduallyAndStepsUpAtFiveActiveMinutesAcrossOriginShifts()
     {
         var player = new GameObject("ProgressiveSpeedPlayer");
         var host = new GameObject("ProgressiveSpeedTest");
@@ -35,8 +35,12 @@ public sealed class BalloonDogEndlessTests
             Assert.That((float)speed.GetValue(runner), Is.LessThan(14.5f));
             advance.Invoke(endless, new object[] { 1f });
             Assert.That((float)speed.GetValue(runner), Is.EqualTo(14.5f).Within(.001f));
-            advance.Invoke(endless, new object[] { 3600f });
+            advance.Invoke(endless, new object[] { 189f });
             Assert.That((float)speed.GetValue(runner), Is.EqualTo(14.5f).Within(.001f));
+            advance.Invoke(endless, new object[] { 1f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(17f).Within(.001f));
+            advance.Invoke(endless, new object[] { 3600f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(17f).Within(.001f));
         }
         finally { UnityEngine.Object.DestroyImmediate(host); UnityEngine.Object.DestroyImmediate(player); }
     }

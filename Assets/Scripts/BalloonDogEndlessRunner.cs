@@ -15,6 +15,8 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
     public const int RowsPerChunk = 5;
     public const float RowSpacing = ChunkLength / RowsPerChunk;
     public const float FirstObstacleDistance = 14f;
+    private const float LateRunSpeedThreshold = 300f;
+    private const float LateRunSpeed = 17f;
 
     [Header("Progressive Run Speed")]
     [SerializeField, Min(0f)] private float startingRunSpeed = 5f;
@@ -271,8 +273,11 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
             return;
         }
         activeRunSeconds += Mathf.Max(0f, deltaTime);
-        float speed = Mathf.Lerp(startingRunSpeed, Mathf.Max(startingRunSpeed, maximumRunSpeed),
-            Mathf.Clamp01(activeRunSeconds / Mathf.Max(.01f, secondsToMaximumSpeed)));
+        // Five minutes in the same run unlocks a direct second speed tier.
+        float speed = activeRunSeconds >= LateRunSpeedThreshold
+            ? LateRunSpeed
+            : Mathf.Lerp(startingRunSpeed, Mathf.Max(startingRunSpeed, maximumRunSpeed),
+                Mathf.Clamp01(activeRunSeconds / Mathf.Max(.01f, secondsToMaximumSpeed)));
         runner.ConfigureForwardSpeed(speed);
     }
 
