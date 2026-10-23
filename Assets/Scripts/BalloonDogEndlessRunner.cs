@@ -18,8 +18,8 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
 
     [Header("Progressive Run Speed")]
     [SerializeField, Min(0f)] private float startingRunSpeed = 5f;
-    [SerializeField, Min(0f)] private float maximumRunSpeed = 13f;
-    [SerializeField, Min(.01f)] private float secondsToMaximumSpeed = 120f;
+    [SerializeField, Min(0f)] private float maximumRunSpeed = 14.5f;
+    [SerializeField, Min(.01f)] private float secondsToMaximumSpeed = 110f;
     private float activeRunSeconds;
 
     private sealed class Chunk

@@ -25,16 +25,18 @@ public sealed class BalloonDogEndlessTests
             PropertyInfo speed = runner.GetType().GetProperty("CurrentForwardSpeed");
             advance.Invoke(endless, new object[] { 0f });
             Assert.That((float)speed.GetValue(runner), Is.EqualTo(5f));
-            advance.Invoke(endless, new object[] { 60f });
-            Assert.That((float)speed.GetValue(runner), Is.EqualTo(9f).Within(.001f));
+            advance.Invoke(endless, new object[] { 55f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(9.75f).Within(.001f));
             player.transform.position = Vector3.forward * 1200f;
             player.transform.position -= Vector3.forward * 896f;
             advance.Invoke(endless, new object[] { 0f });
-            Assert.That((float)speed.GetValue(runner), Is.EqualTo(9f).Within(.001f));
-            advance.Invoke(endless, new object[] { 60f });
-            Assert.That((float)speed.GetValue(runner), Is.EqualTo(13f).Within(.001f));
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(9.75f).Within(.001f));
+            advance.Invoke(endless, new object[] { 54f });
+            Assert.That((float)speed.GetValue(runner), Is.LessThan(14.5f));
+            advance.Invoke(endless, new object[] { 1f });
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(14.5f).Within(.001f));
             advance.Invoke(endless, new object[] { 3600f });
-            Assert.That((float)speed.GetValue(runner), Is.EqualTo(13f).Within(.001f));
+            Assert.That((float)speed.GetValue(runner), Is.EqualTo(14.5f).Within(.001f));
         }
         finally { UnityEngine.Object.DestroyImmediate(host); UnityEngine.Object.DestroyImmediate(player); }
     }

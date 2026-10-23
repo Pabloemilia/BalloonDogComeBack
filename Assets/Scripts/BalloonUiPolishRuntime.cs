@@ -47,7 +47,6 @@ public sealed class BalloonUiPolishRuntime : MonoBehaviour
 
         ApplyMainMenuSprites();
         ApplySettingsTypography();
-        ReplaceDecorSquaresWithBalloons();
     }
 
     private void Update()
@@ -333,72 +332,6 @@ public sealed class BalloonUiPolishRuntime : MonoBehaviour
             rect.sizeDelta = new Vector2(width, height);
 
             cursor += width + spacing * scale;
-        }
-    }
-
-    private static void ReplaceDecorSquaresWithBalloons()
-    {
-        Sprite balloonSprite = LoadSprite("BalloonDecor/menu_balloon");
-        if (balloonSprite == null)
-        {
-            return;
-        }
-
-        Image[] images = Resources.FindObjectsOfTypeAll<Image>();
-        Color[] palette =
-        {
-            new Color(0.26f, 0.85f, 1f, 0.32f),
-            new Color(1f, 0.55f, 0.74f, 0.28f),
-            new Color(0.70f, 0.85f, 1f, 0.26f),
-            new Color(0.38f, 0.96f, 0.90f, 0.24f),
-            new Color(1f, 0.79f, 0.34f, 0.25f),
-        };
-
-        foreach (Image image in images)
-        {
-            if (image == null ||
-                !image.gameObject.scene.IsValid() ||
-                image.GetComponentInParent<Button>() != null ||
-                image.name.StartsWith("MarketDog"))
-            {
-                continue;
-            }
-
-            if (image.name.Contains("V14") ||
-                image.name.Contains("BalloonTitle") ||
-                image.name.Contains("PlayLabel") ||
-                image.name.Contains("SettingsLabel") ||
-                image.name.Contains("ExitLabel"))
-            {
-                continue;
-            }
-
-            RectTransform rect = image.rectTransform;
-            float width = rect.rect.width > 0f ? rect.rect.width : rect.sizeDelta.x;
-            float height = rect.rect.height > 0f ? rect.rect.height : rect.sizeDelta.y;
-
-            bool looksLikeDecor =
-                image.color.a > 0.04f &&
-                image.color.a < 0.60f &&
-                width >= 22f &&
-                width <= 180f &&
-                height >= 22f &&
-                height <= 180f &&
-                Mathf.Abs(width - height) <= 30f;
-
-            if (!looksLikeDecor)
-            {
-                continue;
-            }
-
-            image.sprite = balloonSprite;
-            image.type = Image.Type.Simple;
-            image.preserveAspect = true;
-            image.raycastTarget = false;
-            image.color = palette[Mathf.Abs(image.gameObject.name.GetHashCode()) % palette.Length];
-
-            float diameter = Mathf.Max(width, height);
-            rect.sizeDelta = new Vector2(diameter * 0.82f, diameter * 1.02f);
         }
     }
 
