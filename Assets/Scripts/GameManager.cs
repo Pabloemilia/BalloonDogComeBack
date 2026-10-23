@@ -40,7 +40,6 @@ public sealed class GameManager : MonoBehaviour
     public int LastScore { get; private set; }
     public double LastDistance { get; private set; }
     public int LastCoinsReward { get; private set; }
-    public int LastGemsReward { get; private set; }
     public bool IsDoubleRewardClaimed => doubleRewardClaimed;
     public string LastEndReason { get; private set; } = string.Empty;
     public string LastEndTitle { get; private set; } = string.Empty;
@@ -161,8 +160,8 @@ public sealed class GameManager : MonoBehaviour
         if (rewardsSettled) return;
         rewardsSettled = true;
         LastCoinsReward = BalloonDogEconomy.CalculateRunCoins(LastDistance);
-        LastGemsReward = BalloonDogEconomy.CalculateRunGems(LastDistance);
-        BalloonDogEconomy.AddRewards(LastCoinsReward, LastGemsReward);
+        // Gems are reserved for purchases and successful rewarded ads.
+        BalloonDogEconomy.AddCoins(LastCoinsReward);
     }
 
     private void SettleBeforeLeaving()
@@ -176,9 +175,9 @@ public sealed class GameManager : MonoBehaviour
     public bool TryClaimDoubleRunReward()
     {
         if (!IsResultFinalized || !rewardsSettled || doubleRewardClaimed
-            || LastCoinsReward == 0 && LastGemsReward == 0) return false;
+            || LastCoinsReward == 0) return false;
         doubleRewardClaimed = true;
-        BalloonDogEconomy.AddRewards(LastCoinsReward, LastGemsReward);
+        BalloonDogEconomy.AddCoins(LastCoinsReward);
         return true;
     }
 

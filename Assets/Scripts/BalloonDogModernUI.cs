@@ -133,8 +133,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         new System.Collections.Concurrent.ConcurrentQueue<System.Action>();
     private bool resultRewardGranted;
     private int lastRunReward;
-    private int lastRunGems;
-    private TMP_Text resultGemRewardText;
     private bool gemAdPending;
     private int gemAdGeneration;
     private RectTransform wheelTransform;
@@ -320,8 +318,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         lastKnownSkin = string.Empty;
         resultRewardGranted = false;
         lastRunReward = 0;
-        lastRunGems = 0;
-        resultGemRewardText = null;
         gemAdPending = false;
         gemAdGeneration++;
     }
@@ -1730,13 +1726,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             true,
             new Color(0.32f, 0.84f, 1f, 1f),
             new Color(0.02f, 0.80f, 1f, 1f));
-        resultGemRewardText = CreatePauseText(
-            resultRewardText.transform.parent, "RunGemReward", "+0 GEMS",
-            new Vector2(0f, -122f), new Vector2(540f, 45f), 30f,
-            Color.white, TextAlignmentOptions.Center);
-        Image gemRewardIcon = CreateResourceImage(resultGemRewardText.transform,
-            "GemIcon", "MarketUI/Extras/Icon_Gems", new Vector2(-150f, 0f), new Vector2(44f, 44f));
-        gemRewardIcon.preserveAspect = true;
         resultBestText = CreateResultStatCard(
             content,
             "ResultBestCard",
@@ -2953,7 +2942,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultRewardGranted = false;
         lastRunReward = 0;
         pauseActionInProgress = false;
-        lastRunGems = 0;
         GameAudioController.SetPaused(false);
         HideAllScreens();
         gameplayOverlay.SetActive(true);
@@ -3261,10 +3249,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         {
             // The manager settles and saves the run once, independently of UI rebuilds.
             lastRunReward = gameManager.LastCoinsReward;
-            lastRunGems = gameManager.LastGemsReward;
             resultBonusClaimed = gameManager.IsDoubleRewardClaimed;
             resultRewardGranted = true;
-            bool hasReward = lastRunReward > 0 || lastRunGems > 0;
+            bool hasReward = lastRunReward > 0;
             if (resultBonusButton != null) resultBonusButton.interactable = hasReward && !resultBonusClaimed;
             if (resultBonusClaimed && resultBonusHint != null) resultBonusHint.text = "2X REWARD CLAIMED";
             if (!hasReward && resultBonusHint != null) resultBonusHint.text = "RUN TO EARN REWARDS";
@@ -3293,7 +3280,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         long multiplier = resultBonusClaimed ? 2L : 1L;
         if (resultRewardText != null) resultRewardText.text = "+" + (lastRunReward * multiplier).ToString("N0");
-        if (resultGemRewardText != null) resultGemRewardText.text = "+" + (lastRunGems * multiplier).ToString("N0") + " GEMS";
     }
 
     private void WatchAdForGems()
