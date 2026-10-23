@@ -390,7 +390,8 @@ public sealed class MainMenuController : MonoBehaviour
 
             if (gameObject != null)
             {
-                gameObject.SetActive(visible && objectName != "AirSlider");
+                // The modern gameplay overlay owns the air and run-stat views.
+                gameObject.SetActive(visible && objectName != "AirSlider" && objectName != "ScoreText");
             }
         }
     }

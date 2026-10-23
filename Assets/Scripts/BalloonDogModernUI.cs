@@ -98,6 +98,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private TMP_Text resultBestText;
     private TMP_Text resultRewardText;
     private TMP_Text gameplaySkinText;
+    private TMP_Text gameplayScoreText;
+    private TMP_Text gameplayRunCoinsText;
+    private int displayedRunScore = -1;
+    private int displayedRunCoins = -1;
     private TMP_Text pauseScoreText;
     private TMP_Text pauseTokenText;
     private TMP_Text wheelNextText;
@@ -297,6 +301,10 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         resultBestText = null;
         resultRewardText = null;
         gameplaySkinText = null;
+        gameplayScoreText = null;
+        gameplayRunCoinsText = null;
+        displayedRunScore = -1;
+        displayedRunCoins = -1;
         pauseScoreText = null;
         pauseTokenText = null;
         wheelNextText = null;
@@ -355,6 +363,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             RefreshPersistentViews();
         }
 
+        RefreshGameplayStats();
         UpdateToast();
     }
 
@@ -374,7 +383,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             "GameOverPanel",
             "EndPanel",
             "PausePanel",
-            "PauseButton"
+            "PauseButton",
+            "ScoreText"
         };
 
         foreach (string panelName in panelNames)
@@ -2608,6 +2618,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         gameplayOverlay.transform.SetParent(safeRoot, false);
         Stretch(gameplayOverlay.GetComponent<RectTransform>());
         BuildAirMeter(gameplayOverlay.transform);
+        BuildRunStats(gameplayOverlay.transform);
 
         Button pause = CreatePauseActionButton(
             gameplayOverlay.transform, "GameplayPauseButton", "II", null,
@@ -2629,6 +2640,97 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreateImage(pauseGlyph, "LeftBar", new Vector2(-12f, 0f), new Vector2(13f, 44f), Color.white, false);
         CreateImage(pauseGlyph, "RightBar", new Vector2(12f, 0f), new Vector2(13f, 44f), Color.white, false);
 
+    }
+
+    private void BuildRunStats(Transform parent)
+    {
+        RectTransform row = CreateRect("GameplayRunStats", parent);
+        row.anchorMin = new Vector2(0f, 1f);
+        row.anchorMax = Vector2.one;
+        row.pivot = new Vector2(.5f, 1f);
+        row.offsetMin = new Vector2(24f, -278f);
+        row.offsetMax = new Vector2(-24f, -166f);
+        // These passive cards share the gameplay overlay's safe area and
+        // visibility, leaving the air meter and pause control unobstructed.
+        CanvasGroup group = row.gameObject.AddComponent<CanvasGroup>();
+        group.interactable = false;
+        group.blocksRaycasts = false;
+        gameplayScoreText = CreateRunStatCard(row, "RunScore", "SCORE",
+            "PauseMenu/Icons/Crown", 0f, .5f, Cyan);
+        gameplayRunCoinsText = CreateRunStatCard(row, "RunCoins", "RUN COINS",
+            "CustomCoin", .5f, 1f, Gold);
+        RefreshGameplayStats();
+    }
+
+    private static TMP_Text CreateRunStatCard(Transform parent, string name,
+        string title, string iconResource, float left, float right, Color accent)
+    {
+        RectTransform card = CreateRect(name, parent);
+        card.anchorMin = new Vector2(left, 0f);
+        card.anchorMax = new Vector2(right, 1f);
+        card.offsetMin = new Vector2(left > 0f ? 8f : 0f, 0f);
+        card.offsetMax = new Vector2(right < 1f ? -8f : 0f, 0f);
+        Image background = card.gameObject.AddComponent<Image>();
+        background.sprite = GetRoundedSprite();
+        background.type = Image.Type.Sliced;
+        background.color = new Color(.025f, .075f, .16f, .94f);
+        background.raycastTarget = false;
+        Outline rim = card.gameObject.AddComponent<Outline>();
+        rim.effectColor = new Color(accent.r, accent.g, accent.b, .6f);
+        rim.effectDistance = new Vector2(2f, -2f);
+
+        Image icon = CreateResourceImage(card, "Icon", iconResource,
+            Vector2.zero, new Vector2(62f, 62f));
+        icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(0f, .5f);
+        icon.rectTransform.anchoredPosition = new Vector2(46f, 0f);
+        icon.raycastTarget = false;
+        if (icon.sprite == null)
+        {
+            icon.sprite = GetCircleSprite();
+            icon.color = accent;
+        }
+
+        TMP_Text heading = CreateText(card, "Heading", title, Vector2.zero,
+            Vector2.zero, 25f, accent, FontStyles.Normal, TextAlignmentOptions.Left);
+        heading.rectTransform.anchorMin = new Vector2(0f, 1f);
+        heading.rectTransform.anchorMax = Vector2.one;
+        heading.rectTransform.offsetMin = new Vector2(92f, -41f);
+        heading.rectTransform.offsetMax = new Vector2(-20f, -9f);
+        heading.enableAutoSizing = true;
+        heading.fontSizeMin = 18f;
+        heading.fontSizeMax = 25f;
+
+        TMP_Text value = CreateText(card, "Value", "0", Vector2.zero,
+            Vector2.zero, 44f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left);
+        value.rectTransform.anchorMin = Vector2.zero;
+        value.rectTransform.anchorMax = Vector2.right;
+        value.rectTransform.offsetMin = new Vector2(92f, 9f);
+        value.rectTransform.offsetMax = new Vector2(-20f, 69f);
+        value.enableAutoSizing = true;
+        value.fontSizeMin = 20f;
+        value.fontSizeMax = 44f;
+        return value;
+    }
+
+    private void RefreshGameplayStats()
+    {
+        if (gameplayOverlay == null || !gameplayOverlay.activeInHierarchy) return;
+        bool ended = gameManager != null && gameManager.IsGameOver;
+        int score = ended ? gameManager.LastScore : scoreController != null ? scoreController.CurrentScore : 0;
+        double distance = ended ? gameManager.LastDistance : scoreController != null ? scoreController.DistanceTravelled : 0d;
+        // Preview the same base reward that GameManager settles at run end.
+        // Never show the wallet balance or grant coins from a UI refresh.
+        int coins = BalloonDogEconomy.CalculateRunCoins(distance);
+        if (gameplayScoreText != null && score != displayedRunScore)
+        {
+            gameplayScoreText.text = score.ToString("N0");
+            displayedRunScore = score;
+        }
+        if (gameplayRunCoinsText != null && coins != displayedRunCoins)
+        {
+            gameplayRunCoinsText.text = coins.ToString("N0");
+            displayedRunCoins = coins;
+        }
     }
 
     private static void BuildAirMeter(Transform parent)
