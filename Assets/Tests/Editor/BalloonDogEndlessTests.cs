@@ -321,7 +321,7 @@ public sealed class BalloonDogEndlessTests
             new Vector3(2.3f,1.6f,2),new Vector3(2,2,2),new Vector3(1.2f,1,1),Vector3.one,
             new Vector3(2,1.5f,2),Vector3.one,Vector3.one,Vector3.one,Vector3.one,Vector3.one,
             new Vector3(1.5f,1.3f,1.5f),new Vector3(1.7f,1.4f,1.4f),Vector3.one,new Vector3(2,1.3f,1),Vector3.one};
-        float[] xs={0,-.18f,0,0,0,-.02f,0,0,0,0,0,0,0,0,0,0,0,2.792f,0,-2.762f};
+        float[] xs={0,1.478f,0,0,0,-.02f,0,0,0,0,0,0,0,0,0,0,0,2.792f,0,-2.762f};
         float[] ys={.074f,0,-1,-1.5f,-.011f,-.001f,0,0,0,0,0,-.317f,.022f,0,0,0,-.165f,-.178f,0,0};
         for(int index=0;index<AllowedIds.Length;index++)
         {

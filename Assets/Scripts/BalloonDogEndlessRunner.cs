@@ -480,7 +480,9 @@ public sealed class BalloonDogEndlessRunner : MonoBehaviour
             animator.enabled=true;animator.Rebind();animator.Update(0);
             if(animator.runtimeAnimatorController!=null && animator.layerCount>0)
                 animator.Play(0,0,(float)random.NextDouble());
-            animator.speed=.8f;
+            // The six-second saw clip completes one full out-and-back in two
+            // seconds. Other obstacle animations retain their existing speed.
+            animator.speed=artId==3 ? 3f : .8f;
             BalloonDogTrapImpactVfx.Install(animator);
         }
         // Contact boxes follow the actual animated parts, not an invisible solid
