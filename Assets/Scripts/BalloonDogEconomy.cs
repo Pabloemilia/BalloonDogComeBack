@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+public enum BalloonDogSkinRarity { Common, Uncommon, Rare, Epic, Legendary }
+
 [Serializable]
 public readonly struct BalloonDogSkinDefinition
 {
@@ -9,13 +11,15 @@ public readonly struct BalloonDogSkinDefinition
         string displayName,
         int price,
         Color primaryColor,
-        Color accentColor)
+        Color accentColor,
+        BalloonDogSkinRarity rarity = BalloonDogSkinRarity.Common)
     {
         Id = id;
         DisplayName = displayName;
         Price = price;
         PrimaryColor = primaryColor;
         AccentColor = accentColor;
+        Rarity = rarity;
     }
 
     public string Id { get; }
@@ -23,6 +27,7 @@ public readonly struct BalloonDogSkinDefinition
     public int Price { get; }
     public Color PrimaryColor { get; }
     public Color AccentColor { get; }
+    public BalloonDogSkinRarity Rarity { get; }
 }
 
 /// <summary>
@@ -34,37 +39,40 @@ public static class BalloonDogEconomy
     private const string CoinsKey = "BalloonDog.Coins";
     private const string GemsKey = "BalloonDog.Gems";
     public const double MetresPerCoin = 10d;
+    public const double RunCoinMultiplier = 1.2d;
+    public const int CoinScale = 10;
+    private const string CoinScaleMigrationKey = "BalloonDog.Coins.Scale10.v1";
     private const string EquippedSkinKey = "BalloonDog.Skin.Equipped";
     private const string OwnedSkinPrefix = "BalloonDog.Skin.Owned.";
     private const string CaseCollectionResetKey = "BalloonDog.Skins.CaseEconomy.v1";
     private const string CasesOpenedKey = "BalloonDog.Cases.Opened.v1";
-    public const int StartingCasePrice = 50;
-    public const int MaximumCasePrice = 600;
+    public const int StartingCasePrice = 50 * CoinScale;
+    public const int MaximumCasePrice = 600 * CoinScale;
 
     // These IDs match the fifteen existing prefab names in the player's switcher.
     private static readonly BalloonDogSkinDefinition[] SkinCatalog =
     {
         new BalloonDogSkinDefinition("classic", "CLASSIC", 0,
             new Color(.92f, .08f, .04f), new Color(1f, .38f, .10f)),
-        ModelSkin("skin_caramel", "CARAMEL", new Color(.85f, .49f, .16f)),
-        ModelSkin("skin_archleenio", "ARCHLEENIO", new Color(.52f, .24f, .85f)),
-        ModelSkin("skin_aurora", "AURORA", new Color(.22f, .86f, .73f)),
-        ModelSkin("skin_candy", "CANDY", new Color(1f, .25f, .60f)),
-        ModelSkin("skin_clown", "CLOWN", new Color(1f, .75f, .15f)),
-        ModelSkin("skin_cyber", "CYBER", new Color(.08f, .78f, 1f)),
-        ModelSkin("skin_devil", "DEVIL", new Color(.70f, .05f, .12f)),
-        ModelSkin("skin_dino", "DINO", new Color(.26f, .68f, .18f)),
-        ModelSkin("skin_honey", "HONEY", new Color(1f, .65f, .08f)),
-        ModelSkin("skin_khora", "KHORA", new Color(.70f, .36f, .78f)),
-        ModelSkin("skin_NİNETAİL", "NINETAIL", new Color(1f, .53f, .24f)),
-        ModelSkin("skin_pirate", "PIRATE", new Color(.30f, .21f, .15f)),
-        ModelSkin("skin_rainbow", "RAINBOW", new Color(.65f, .58f, 1f)),
-        ModelSkin("skin_traxex", "TRAXEX", new Color(.20f, .48f, .90f)),
-        ModelSkin("skin_watermelon", "WATERMELON", new Color(.24f, .75f, .32f))
+        ModelSkin("skin_caramel", "CARAMEL", new Color(.85f, .49f, .16f), BalloonDogSkinRarity.Common),
+        ModelSkin("skin_archleenio", "ARCHLEENIO", new Color(.52f, .24f, .85f), BalloonDogSkinRarity.Common),
+        ModelSkin("skin_aurora", "AURORA", new Color(.22f, .86f, .73f), BalloonDogSkinRarity.Uncommon),
+        ModelSkin("skin_candy", "CANDY", new Color(1f, .25f, .60f), BalloonDogSkinRarity.Uncommon),
+        ModelSkin("skin_clown", "CLOWN", new Color(1f, .75f, .15f), BalloonDogSkinRarity.Uncommon),
+        ModelSkin("skin_cyber", "CYBER", new Color(.08f, .78f, 1f), BalloonDogSkinRarity.Rare),
+        ModelSkin("skin_devil", "DEVIL", new Color(.70f, .05f, .12f), BalloonDogSkinRarity.Rare),
+        ModelSkin("skin_dino", "DINO", new Color(.26f, .68f, .18f), BalloonDogSkinRarity.Rare),
+        ModelSkin("skin_honey", "HONEY", new Color(1f, .65f, .08f), BalloonDogSkinRarity.Epic),
+        ModelSkin("skin_khora", "KHORA", new Color(.70f, .36f, .78f), BalloonDogSkinRarity.Epic),
+        ModelSkin("skin_NİNETAİL", "NINETAIL", new Color(1f, .53f, .24f), BalloonDogSkinRarity.Epic),
+        ModelSkin("skin_pirate", "PIRATE", new Color(.30f, .21f, .15f), BalloonDogSkinRarity.Legendary),
+        ModelSkin("skin_rainbow", "RAINBOW", new Color(.65f, .58f, 1f), BalloonDogSkinRarity.Legendary),
+        ModelSkin("skin_traxex", "TRAXEX", new Color(.20f, .48f, .90f), BalloonDogSkinRarity.Legendary),
+        ModelSkin("skin_watermelon", "WATERMELON", new Color(.24f, .75f, .32f), BalloonDogSkinRarity.Legendary)
     };
 
-    private static BalloonDogSkinDefinition ModelSkin(string id, string name, Color swatch) =>
-        new BalloonDogSkinDefinition(id, name, 0, swatch, Color.white);
+    private static BalloonDogSkinDefinition ModelSkin(string id, string name, Color swatch, BalloonDogSkinRarity rarity) =>
+        new BalloonDogSkinDefinition(id, name, 0, swatch, Color.white, rarity);
 
     public static int CasesOpened
     {
@@ -256,11 +264,16 @@ public static class BalloonDogEconomy
         return true;
     }
 
-    public static int CalculateRunCoins(double metres) => DistanceReward(metres, MetresPerCoin);
+    // Convert base coin amounts once at their source; wallet APIs always use current units.
+    public static int ScaleCoins(int baseCoins) =>
+        (int)Math.Min(int.MaxValue, (long)Math.Max(0, baseCoins) * CoinScale);
+
+    public static int CalculateRunCoins(double metres) => ScaleCoins(DistanceReward(metres, MetresPerCoin));
     private static int DistanceReward(double metres, double interval)
     {
         if (double.IsNaN(metres) || double.IsInfinity(metres) || metres <= 0d) return 0;
-        return (int)Math.Min(int.MaxValue, Math.Floor(metres / interval));
+        // Apply the run multiplier before rounding, so partial base coins also count.
+        return (int)Math.Min(int.MaxValue, Math.Floor(metres / interval * RunCoinMultiplier));
     }
 
     private static void EnsureInitialized()
@@ -289,6 +302,13 @@ public static class BalloonDogEconomy
             PlayerPrefs.DeleteKey("BalloonDog.SelectedSkin.V5");
             PlayerPrefs.SetInt(CasesOpenedKey, 0);
             PlayerPrefs.SetInt(CaseCollectionResetKey, 1);
+            changed = true;
+        }
+        // Preserve purchasing power for existing saves; never multiply on subsequent launches.
+        if (PlayerPrefs.GetInt(CoinScaleMigrationKey, 0) != 1)
+        {
+            PlayerPrefs.SetInt(CoinsKey, ScaleCoins(PlayerPrefs.GetInt(CoinsKey, 0)));
+            PlayerPrefs.SetInt(CoinScaleMigrationKey, 1);
             changed = true;
         }
         if (changed) PlayerPrefs.Save();

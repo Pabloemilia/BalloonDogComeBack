@@ -783,7 +783,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         out Color fill,
         out Color outline)
     {
-        int tier = Mathf.Clamp(index / 3, 0, 4);
+        BalloonDogSkinDefinition[] skins = BalloonDogEconomy.Skins;
+        int tier = (int)skins[Mathf.Clamp(index, 0, skins.Length - 1)].Rarity;
         switch (tier)
         {
             case 0:
@@ -1111,7 +1112,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             background.raycastTarget = true;
             if (gems) BalloonDogMenuArtwork.ApplyButtonBackground(background, false);
 
-            int quantity = amounts[i];
+            int quantity = gems ? amounts[i] : BalloonDogEconomy.ScaleCoins(amounts[i]);
             Button rowButton = row.gameObject.AddComponent<Button>();
             rowButton.targetGraphic = background;
             rowButton.navigation = new Navigation { mode = Navigation.Mode.None };
@@ -1136,7 +1137,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             icon.preserveAspect = true;
             icon.raycastTarget = false;
             Text amount = CreateMarketFontText(row, "PackAmount",
-                amounts[i].ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")),
+                quantity.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")),
                 new Vector2(-25f, 0f), new Vector2(300f, 110f), 62f);
             amount.alignByGeometry = true;
             amount.alignment = TextAnchor.MiddleCenter;
