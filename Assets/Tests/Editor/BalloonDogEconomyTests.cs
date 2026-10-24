@@ -541,6 +541,43 @@ public sealed class BalloonDogEconomyTests
         Assert.That(wallet.transform.Find("CaseMachine/OpenCase").GetComponent<Button>().interactable, Is.True);
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public void ApprovedCurrencyShopShowsFiveCorrectPacksAndSixIndependentButtons(bool gems)
+    {
+        wallet = new GameObject("ApprovedShopTest", typeof(RectTransform));
+        wallet.GetComponent<RectTransform>().sizeDelta = new Vector2(1080f, 1920f);
+        Component ui = wallet.AddComponent(Runtime("BalloonDogModernUI"));
+        Set(ui, "safeRoot", wallet.GetComponent<RectTransform>());
+        GameObject page = (GameObject)Call(ui, "BuildCurrencyPacksScreen", gems);
+        Transform layout = page.transform.Find("CurrencyLayout");
+        Image art = layout.Find("ApprovedShopArtwork").GetComponent<Image>();
+        Assert.That(art.sprite, Is.Not.Null);
+        Assert.That(art.raycastTarget, Is.False);
+        Assert.That(page.GetComponentsInChildren<ScrollRect>(true), Is.Empty);
+        Assert.That(page.GetComponentsInChildren<Button>(true).Length, Is.EqualTo(6));
+        Type textType = Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro", true);
+        int[] expected = gems ? new[] { 50, 150, 350, 750, 1600 } : new[] { 5000, 15000, 35000, 75000, 160000 };
+        string[] prices = { "₺19,99", "₺49,99", "₺99,99", "₺199,99", "₺399,99" };
+        string currency = gems ? "GEMS" : "COINS";
+        for (int i = 0; i < 5; i++)
+        {
+            Component quantity = layout.Find(currency + "PackAmount" + (i + 1)).GetComponent(textType);
+            Assert.That((string)textType.GetProperty("text").GetValue(quantity),
+                Is.EqualTo(expected[i].ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))));
+            Transform button = layout.Find(currency + "Pack" + (i + 1));
+            Component price = button.Find("PressContent/PackPrice").GetComponent(textType);
+            Assert.That((string)textType.GetProperty("text").GetValue(price), Is.EqualTo(prices[i]));
+            Assert.That(button.Find("PressContent").GetComponent<Image>().sprite, Is.Not.Null);
+            Assert.That(button.GetComponent(Runtime("BalloonDogDirectPressButton")), Is.Not.Null);
+        }
+        RectTransform left = (RectTransform)layout.Find(currency + "Pack1");
+        RectTransform right = (RectTransform)layout.Find(currency + "Pack2");
+        Assert.That(left.anchoredPosition.x, Is.LessThan(0f));
+        Assert.That(right.anchoredPosition.x, Is.GreaterThan(0f));
+        Assert.That(left.anchoredPosition.y, Is.EqualTo(right.anchoredPosition.y));
+    }
+
     private Component CurrencyUi(string originField, out GameObject origin, out GameObject coinsPage, out GameObject gemsPage, out GameObject gameplay)
     {
         wallet = new GameObject("CurrencyNavigationTest", typeof(RectTransform));

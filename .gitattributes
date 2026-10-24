@@ -200,3 +200,6 @@ Assets/Resources/shrink_transform_icon.png -filter -diff -merge -text
 
 # Capsule machine runtime artwork uses regular Git blobs.
 Assets/Resources/MarketUI/CapsuleMachine/*.png -filter -diff -merge -text
+
+# Approved currency shop artwork uses regular Git blobs.
+Assets/Resources/MarketUI/PackShop/*.png -filter -diff -merge -text

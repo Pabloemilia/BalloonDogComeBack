@@ -1063,111 +1063,94 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private GameObject BuildCurrencyPacksScreen(bool gems)
     {
         string currency = gems ? "GEMS" : "COINS";
-        GameObject screen = CreateScreen(
-            gems ? "ModernGemPacksScreen" : "ModernCoinPacksScreen",
-            new Color(0.13f, 0.44f, 0.96f, 1f),
-            new Color(0.27f, 0.84f, 0.53f, 1f));
-
-        // Fit the complete five-row design to every safe area without clipping.
+        string art = "MarketUI/PackShop/" + (gems ? "Gems" : "Coins");
+        GameObject screen = CreateScreen(gems ? "ModernGemPacksScreen" : "ModernCoinPacksScreen",
+            new Color(.13f, .44f, .96f, 1f), new Color(.27f, .84f, .53f, 1f));
+        Transform oldPattern = screen.transform.Find("FigmaPattern");
+        if (oldPattern != null) oldPattern.gameObject.SetActive(false);
         RectTransform layout = CreateRect("CurrencyLayout", screen.transform);
         SetRect(layout, Vector2.zero, new Vector2(1080f, 1920f));
         layout.gameObject.AddComponent<BalloonDogSettingsFit>();
-        CreateMarketFontText(layout, "CurrencyTitle", currency,
-            new Vector2(0f, 820f), new Vector2(800f, 160f), 100f);
-        CreatePauseTitleAccents(layout, 820f);
-
-        const int packCount = 5;
-        const float listHeight = 1450f;
-        const float edgePadding = 20f;
-        const float rowGap = 15f;
-        const float rowWidth = 1000f;
-        const float rowHeight = (listHeight - 2f * edgePadding
-            - (packCount - 1) * rowGap) / packCount; // 270 for every row
-        RectTransform viewport = CreateRect("PackViewport", layout);
-        SetRect(viewport, new Vector2(0f, -5f), new Vector2(1040f, listHeight));
-        Image hitArea = viewport.gameObject.AddComponent<Image>();
-        hitArea.color = Color.clear;
-        viewport.gameObject.AddComponent<RectMask2D>();
-        ScrollRect scroll = viewport.gameObject.AddComponent<ScrollRect>();
-        scroll.viewport = viewport;
-        scroll.horizontal = false;
-        scroll.vertical = false;
-        scroll.inertia = false;
-        scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = 35f;
-
-        RectTransform content = CreateRect("PackRows", viewport);
-        content.anchorMin = new Vector2(0f, 1f);
-        content.anchorMax = new Vector2(1f, 1f);
-        content.pivot = new Vector2(0.5f, 1f);
-        content.sizeDelta = new Vector2(0f, listHeight);
-        content.anchoredPosition = Vector2.zero;
-        scroll.content = content;
+        Image artwork = CreateResourceImage(layout, "ApprovedShopArtwork", art,
+            Vector2.zero, new Vector2(1080f, 1920f));
+        artwork.preserveAspect = false;
+        // The approved artwork contains no text. Quantities and prices remain real UI labels.
+        CreateCurrencyLabel(layout, "CurrencyTitle", currency, new Vector2(471f, 145f),
+            new Vector2(820f, 195f), 160f);
 
         int[] amounts = gems ? new[] { 50, 150, 350, 750, 1600 }
             : new[] { 500, 1500, 3500, 7500, 16000 };
         string[] prices = { "₺19,99", "₺49,99", "₺99,99", "₺199,99", "₺399,99" };
-        for (int i = 0; i < packCount; i++)
+        Vector2[] quantityCentres = { new Vector2(260f, 535f), new Vector2(681f, 535f),
+            new Vector2(260f, 1024f), new Vector2(681f, 1024f), new Vector2(669f, 1314f) };
+        Rect[] priceFaces = { new Rect(94f, 578f, 337f, 104f), new Rect(514f, 578f, 337f, 104f),
+            new Rect(94f, 1066f, 337f, 104f), new Rect(514f, 1066f, 337f, 104f),
+            new Rect(488f, 1366f, 367f, 114f) };
+        for (int i = 0; i < amounts.Length; i++)
         {
-            RectTransform row = CreateRect(currency + "Pack" + (i + 1), content);
-            SetRect(row, Vector2.zero, new Vector2(rowWidth, rowHeight));
-            row.anchorMin = row.anchorMax = new Vector2(0.5f, 1f);
-            row.anchoredPosition = new Vector2(0f,
-                -(edgePadding + rowHeight * 0.5f + i * (rowHeight + rowGap)));
-            Image background = row.gameObject.AddComponent<Image>();
-            background.sprite = GetCenteredStoreCardSprite(
-                "MarketUI/Extras/" + (gems ? "CurrencyRow_Gems" : "CurrencyRow_Coins"));
-            background.type = Image.Type.Simple;
-            background.preserveAspect = false;
-            background.raycastTarget = true;
-            if (gems) BalloonDogMenuArtwork.ApplyButtonBackground(background, false);
-
             int quantity = gems ? amounts[i] : BalloonDogEconomy.ScaleCoins(amounts[i]);
-            Button rowButton = row.gameObject.AddComponent<Button>();
-            rowButton.targetGraphic = background;
-            rowButton.navigation = new Navigation { mode = Navigation.Mode.None };
-            ColorBlock rowColors = rowButton.colors;
-            rowColors.normalColor = Color.white;
-            rowColors.highlightedColor = new Color(1f, 1f, 1f, 0.96f);
-            rowColors.pressedColor = new Color(0.78f, 0.84f, 0.92f, 1f);
-            rowColors.selectedColor = Color.white;
-            rowColors.fadeDuration = 0.08f;
-            rowButton.colors = rowColors;
-            rowButton.onClick.AddListener(
-                () => ShowToast(quantity + " " + currency + " - PURCHASE COMING SOON"));
-            row.gameObject.AddComponent<MenuPressScale>();
-
-            // Center visible artwork, not the transparent source canvas.
-            // Crop both row and logo to their alpha bounds before alignment.
-            Image icon = CreateResourceImage(row, "PackLogo",
-                gems ? "MarketUI/Extras/GemPack_" + (i + 1).ToString("00") : "MarketUI/Extras/Icon_Coins",
-                new Vector2(-350f, 0f), new Vector2(220f, 210f));
-            if (gems) icon.sprite = GetCenteredStoreCardSprite("MarketUI/Extras/GemPack_" + (i + 1).ToString("00"));
-            icon.preserveAspect = true;
-            icon.raycastTarget = false;
-            Text amount = CreateMarketFontText(row, "PackAmount",
+            CreateCurrencyLabel(layout, currency + "PackAmount" + (i + 1),
                 quantity.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")),
-                new Vector2(-25f, 0f), new Vector2(300f, 110f), 62f);
-            amount.alignByGeometry = true;
-            amount.alignment = TextAnchor.MiddleCenter;
-            amount.resizeTextForBestFit = true;
-            amount.resizeTextMinSize = 42;
-            amount.resizeTextMaxSize = 62;
-            AddGraphicShadow(amount, new Color(0.02f, 0.12f, 0.4f, 1f), new Vector2(0f, -4f));
-
-            Text priceText = CreateMarketFontText(row, "PackPrice", prices[i],
-                new Vector2(320f, 0f), new Vector2(285f, 110f), 46f);
-            priceText.alignByGeometry = true;
-            priceText.alignment = TextAnchor.MiddleCenter;
-            priceText.resizeTextForBestFit = true;
-            priceText.resizeTextMinSize = 34;
-            priceText.resizeTextMaxSize = 46;
-            AddGraphicShadow(priceText, new Color(0.02f, 0.12f, 0.4f, 0.82f),
-                new Vector2(0f, -3f));
+                quantityCentres[i], new Vector2(i == 4 ? 495f : 440f, 125f), 98f);
+            CreateCurrencyArtworkButton(layout, currency + "Pack" + (i + 1), art, priceFaces[i], prices[i], 70f,
+                () => ShowToast(quantity + " " + currency + " - PURCHASE COMING SOON"));
         }
-        CreateMarketArtworkButton(layout, "BackToExtras", "BACK",
-            new Vector2(0f, -820f), new Vector2(530f, 190f), ReturnFromCurrencyPacks, 60f);
+        CreateCurrencyArtworkButton(layout, "BackToExtras", art, new Rect(309f, 1535f, 326f, 118f),
+            "BACK", 88f, ReturnFromCurrencyPacks);
         return screen;
+    }
+
+    // The design reference uses top-left pixel coordinates on a 941 x 1672 canvas.
+    private static Vector2 CurrencyPoint(Vector2 pixel) =>
+        new Vector2((pixel.x / 941f - .5f) * 1080f, (.5f - pixel.y / 1672f) * 1920f);
+
+    private static TMP_Text CreateCurrencyLabel(Transform parent, string name, string value,
+        Vector2 pixelCentre, Vector2 size, float fontSize)
+    {
+        TMP_Text label = CreatePauseText(parent, name, value, CurrencyPoint(pixelCentre), size,
+            fontSize, Color.white, TextAlignmentOptions.Center);
+        label.enableAutoSizing = true;
+        label.fontSizeMax = fontSize;
+        label.fontSizeMin = fontSize * .70f;
+        label.enableWordWrapping = false;
+        label.outlineColor = new Color(.015f, .045f, .20f, 1f);
+        label.outlineWidth = .22f;
+        return label;
+    }
+
+    private static void CreateCurrencyArtworkButton(Transform parent, string name, string art,
+        Rect sourceRect, string value, float fontSize, UnityAction action)
+    {
+        RectTransform hit = CreateRect(name, parent);
+        Vector2 size = new Vector2(sourceRect.width / 941f * 1080f, sourceRect.height / 1672f * 1920f);
+        SetRect(hit, CurrencyPoint(sourceRect.center), size);
+        RectTransform face = CreateRect("PressContent", hit);
+        SetRect(face, Vector2.zero, size);
+        Image image = face.gameObject.AddComponent<Image>();
+        string key = art + "#" + name;
+        if (!ResourceSprites.TryGetValue(key, out Sprite sprite) || sprite == null)
+        {
+            Texture2D texture = Resources.Load<Texture2D>(art);
+            if (texture != null)
+            {
+                Rect region = new Rect(sourceRect.x / 941f * texture.width,
+                    (1672f - sourceRect.yMax) / 1672f * texture.height,
+                    sourceRect.width / 941f * texture.width, sourceRect.height / 1672f * texture.height);
+                sprite = Sprite.Create(texture, region, new Vector2(.5f, .5f), 100f);
+                ResourceSprites[key] = sprite;
+            }
+        }
+        image.sprite = sprite;
+        image.enabled = sprite != null;
+        image.raycastTarget = false;
+        CreateCurrencyLabel(face, "PackPrice", value, new Vector2(470.5f, 836f),
+            size - new Vector2(20f, 8f), fontSize);
+        Button button = hit.gameObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.AddListener(action);
+        hit.gameObject.AddComponent<BalloonDogDirectPressButton>()
+            .Configure(button, face, new Vector2(.15f, .49f), true);
     }
 
     private void BindCurrencyCounters()
