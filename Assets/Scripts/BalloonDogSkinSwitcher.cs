@@ -44,6 +44,15 @@ public sealed class BalloonDogSkinSwitcher : MonoBehaviour
     public GameObject ActiveSkinInstance => activeSkinInstance;
     public string CurrentSkinName => GetSkinName(currentSkinIndex);
 
+    // Read-only source access for collection thumbnails. This never selects or
+    // instantiates a gameplay skin, including when the requested skin is locked.
+    public GameObject GetSkinPreviewSource(string skinId)
+    {
+        int index = FindSkinIndex(skinId);
+        if (!IsValidIndex(index)) return null;
+        return HasStarterVisual && index == 0 ? starterVisual : skinPrefabs[index - PrefabIndexOffset];
+    }
+
     public event Action<int, GameObject> SkinChanged;
 
     private void Awake()

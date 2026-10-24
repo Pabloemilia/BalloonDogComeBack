@@ -54,7 +54,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         public BalloonDogSkinDefinition Skin;
         public bool MarketMode;
-        public Image Swatch;
         public TMP_Text Status;
         public TMP_Text ActionLabel;
         public Button ActionButton;
@@ -125,6 +124,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private TMP_Text collectionPageLabel;
     private Button collectionPreviousButton;
     private Button collectionNextButton;
+    private BalloonDogCollectionStudio collectionStudio;
     private readonly List<Image> menuPreviewParts = new List<Image>();
     private int lastKnownCoins = -1;
     private int lastKnownGems = -1;
@@ -162,7 +162,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private static Sprite roundedSprite;
     private static Sprite circleSprite;
-    private static Sprite collectionSwatchSprite;
+    private static Sprite collectionArrowSprite;
     private static Sprite resultSoftLightSprite;
     private static Sprite patternSprite;
     private static readonly Dictionary<string, Sprite> ResourceSprites =
@@ -291,6 +291,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         collectionPageLabel = null;
         collectionPreviousButton = null;
         collectionNextButton = null;
+        collectionStudio = null;
         settingsScreen = null;
         privacyScreen = null;
         resultScreen = null;
@@ -1369,6 +1370,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         CreatePauseText(content, "CollectionSubtitle", "YOUR COLLECTION",
             new Vector2(0f, 625f), new Vector2(900f, 60f), 34f,
             Color.white, TextAlignmentOptions.Center);
+        collectionStudio = content.gameObject.AddComponent<BalloonDogCollectionStudio>();
         BuildSkinGrid(content, false);
 
         collectionPreviousButton = CreateCollectionPageButton(content,
@@ -1404,13 +1406,18 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     {
         Image artwork = CreateResourceImage(parent, name, "CollectionUI/PageArrow",
             position, new Vector2(215f, 130f));
-        BalloonDogMenuArtwork.ApplyButtonBackground(artwork, false);
-        RectTransform arrow = CreateRect("PageArrow", artwork.transform);
-        SetRect(arrow, Vector2.zero, new Vector2(36f, 54f));
-        BalloonDogPageChevron chevron = arrow.gameObject.AddComponent<BalloonDogPageChevron>();
-        chevron.Previous = previous;
-        chevron.color = Color.white;
-        chevron.raycastTarget = false;
+        // Use the actual authored arrow button. Replacing its sprite with the
+        // blank shared blue button was removing the arrow from this artwork.
+        if (collectionArrowSprite == null && artwork.sprite != null)
+        {
+            Texture2D texture = artwork.sprite.texture;
+            collectionArrowSprite = Sprite.Create(texture, new Rect(108f, 128f, 1440f, 700f),
+                new Vector2(.5f, .5f), 100f, 0, SpriteMeshType.FullRect);
+            collectionArrowSprite.name = "CollectionArrowButton";
+        }
+        artwork.sprite = collectionArrowSprite;
+        artwork.preserveAspect = false;
+        artwork.rectTransform.localScale = new Vector3(previous ? -1f : 1f, 1f, 1f);
         artwork.raycastTarget = true;
         Button button = artwork.gameObject.AddComponent<Button>();
         button.targetGraphic = artwork;
@@ -1442,6 +1449,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             collectionPreviousButton.interactable = collectionPage > 0;
         if (collectionNextButton != null)
             collectionNextButton.interactable = collectionPage < pageCount - 1;
+        if (collectionStudio != null) collectionStudio.SetPage(collectionPage);
     }
 
     private void BuildSkinGrid(Transform parent, bool marketMode)
@@ -1457,17 +1465,17 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 "CollectionUI/SkinCard", position, new Vector2(420f, 405f));
             background.preserveAspect = false;
             RectTransform card = background.rectTransform;
-            // 145 * 0.8 = 116. Use one shared high-resolution circle for every skin.
-            Image swatch = CreateImage(card, "SkinSwatch", new Vector2(0f, 82f),
-                new Vector2(116f, 116f), skin.PrimaryColor, true);
-            swatch.sprite = GetCollectionSwatchSprite();
-            // Equal 16-unit gaps: circle bottom 24, name top 8;
-            // name bottom -32, status top -48.
+            RectTransform previewRect = CreateRect("SkinPreview", card);
+            SetRect(previewRect, new Vector2(0f, 84f), new Vector2(320f, 190f));
+            RawImage preview = previewRect.gameObject.AddComponent<RawImage>();
+            preview.raycastTarget = false;
+            preview.color = Color.clear;
+            collectionStudio.Register(skin.Id, preview);
             CreatePauseText(card, "SkinName", skin.DisplayName,
-                new Vector2(0f, -12f), new Vector2(380f, 40f), 31f,
+                new Vector2(0f, -40f), new Vector2(380f, 40f), 31f,
                 Color.white, TextAlignmentOptions.Center);
             TMP_Text status = CreatePauseText(card, "SkinStatus", string.Empty,
-                new Vector2(0f, -64f), new Vector2(380f, 32f), 23f,
+                new Vector2(0f, -88f), new Vector2(380f, 32f), 23f,
                 MenuGreen, TextAlignmentOptions.Center);
             // The entire card is the hit target; EQUIP is now only a text label.
             background.raycastTarget = true;
@@ -1487,7 +1495,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 Color.white, TextAlignmentOptions.Center);
             skinCards.Add(new SkinCardView
             {
-                Skin = skin, MarketMode = marketMode, Swatch = swatch,
+                Skin = skin, MarketMode = marketMode,
                 Status = status, ActionLabel = actionLabel, ActionButton = action,
                 Card = card, CollectionIndex = index
             });
@@ -4143,18 +4151,6 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             circleSprite = CreateRoundedSprite(64, 31f, false);
         }
         return circleSprite;
-    }
-
-    private static Sprite GetCollectionSwatchSprite()
-    {
-        if (collectionSwatchSprite == null)
-        {
-            // A true circle with a one-source-pixel antialiased edge.
-            // 512 px is downsampled into the 116-unit UI swatch, never enlarged.
-            collectionSwatchSprite = CreateRoundedSprite(512, 255.5f, false);
-            collectionSwatchSprite.name = "CollectionSwatch512";
-        }
-        return collectionSwatchSprite;
     }
 
     private static Sprite GetResourceSprite(string path)

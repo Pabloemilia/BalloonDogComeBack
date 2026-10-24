@@ -640,6 +640,108 @@ public sealed class BalloonDogEconomyTests
         Assert.That(left.anchoredPosition.y, Is.EqualTo(right.anchoredPosition.y));
     }
 
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(2)]
+    public void CollectionPagesShowRealOwnedModelsAndLockedSilhouettesWithoutChangingThePlayer(int pageIndex)
+    {
+        Component switcher = player.AddComponent(Runtime("BalloonDogSkinSwitcher"));
+        GameObject starter = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        starter.name = "StarterPreviewSource";
+        starter.transform.SetParent(player.transform, false);
+        starter.transform.localScale = new Vector3(1f, 2f, 3f);
+        Set(switcher, "starterVisual", starter);
+        var prefabs = new List<GameObject>();
+        foreach (object skin in Skins)
+        {
+            string id = SkinId(skin);
+            if (id == "classic") continue;
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Skins/" + id + ".prefab");
+            Assert.That(prefab, Is.Not.Null, id);
+            prefabs.Add(prefab);
+        }
+        Set(switcher, "skinPrefabs", prefabs);
+        int first = pageIndex * 6;
+        int last = Mathf.Min(first + 6, Skins.Length);
+        string revealedId = SkinId(Skins.GetValue(first == 0 ? 1 : first));
+        PlayerPrefs.SetInt("BalloonDog.Skin.Owned." + revealedId, 1);
+        string equippedBefore = (string)Runtime("BalloonDogEconomy").GetProperty("EquippedSkinId").GetValue(null);
+        Vector3 sourceScale = starter.transform.localScale;
+        Material sourceMaterial = starter.GetComponent<Renderer>().sharedMaterial;
+
+        wallet = new GameObject("CollectionPreviewTest", typeof(RectTransform));
+        wallet.GetComponent<RectTransform>().sizeDelta = new Vector2(1080f, 1920f);
+        Component ui = wallet.AddComponent(Runtime("BalloonDogModernUI"));
+        Set(ui, "safeRoot", wallet.GetComponent<RectTransform>());
+        Call(ui, "BuildSkinsScreen");
+        Transform content = wallet.transform.Find("ModernSkinsScreen/CollectionContent");
+        Component studio = content.GetComponent(Runtime("BalloonDogCollectionStudio"));
+        Set(studio, "switcher", switcher);
+        Call(ui, "SetCollectionPage", pageIndex);
+        Assert.That((bool)Call(studio, "BuildPage"), Is.True);
+        GameObject models = (GameObject)studio.GetType().GetField("models", Private).GetValue(studio);
+        Assert.That(models.transform.childCount, Is.EqualTo(last - first));
+        Assert.That(models.GetComponentsInChildren<Collider>(true), Is.Empty);
+        Assert.That(models.GetComponentsInChildren<Animator>(true), Is.Empty);
+        Assert.That(models.GetComponentsInChildren<MonoBehaviour>(true), Is.Empty);
+        RenderTexture atlas = (RenderTexture)studio.GetType().GetField("target", Private).GetValue(studio);
+        GameObject stage = (GameObject)studio.GetType().GetField("stage", Private).GetValue(studio);
+        Assert.That(stage.GetComponentsInChildren<Camera>().Length, Is.EqualTo(1));
+
+        for (int i = 0; i < Skins.Length; i++)
+        {
+            string id = SkinId(Skins.GetValue(i));
+            Transform card = content.Find("Collection_" + id);
+            Assert.That(card.gameObject.activeSelf, Is.EqualTo(i >= first && i < last));
+            Assert.That(card.Find("SkinSwatch"), Is.Null);
+            RawImage preview = card.Find("SkinPreview").GetComponent<RawImage>();
+            Assert.That(preview.texture, Is.SameAs(atlas));
+            Assert.That(preview.raycastTarget, Is.False);
+            if (i < first || i >= last) continue;
+            Assert.That(preview.color, Is.EqualTo(Color.white));
+            Transform model = models.transform.Find(id);
+            Assert.That(model.GetComponentsInChildren<MeshFilter>().Length, Is.GreaterThan(0));
+            foreach (Renderer renderer in model.GetComponentsInChildren<Renderer>())
+                foreach (Material material in renderer.sharedMaterials)
+                    Assert.That(material.GetFloat("_Silhouette"),
+                        Is.EqualTo(id == "classic" || id == revealedId ? 0f : 1f), id);
+        }
+        Image previous = content.Find("PreviousPage").GetComponent<Image>();
+        Image next = content.Find("NextPage").GetComponent<Image>();
+        Assert.That(previous.sprite.texture, Is.SameAs(Resources.Load<Sprite>("CollectionUI/PageArrow").texture));
+        Assert.That(next.sprite, Is.SameAs(previous.sprite));
+        Assert.That(previous.rectTransform.localScale.x, Is.LessThan(0f));
+        Assert.That(next.rectTransform.localScale.x, Is.GreaterThan(0f));
+        Assert.That(previous.GetComponent<Button>().interactable, Is.EqualTo(pageIndex > 0));
+        Assert.That(next.GetComponent<Button>().interactable, Is.EqualTo(pageIndex < 2));
+        Assert.That(previous.rectTransform.anchoredPosition.y, Is.EqualTo(next.rectTransform.anchoredPosition.y));
+        Assert.That(previous.rectTransform.anchoredPosition.x, Is.EqualTo(-next.rectTransform.anchoredPosition.x));
+
+        // Earning a skin while the collection is open reveals its real materials.
+        string newlyOwned = SkinId(Skins.GetValue(first + 2));
+        PlayerPrefs.SetInt("BalloonDog.Skin.Owned." + newlyOwned, 1);
+        Call(studio, "MarkDirty");
+        Call(studio, "LateUpdate");
+        models = (GameObject)studio.GetType().GetField("models", Private).GetValue(studio);
+        foreach (Renderer renderer in models.transform.Find(newlyOwned).GetComponentsInChildren<Renderer>())
+            foreach (Material material in renderer.sharedMaterials)
+                Assert.That(material.GetFloat("_Silhouette"), Is.Zero);
+        Camera camera = stage.GetComponentInChildren<Camera>();
+        Call(studio, "AfterBuiltInCamera", camera);
+        Assert.That(camera.enabled, Is.False, "Static thumbnails must stop rendering after the atlas is ready.");
+        Assert.That(starter.transform.localScale, Is.EqualTo(sourceScale));
+        Assert.That(starter.GetComponent<Renderer>().sharedMaterial, Is.SameAs(sourceMaterial));
+        Assert.That(starter.GetComponent<Collider>().enabled, Is.True);
+        Assert.That((string)Runtime("BalloonDogEconomy").GetProperty("EquippedSkinId").GetValue(null), Is.EqualTo(equippedBefore));
+        Assert.That(Balance("Coins"), Is.Zero);
+        content.gameObject.SetActive(false);
+        Assert.That(atlas == null, Is.True);
+        Assert.That(stage == null, Is.True);
+        content.gameObject.SetActive(true);
+        Call(studio, "LateUpdate");
+        Assert.That(studio.GetType().GetField("target", Private).GetValue(studio), Is.Not.Null);
+    }
+
     private Component CurrencyUi(string originField, out GameObject origin, out GameObject coinsPage, out GameObject gemsPage, out GameObject gameplay)
     {
         wallet = new GameObject("CurrencyNavigationTest", typeof(RectTransform));

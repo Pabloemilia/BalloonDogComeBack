@@ -4,6 +4,8 @@ Shader "BalloonDog/MenuStudioBalloon"
     {
         _BaseMap("Skin Texture", 2D) = "white" {}
         _BaseColor("Skin Color", Color) = (1,1,1,1)
+        _Silhouette("Collection Silhouette", Float) = 0
+        _SilhouetteColor("Silhouette Color", Color) = (.02,.055,.12,1)
     }
     SubShader
     {
@@ -20,6 +22,8 @@ Shader "BalloonDog/MenuStudioBalloon"
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
                 half4 _BaseColor;
+                half4 _SilhouetteColor;
+                half _Silhouette;
             CBUFFER_END
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; };
             struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; half3 normalWS : TEXCOORD1; float2 uv : TEXCOORD2; };
@@ -34,6 +38,7 @@ Shader "BalloonDog/MenuStudioBalloon"
             }
             half4 Frag(Varyings input) : SV_Target
             {
+                if (_Silhouette > .5) return half4(_SilhouetteColor.rgb, 1);
                 half3 n = normalize(input.normalWS);
                 half3 v = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 half3 key = normalize(half3(-.6, .9, -.7));
