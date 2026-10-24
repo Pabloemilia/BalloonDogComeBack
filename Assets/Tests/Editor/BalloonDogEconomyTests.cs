@@ -24,6 +24,7 @@ public sealed class BalloonDogEconomyTests
     private string equipped;
     private string legacySelection;
     private float previousTimeScale;
+    private bool previousAudioPause;
     private GameObject player;
     private GameObject host;
     private GameObject panel;
@@ -61,6 +62,7 @@ public sealed class BalloonDogEconomyTests
         if (PlayerPrefs.HasKey(LegacySelection)) presentKeys.Add(LegacySelection);
         legacySelection = PlayerPrefs.GetString(LegacySelection, string.Empty);
         previousTimeScale = Time.timeScale;
+        previousAudioPause = AudioListener.pause;
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         PlayerPrefs.SetInt(Init, 1);
         PlayerPrefs.SetInt(Coins, 0);
@@ -102,6 +104,7 @@ public sealed class BalloonDogEconomyTests
         savedInts.Clear();
         presentKeys.Clear();
         Time.timeScale = previousTimeScale;
+        AudioListener.pause = previousAudioPause;
     }
 
     [TestCase(0d, 0)]
@@ -536,6 +539,91 @@ public sealed class BalloonDogEconomyTests
         Assert.That(Quaternion.Angle(crank.localRotation, Quaternion.identity), Is.LessThan(.01f));
         Assert.That(wallet.transform.Find("CaseMachine/MachineVisual/DispensedCapsule").gameObject.activeSelf, Is.False);
         Assert.That(wallet.transform.Find("CaseMachine/OpenCase").GetComponent<Button>().interactable, Is.True);
+    }
+
+    private Component CurrencyUi(string originField, out GameObject origin, out GameObject coinsPage, out GameObject gemsPage, out GameObject gameplay)
+    {
+        wallet = new GameObject("CurrencyNavigationTest", typeof(RectTransform));
+        Component ui = wallet.AddComponent(Runtime("BalloonDogModernUI"));
+        origin = new GameObject("Origin", typeof(RectTransform));
+        coinsPage = new GameObject("Coins", typeof(RectTransform));
+        gemsPage = new GameObject("Gems", typeof(RectTransform));
+        gameplay = new GameObject("Gameplay", typeof(RectTransform));
+        foreach (GameObject page in new[] { origin, coinsPage, gemsPage, gameplay })
+        {
+            page.transform.SetParent(wallet.transform, false);
+            page.SetActive(false);
+        }
+        Set(ui, originField, origin);
+        Set(ui, "coinPacksScreen", coinsPage);
+        Set(ui, "gemPacksScreen", gemsPage);
+        Set(ui, "gameplayOverlay", gameplay);
+        return ui;
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void CurrencyCounterClicksOpenTheCorrectStoreAndSurviveVisualRestyling(bool gems)
+    {
+        Component ui = CurrencyUi("mainScreen", out GameObject origin, out GameObject coinsPage,
+            out GameObject gemsPage, out GameObject gameplay);
+        origin.SetActive(true);
+        GameObject card = new GameObject("WalletCounter", typeof(RectTransform), typeof(Image));
+        card.transform.SetParent(origin.transform, false);
+        Type textType = Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro", true);
+        Component label = new GameObject("Label", typeof(RectTransform), textType).GetComponent(textType);
+        label.transform.SetParent(card.transform, false);
+        Call(ui, "BindCurrencyCounter", label, gems);
+        Call(ui, "BindCurrencyCounter", label, gems);
+        Assert.That(card.transform.childCount, Is.EqualTo(2), "Only one hit surface may be attached.");
+        Runtime("BalloonDogBalloonThemeRuntime").GetMethod("StyleWalletCounter")
+            .Invoke(null, new object[] { card.GetComponent<RectTransform>(), label, gems });
+        Button hit = card.transform.Find("CurrencyHitTarget").GetComponent<Button>();
+        Assert.That(hit.GetComponent<Image>().raycastTarget, Is.True);
+        hit.onClick.Invoke();
+        Assert.That(gems ? gemsPage.activeSelf : coinsPage.activeSelf, Is.True);
+        Assert.That(gems ? coinsPage.activeSelf : gemsPage.activeSelf, Is.False);
+        Call(ui, "ReturnFromCurrencyPacks");
+        Assert.That(origin.activeSelf, Is.True);
+    }
+
+    [TestCase("marketScreen")]
+    [TestCase("resultScreen")]
+    [TestCase("pauseScreen")]
+    public void StoreBackReturnsToTheOriginScreenAndPreservesPausedTime(string originField)
+    {
+        Component ui = CurrencyUi(originField, out GameObject origin, out GameObject coinsPage,
+            out GameObject gemsPage, out GameObject gameplay);
+        origin.SetActive(true);
+        Time.timeScale = 0f;
+        Call(ui, "ShowCurrencyPacks", false);
+        Assert.That(origin.activeSelf, Is.False);
+        Call(ui, "ShowCurrencyPacks", true);
+        Assert.That(coinsPage.activeSelf, Is.False);
+        Assert.That(gemsPage.activeSelf, Is.True);
+        Call(ui, "ReturnFromCurrencyPacks");
+        Assert.That(origin.activeSelf, Is.True);
+        Assert.That(gameplay.activeSelf, Is.False);
+        Assert.That(Time.timeScale, Is.Zero);
+    }
+
+    [Test]
+    public void GameplayStorePausesTheRunAndReturnsWithoutSettlingOrGrantingCoins()
+    {
+        Component ui = CurrencyUi("mainScreen", out GameObject origin, out GameObject coinsPage,
+            out GameObject gemsPage, out GameObject gameplay);
+        gameplay.SetActive(true);
+        Time.timeScale = 1f;
+        Call(ui, "ShowCurrencyPacks", false);
+        Assert.That(Time.timeScale, Is.Zero);
+        Assert.That(gameplay.activeSelf, Is.False);
+        Call(ui, "ShowCurrencyPacks", true);
+        Call(ui, "ReturnFromCurrencyPacks");
+        Assert.That(gameplay.activeSelf, Is.True);
+        Assert.That(origin.activeSelf, Is.False);
+        Assert.That(Time.timeScale, Is.EqualTo(1f));
+        Assert.That(Balance("Coins"), Is.Zero);
+        Assert.That(Balance("CasesOpened"), Is.Zero);
     }
 
     [Test]

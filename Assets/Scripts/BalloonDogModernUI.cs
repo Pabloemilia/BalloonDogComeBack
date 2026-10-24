@@ -149,6 +149,12 @@ public sealed class BalloonDogModernUI : MonoBehaviour
     private Coroutine rebuildRoutine;
     private bool economySubscribed;
     private bool menuLaunchInProgress;
+    private bool currencyStoreOpen;
+    private GameObject currencyReturnScreen;
+    private bool currencyReturnGameplay;
+    private bool currencyPausedRun;
+    private bool currencyPreviousAudioPause;
+    private float currencyReturnTimeScale;
     public bool IsReady { get; private set; }
     // Keep the Scene itself: current Unity versions forbid implicit
     // conversions between their typed SceneHandle and int.
@@ -265,6 +271,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void ResetRuntimeReferences()
     {
+        RestoreCurrencyRunState();
+        currencyStoreOpen = false;
+        currencyReturnScreen = null;
         menuLaunchInProgress = false;
         resultAdGeneration++;
         resultBonusPending = resultBonusClaimed = false;
@@ -351,7 +360,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             scoreController = FindAnyObjectByType<ScoreController>();
         }
 
-        if (gameManager != null && gameManager.IsResultFinalized &&
+        if (!currencyStoreOpen && gameManager != null && gameManager.IsResultFinalized &&
             resultScreen != null && !resultScreen.activeSelf)
         {
             HandleGameEnded();
@@ -454,6 +463,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         BuildPauseScreen();
         BuildGameplayOverlay();
         BuildToast();
+        BindCurrencyCounters();
 
         HideAllScreens();
     }
@@ -1130,10 +1140,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             // Center visible artwork, not the transparent source canvas.
             // Crop both row and logo to their alpha bounds before alignment.
             Image icon = CreateResourceImage(row, "PackLogo",
-                "MarketUI/Extras/" + (gems ? "GemPack_" : "CoinPack_") + (i + 1).ToString("00"),
+                gems ? "MarketUI/Extras/GemPack_" + (i + 1).ToString("00") : "MarketUI/Extras/Icon_Coins",
                 new Vector2(-350f, 0f), new Vector2(220f, 210f));
-            icon.sprite = GetCenteredStoreCardSprite(
-                "MarketUI/Extras/" + (gems ? "GemPack_" : "CoinPack_") + (i + 1).ToString("00"));
+            if (gems) icon.sprite = GetCenteredStoreCardSprite("MarketUI/Extras/GemPack_" + (i + 1).ToString("00"));
             icon.preserveAspect = true;
             icon.raycastTarget = false;
             Text amount = CreateMarketFontText(row, "PackAmount",
@@ -1157,24 +1166,95 @@ public sealed class BalloonDogModernUI : MonoBehaviour
                 new Vector2(0f, -3f));
         }
         CreateMarketArtworkButton(layout, "BackToExtras", "BACK",
-            new Vector2(0f, -820f), new Vector2(530f, 190f), ReturnToMarketExtras, 60f);
+            new Vector2(0f, -820f), new Vector2(530f, 190f), ReturnFromCurrencyPacks, 60f);
         return screen;
+    }
+
+    private void BindCurrencyCounters()
+    {
+        BindCurrencyCounter(coinText, false);
+        foreach (BalloonDogCoinLabel marker in safeRoot.GetComponentsInChildren<BalloonDogCoinLabel>(true))
+            BindCurrencyCounter(marker.GetComponent<TMP_Text>(), false);
+        foreach (BalloonDogGemLabel marker in safeRoot.GetComponentsInChildren<BalloonDogGemLabel>(true))
+            BindCurrencyCounter(marker.GetComponent<TMP_Text>(), true);
+        BindCurrencyCounter(gameplayRunCoinsText, false);
+        BindCurrencyCounter(resultRewardText, false);
+        BindCurrencyCounter(pauseTokenText, false);
+    }
+
+    private void BindCurrencyCounter(TMP_Text label, bool gems)
+    {
+        if (label == null) return;
+        RectTransform card = label.transform.parent as RectTransform;
+        if (card == null || card.Find("CurrencyHitTarget") != null) return;
+        // A separate transparent hit surface survives recurring visual theme passes.
+        RectTransform hit = CreateRect("CurrencyHitTarget", card);
+        Stretch(hit);
+        Image surface = hit.gameObject.AddComponent<Image>();
+        surface.color = new Color(1f, 1f, 1f, .001f);
+        surface.raycastTarget = true;
+        Button button = hit.gameObject.AddComponent<Button>();
+        button.targetGraphic = surface;
+        button.transition = Selectable.Transition.None;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.AddListener(() => ShowCurrencyPacks(gems));
     }
 
     private void ShowCurrencyPacks(bool gems)
     {
+        GameObject destination = gems ? gemPacksScreen : coinPacksScreen;
+        if (destination == null) return;
+        if (!currencyStoreOpen)
+        {
+            currencyReturnScreen = null;
+            foreach (GameObject screen in new[] { mainScreen, marketScreen, skinsScreen, settingsScreen,
+                privacyScreen, resultScreen, pauseScreen })
+                if (screen != null && screen.activeSelf) { currencyReturnScreen = screen; break; }
+            currencyReturnGameplay = gameplayOverlay != null && gameplayOverlay.activeSelf;
+            currencyReturnTimeScale = Time.timeScale;
+            currencyPausedRun = currencyReturnGameplay && Time.timeScale > 0f;
+            if (currencyPausedRun)
+            {
+                currencyPreviousAudioPause = AudioListener.pause;
+                menuController ??= FindAnyObjectByType<MainMenuController>();
+                menuController?.SetGameplayPaused(true);
+                GameAudioController.SetPaused(true);
+                Time.timeScale = 0f;
+            }
+            currencyStoreOpen = true;
+        }
         HideAllScreens();
         SetActive(gameplayOverlay, false);
-        SetActive(gems ? gemPacksScreen : coinPacksScreen, true);
+        SetActive(destination, true);
     }
 
-    private void ReturnToMarketExtras()
+    private void ReturnFromCurrencyPacks()
     {
         HideAllScreens();
-        SetActive(gameplayOverlay, false);
-        SetActive(marketScreen, true);
-        ShowMarketTab(false);
+        SetActive(gameplayOverlay, currencyReturnGameplay);
+        if (currencyReturnScreen != null)
+        {
+            SetActive(currencyReturnScreen, true);
+            if (currencyReturnScreen == pauseScreen) pauseAnimator?.PlayShow();
+        }
+        else if (!currencyReturnGameplay)
+        {
+            SetActive(marketScreen, true);
+            ShowMarketTab(false);
+        }
+        currencyStoreOpen = false;
+        currencyReturnScreen = null;
+        RestoreCurrencyRunState();
         RefreshPersistentViews();
+    }
+
+    private void RestoreCurrencyRunState()
+    {
+        if (!currencyPausedRun) return;
+        currencyPausedRun = false;
+        menuController?.SetGameplayPaused(false);
+        GameAudioController.SetPaused(currencyPreviousAudioPause);
+        Time.timeScale = currencyReturnTimeScale;
     }
 
     private static Sprite GetCenteredStoreCardSprite(string path)
@@ -2560,7 +2640,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Image coin = CreateResourceImage(
             parent,
             "TokenIcon",
-            "CustomCoin",
+            "MarketUI/Extras/Icon_Coins",
             position,
             new Vector2(82f, 82f));
 
@@ -4267,6 +4347,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        RestoreCurrencyRunState();
         if (pauseScreen != null && pauseScreen.activeSelf)
         {
             menuController?.SetGameplayPaused(false);

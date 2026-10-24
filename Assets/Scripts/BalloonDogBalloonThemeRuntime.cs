@@ -1444,8 +1444,7 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
 
     private static Sprite GetCounterCoinIconSprite()
     {
-        // Match the supplied COINS card's ring-shaped gold logo in the two
-        // requested counters, reusing the existing transparent asset verbatim.
+        // All wallet counters share the same paw coin as the gameplay HUD.
         if (counterCoinIconSprite == null)
             counterCoinIconSprite = Resources.Load<Sprite>("MarketUI/Extras/Icon_Coins");
         return counterCoinIconSprite != null ? counterCoinIconSprite : GetCoinIconSprite();
@@ -1457,6 +1456,9 @@ public sealed class BalloonDogBalloonThemeRuntime : MonoBehaviour
         {
             return coinIconSprite;
         }
+
+        Sprite sharedPawCoin = Resources.Load<Sprite>("MarketUI/Extras/Icon_Coins");
+        if (sharedPawCoin != null) return coinIconSprite = sharedPawCoin;
 
         Texture2D custom = Resources.Load<Texture2D>("CustomCoin");
         if (custom != null)
