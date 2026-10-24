@@ -24,6 +24,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
     private RectTransform droppedCapsule;
     private Material dispensedCapsuleMaterial;
     private RectTransform rewardPanel;
+    private Material rewardBackgroundMaterial;
     private TMP_Text rewardName;
     private RectTransform rewardContent;
     private CanvasGroup marketInput;
@@ -59,7 +60,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         {
             float size = 148f + (i * 11 % 27);
             Image capsule = Artwork(machineVisual, "Capsule" + i, Load("Capsule"), positions[i], new Vector2(size, size * .9625f));
-            TintCapsule(capsule, Tints[tiers[i]]);
+            TintArtwork(capsule, Tints[tiers[i]]);
             float angle = (i * 29 % 47) - 23f;
             capsule.rectTransform.localRotation = Quaternion.Euler(0f, 0f, angle);
             capsuleAngles.Add(angle);
@@ -74,7 +75,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
 
         Image dispensed = Artwork(machineVisual, "DispensedCapsule", Load("Capsule"),
             new Vector2(-65f, -365f), new Vector2(156f, 150f));
-        dispensedCapsuleMaterial = TintCapsule(dispensed, Tints[(int)BalloonDogSkinRarity.Common]);
+        dispensedCapsuleMaterial = TintArtwork(dispensed, Tints[(int)BalloonDogSkinRarity.Common]);
         droppedCapsule = dispensed.rectTransform;
         droppedCapsule.gameObject.SetActive(false);
 
@@ -83,7 +84,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
             float x = (i - 2) * 164f;
             Image swatch = Artwork(machine, Rarities[i] + "Swatch", Load("Capsule"),
                 new Vector2(x, -377f), new Vector2(65f, 63f));
-            TintCapsule(swatch, Tints[i]);
+            TintArtwork(swatch, Tints[i]);
             Label(machine, Rarities[i], new Vector2(x, -425f), new Vector2(164f, 35f), i == 1 || i == 4 ? 18f : 21f);
         }
 
@@ -130,7 +131,9 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         background.rectTransform.anchorMax = Vector2.one;
         background.rectTransform.offsetMin = background.rectTransform.offsetMax = Vector2.zero;
         background.preserveAspect = false;
-        background.color = new Color(.30f, .43f, .83f, 1f);
+        // Recolor the artwork itself: multiplying the blue PNG by yellow would turn it green/dark.
+        background.color = Color.white;
+        rewardBackgroundMaterial = TintArtwork(background, Tints[(int)BalloonDogSkinRarity.Common] * .72f);
         background.raycastTarget = true;
         RectTransform effects = CreateRect("Celebration", rewardPanel, Vector2.zero, new Vector2(1080f, 1920f));
         effects.gameObject.AddComponent<BalloonDogSkinRewardEffects>().raycastTarget = false;
@@ -295,6 +298,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         if (sameReward && BalloonDogEconomy.TryUnlockNextSkin(openingCost, out BalloonDogSkinDefinition unlocked))
         {
             BalloonDogSkinSystem.ApplySelectedSkin();
+            ApplyRewardTheme(unlocked);
             rewardName.text = unlocked.DisplayName;
             machineVisual.gameObject.SetActive(false);
             SetMarketInputLocked(true);
@@ -333,7 +337,14 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
             dispensedCapsuleMaterial.SetColor("_CapsuleColor", Tints[(int)reward.Rarity]);
     }
 
-    private Material TintCapsule(Image image, Color tint)
+    private void ApplyRewardTheme(BalloonDogSkinDefinition reward)
+    {
+        // Read the actual awarded skin's rarity on every reveal, including successive openings.
+        if (rewardBackgroundMaterial != null)
+            rewardBackgroundMaterial.SetColor("_CapsuleColor", Tints[(int)reward.Rarity] * .72f);
+    }
+
+    private Material TintArtwork(Image image, Color tint)
     {
         Shader shader = Resources.Load<Shader>(Art + "CapsuleTint");
         if (shader == null) return null;

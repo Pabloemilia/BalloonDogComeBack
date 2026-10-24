@@ -417,7 +417,7 @@ public sealed class BalloonDogEconomyTests
     [TestCase("skin_dino", "RARE")]
     [TestCase("skin_honey", "EPIC")]
     [TestCase("skin_traxex", "LEGENDARY")]
-    public void DispensedCapsuleMatchesTheAwardedSkinsRarityInsteadOfItsBodyColor(string skinId, string rarity)
+    public void CapsuleAndRewardBackgroundMatchTheAwardedSkinsRarityInsteadOfItsBodyColor(string skinId, string rarity)
     {
         wallet = new GameObject("DispensedCapsuleColorTest", typeof(RectTransform));
         Component machine = wallet.AddComponent(Runtime("BalloonDogCaseOpening"));
@@ -426,12 +426,19 @@ public sealed class BalloonDogEconomyTests
         Material reusedMaterial = capsule.material;
         // First use a different tier, verifying successive openings update the existing material.
         Call(machine, "PrepareDispensedCapsule", Economy("FindSkin", "skin_cyber"));
+        Call(machine, "ApplyRewardTheme", Economy("FindSkin", "skin_cyber"));
         object skin = Economy("FindSkin", skinId);
         Call(machine, "PrepareDispensedCapsule", skin);
+        Call(machine, "ApplyRewardTheme", skin);
         Color expected = wallet.transform.Find("CaseMachine/" + rarity + "Swatch")
             .GetComponent<Image>().material.GetColor("_CapsuleColor");
         Assert.That(capsule.material, Is.SameAs(reusedMaterial));
         Assert.That(capsule.material.GetColor("_CapsuleColor"), Is.EqualTo(expected));
+        Transform rewardPage = (Transform)machine.GetType().GetField("rewardPanel", Private).GetValue(machine);
+        Image background = rewardPage.Find("Backdrop").GetComponent<Image>();
+        Assert.That(background.color, Is.EqualTo(Color.white));
+        Assert.That(background.material.shader.name, Is.EqualTo("BalloonDog/UI/CapsuleTint"));
+        Assert.That(background.material.GetColor("_CapsuleColor"), Is.EqualTo(expected * .72f));
         Assert.That(skin.GetType().GetProperty("Rarity").GetValue(skin).ToString().ToUpperInvariant(), Is.EqualTo(rarity));
         Assert.That(Balance("CasesOpened"), Is.Zero);
         Assert.That(Balance("Coins"), Is.Zero);
