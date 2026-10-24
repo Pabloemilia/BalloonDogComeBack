@@ -558,7 +558,7 @@ public sealed class BalloonDogEconomyTests
         Assert.That(page.GetComponentsInChildren<Button>(true).Length, Is.EqualTo(6));
         Type textType = Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro", true);
         int[] expected = gems ? new[] { 50, 150, 350, 750, 1600 } : new[] { 5000, 15000, 35000, 75000, 160000 };
-        string[] prices = { "₺19,99", "₺49,99", "₺99,99", "₺199,99", "₺399,99" };
+        string[] prices = { "$0.40", "$1.01", "$2.01", "$4.02", "$8.05" };
         string currency = gems ? "GEMS" : "COINS";
         for (int i = 0; i < 5; i++)
         {
@@ -577,8 +577,8 @@ public sealed class BalloonDogEconomyTests
             object font = textType.GetProperty("font").GetValue(price);
             MethodInfo hasCharacter = font.GetType().GetMethod("HasCharacter",
                 new[] { typeof(char), typeof(bool), typeof(bool) });
-            Assert.That((bool)hasCharacter.Invoke(font, new object[] { '₺', true, true }), Is.True,
-                "Every price must resolve the real lira glyph through the bundled font fallback.");
+            Assert.That((bool)hasCharacter.Invoke(font, new object[] { '$', true, true }), Is.True,
+                "Every USD price must resolve the dollar glyph in the bundled fonts.");
             RectTransform labelRect = (RectTransform)price.transform;
             Vector2 labelPosition = labelRect.anchoredPosition;
             Vector2 facePosition = surface.rectTransform.anchoredPosition;
