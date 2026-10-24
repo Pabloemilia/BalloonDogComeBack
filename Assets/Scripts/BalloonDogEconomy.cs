@@ -39,6 +39,7 @@ public static class BalloonDogEconomy
     private const string CoinsKey = "BalloonDog.Coins";
     private const string GemsKey = "BalloonDog.Gems";
     public const double MetresPerCoin = 10d;
+    public const double RunCoinMultiplier = 1.2d;
     private const string EquippedSkinKey = "BalloonDog.Skin.Equipped";
     private const string OwnedSkinPrefix = "BalloonDog.Skin.Owned.";
     private const string CaseCollectionResetKey = "BalloonDog.Skins.CaseEconomy.v1";
@@ -265,7 +266,8 @@ public static class BalloonDogEconomy
     private static int DistanceReward(double metres, double interval)
     {
         if (double.IsNaN(metres) || double.IsInfinity(metres) || metres <= 0d) return 0;
-        return (int)Math.Min(int.MaxValue, Math.Floor(metres / interval));
+        // Apply the run multiplier before rounding, so partial base coins also count.
+        return (int)Math.Min(int.MaxValue, Math.Floor(metres / interval * RunCoinMultiplier));
     }
 
     private static void EnsureInitialized()

@@ -103,14 +103,19 @@ public sealed class BalloonDogEconomyTests
     }
 
     [TestCase(0d, 0)]
-    [TestCase(9.99d, 0)]
+    [TestCase(8.33d, 0)]
+    [TestCase(8.34d, 1)]
+    [TestCase(9.99d, 1)]
     [TestCase(10d, 1)]
-    [TestCase(100d, 10)]
-    [TestCase(499.99d, 49)]
-    [TestCase(500d, 50)]
-    [TestCase(1000d, 100)]
-    [TestCase(10000d, 1000)]
-    public void DistanceRewardsUseWholeMetreThresholdsWithoutAFarmingMinimum(double metres, int coins)
+    [TestCase(25d, 3)]
+    [TestCase(49.99d, 5)]
+    [TestCase(50d, 6)]
+    [TestCase(100d, 12)]
+    [TestCase(499.99d, 59)]
+    [TestCase(500d, 60)]
+    [TestCase(1000d, 120)]
+    [TestCase(10000d, 1200)]
+    public void DistanceRewardsApplyTheTwentyPercentBoostBeforeRounding(double metres, int coins)
     {
         Assert.That((int)Economy("CalculateRunCoins", metres), Is.EqualTo(coins));
     }
@@ -177,14 +182,14 @@ public sealed class BalloonDogEconomyTests
         Set(manager, "<IsContinuePending>k__BackingField", true);
         Assert.That(Balance("Coins"), Is.Zero, "The continue offer must not pay early.");
         Call(manager, "ExpireContinueOffer");
-        Assert.That(Balance("Coins"), Is.EqualTo(100));
+        Assert.That(Balance("Coins"), Is.EqualTo(120));
         Assert.That(Balance("Gems"), Is.EqualTo(5));
         Call(manager, "ExpireContinueOffer");
         Call(manager, "SettleRunRewards");
-        Assert.That(Balance("Coins"), Is.EqualTo(100));
+        Assert.That(Balance("Coins"), Is.EqualTo(120));
         Assert.That((bool)Call(manager, "TryClaimDoubleRunReward"), Is.True);
         Assert.That((bool)Call(manager, "TryClaimDoubleRunReward"), Is.False);
-        Assert.That(Balance("Coins"), Is.EqualTo(200));
+        Assert.That(Balance("Coins"), Is.EqualTo(240));
         Assert.That(Balance("Gems"), Is.EqualTo(5));
         Assert.That(PlayerPrefs.GetInt(Best), Is.EqualTo(10000));
     }
@@ -208,7 +213,7 @@ public sealed class BalloonDogEconomyTests
         Set(manager, "isGameOver", true);
         Set(manager, "<IsContinuePending>k__BackingField", true);
         Call(manager, "ExpireContinueOffer");
-        Assert.That(Balance("Coins"), Is.EqualTo(100));
+        Assert.That(Balance("Coins"), Is.EqualTo(120));
         Assert.That(Balance("Gems"), Is.Zero);
     }
 
@@ -221,7 +226,7 @@ public sealed class BalloonDogEconomyTests
         Snapshot(1000f);
         Call(manager, "SettleBeforeLeaving");
         Call(manager, "SettleBeforeLeaving");
-        Assert.That(Balance("Coins"), Is.EqualTo(100));
+        Assert.That(Balance("Coins"), Is.EqualTo(120));
         Assert.That(Balance("Gems"), Is.Zero);
     }
 
