@@ -16,6 +16,7 @@ public sealed class BalloonDogEconomyTests
     private const string Reset = "BalloonDog.BestScore.EndlessEconomy.v1";
     private const string CaseReset = "BalloonDog.Skins.CaseEconomy.v1";
     private const string Cases = "BalloonDog.Cases.Opened.v1";
+    private const string CoinScaleMigration = "BalloonDog.Coins.Scale10.v1";
     private const string LegacySelection = "BalloonDog.SelectedSkin.V5";
     private const BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Instance;
     private readonly Dictionary<string, int> savedInts = new Dictionary<string, int>();
@@ -46,7 +47,7 @@ public sealed class BalloonDogEconomyTests
     [SetUp]
     public void SetUp()
     {
-        var keys = new HashSet<string> { Init, Coins, Gems, Best, Reset, CaseReset, Cases };
+        var keys = new HashSet<string> { Init, Coins, Gems, Best, Reset, CaseReset, Cases, CoinScaleMigration };
         foreach (object skin in Skins) keys.Add("BalloonDog.Skin.Owned." + SkinId(skin));
         foreach (string id in new[] { "mint", "sunset", "royal", "midnight", "candy" })
             keys.Add("BalloonDog.Skin.Owned." + id);
@@ -67,6 +68,7 @@ public sealed class BalloonDogEconomyTests
         PlayerPrefs.SetInt(Best, 0);
         PlayerPrefs.SetInt(Reset, 1);
         PlayerPrefs.SetInt(CaseReset, 1);
+        PlayerPrefs.SetInt(CoinScaleMigration, 1);
         PlayerPrefs.SetInt(Cases, 0);
         foreach (object skin in Skins)
             PlayerPrefs.SetInt("BalloonDog.Skin.Owned." + SkinId(skin), SkinId(skin) == "classic" ? 1 : 0);
@@ -104,18 +106,18 @@ public sealed class BalloonDogEconomyTests
 
     [TestCase(0d, 0)]
     [TestCase(8.33d, 0)]
-    [TestCase(8.34d, 1)]
-    [TestCase(9.99d, 1)]
-    [TestCase(10d, 1)]
-    [TestCase(25d, 3)]
-    [TestCase(49.99d, 5)]
-    [TestCase(50d, 6)]
-    [TestCase(100d, 12)]
-    [TestCase(499.99d, 59)]
-    [TestCase(500d, 60)]
-    [TestCase(1000d, 120)]
-    [TestCase(10000d, 1200)]
-    public void DistanceRewardsApplyTheTwentyPercentBoostBeforeRounding(double metres, int coins)
+    [TestCase(8.34d, 10)]
+    [TestCase(9.99d, 10)]
+    [TestCase(10d, 10)]
+    [TestCase(25d, 30)]
+    [TestCase(49.99d, 50)]
+    [TestCase(50d, 60)]
+    [TestCase(100d, 120)]
+    [TestCase(499.99d, 590)]
+    [TestCase(500d, 600)]
+    [TestCase(1000d, 1200)]
+    [TestCase(10000d, 12000)]
+    public void DistanceRewardsKeepTheTwentyPercentBoostAndScaleWholeCoinsTenfold(double metres, int coins)
     {
         Assert.That((int)Economy("CalculateRunCoins", metres), Is.EqualTo(coins));
     }
@@ -126,6 +128,47 @@ public sealed class BalloonDogEconomyTests
         foreach (double distance in new[] { -1d, double.NaN, double.PositiveInfinity })
             Assert.That((int)Economy("CalculateRunCoins", distance), Is.Zero);
         Assert.That((int)Economy("CalculateRunCoins", double.MaxValue), Is.EqualTo(int.MaxValue));
+    }
+
+    [Test]
+    public void CoinScaleMigrationRunsOnceAndPreservesGemsSkinsAndCaseProgress()
+    {
+        PlayerPrefs.SetInt(Coins, 1999);
+        PlayerPrefs.SetInt(Gems, 12);
+        PlayerPrefs.SetInt(Cases, 7);
+        string skin = SkinId(Skins.GetValue(3));
+        PlayerPrefs.SetInt("BalloonDog.Skin.Owned." + skin, 1);
+        PlayerPrefs.SetString("BalloonDog.Skin.Equipped", skin);
+        PlayerPrefs.DeleteKey(CoinScaleMigration);
+        Assert.That(Balance("Coins"), Is.EqualTo(19990));
+        Assert.That(Balance("CasePrice"), Is.EqualTo(4000));
+        Assert.That(Balance("CasesOpened"), Is.EqualTo(7));
+        Assert.That(Balance("Gems"), Is.EqualTo(12));
+        Assert.That((bool)Economy("IsOwned", skin), Is.True);
+        Assert.That(PlayerPrefs.GetString("BalloonDog.Skin.Equipped"), Is.EqualTo(skin));
+        Assert.That(PlayerPrefs.GetInt(CoinScaleMigration), Is.EqualTo(1));
+        // Subsequent reads, new rewards and initialization cannot reapply the conversion.
+        Economy("AddCoins", 10);
+        PlayerPrefs.DeleteKey(Init);
+        Assert.That(Balance("Coins"), Is.EqualTo(20000));
+        Assert.That(Balance("Coins"), Is.EqualTo(20000));
+    }
+
+    [TestCase(0, 0)]
+    [TestCase(-1, 0)]
+    [TestCase(500, 5000)]
+    [TestCase(1500, 15000)]
+    [TestCase(3500, 35000)]
+    [TestCase(7500, 75000)]
+    [TestCase(16000, 160000)]
+    [TestCase(int.MaxValue, int.MaxValue)]
+    public void CoinScaleConversionAndLegacyWalletsClampSafely(int before, int expected)
+    {
+        Assert.That((int)Economy("ScaleCoins", before), Is.EqualTo(expected));
+        PlayerPrefs.SetInt(Coins, before);
+        PlayerPrefs.DeleteKey(CoinScaleMigration);
+        Assert.That(Balance("Coins"), Is.EqualTo(expected));
+        Assert.That(Balance("Coins"), Is.EqualTo(expected));
     }
 
     [Test]
@@ -182,14 +225,14 @@ public sealed class BalloonDogEconomyTests
         Set(manager, "<IsContinuePending>k__BackingField", true);
         Assert.That(Balance("Coins"), Is.Zero, "The continue offer must not pay early.");
         Call(manager, "ExpireContinueOffer");
-        Assert.That(Balance("Coins"), Is.EqualTo(120));
+        Assert.That(Balance("Coins"), Is.EqualTo(1200));
         Assert.That(Balance("Gems"), Is.EqualTo(5));
         Call(manager, "ExpireContinueOffer");
         Call(manager, "SettleRunRewards");
-        Assert.That(Balance("Coins"), Is.EqualTo(120));
+        Assert.That(Balance("Coins"), Is.EqualTo(1200));
         Assert.That((bool)Call(manager, "TryClaimDoubleRunReward"), Is.True);
         Assert.That((bool)Call(manager, "TryClaimDoubleRunReward"), Is.False);
-        Assert.That(Balance("Coins"), Is.EqualTo(240));
+        Assert.That(Balance("Coins"), Is.EqualTo(2400));
         Assert.That(Balance("Gems"), Is.EqualTo(5));
         Assert.That(PlayerPrefs.GetInt(Best), Is.EqualTo(10000));
     }
@@ -213,7 +256,7 @@ public sealed class BalloonDogEconomyTests
         Set(manager, "isGameOver", true);
         Set(manager, "<IsContinuePending>k__BackingField", true);
         Call(manager, "ExpireContinueOffer");
-        Assert.That(Balance("Coins"), Is.EqualTo(120));
+        Assert.That(Balance("Coins"), Is.EqualTo(1200));
         Assert.That(Balance("Gems"), Is.Zero);
     }
 
@@ -226,19 +269,19 @@ public sealed class BalloonDogEconomyTests
         Snapshot(1000f);
         Call(manager, "SettleBeforeLeaving");
         Call(manager, "SettleBeforeLeaving");
-        Assert.That(Balance("Coins"), Is.EqualTo(120));
+        Assert.That(Balance("Coins"), Is.EqualTo(1200));
         Assert.That(Balance("Gems"), Is.Zero);
     }
 
-    [TestCase(-1, 50)]
-    [TestCase(0, 50)]
-    [TestCase(1, 100)]
-    [TestCase(2, 150)]
-    [TestCase(10, 550)]
-    [TestCase(11, 600)]
-    [TestCase(12, 600)]
-    [TestCase(int.MaxValue, 600)]
-    public void CasePriceIncreasesByFiftyAndNeverExceedsSixHundred(int opened, int expected)
+    [TestCase(-1, 500)]
+    [TestCase(0, 500)]
+    [TestCase(1, 1000)]
+    [TestCase(2, 1500)]
+    [TestCase(10, 5500)]
+    [TestCase(11, 6000)]
+    [TestCase(12, 6000)]
+    [TestCase(int.MaxValue, 6000)]
+    public void CasePriceIncreasesByFiveHundredAndNeverExceedsSixThousand(int opened, int expected)
     {
         Assert.That((int)Economy("CalculateCasePrice", opened), Is.EqualTo(expected));
     }
@@ -246,13 +289,13 @@ public sealed class BalloonDogEconomyTests
     [Test]
     public void CasesUnlockAllFifteenModelSkinsWithoutDuplicatesAndSaveTheNextPrice()
     {
-        Economy("AddRewards", 10000, 5);
+        Economy("AddRewards", 100000, 5);
         var seen = new HashSet<string>();
         int spent = 0;
         Assert.That(Skins.Length, Is.EqualTo(16), "One starter plus the fifteen scene model skins.");
         for (int count = 0; count < Skins.Length - 1; count++)
         {
-            int price = Math.Min(600, (count + 1) * 50);
+            int price = Math.Min(6000, (count + 1) * 500);
             Assert.That(Balance("CasePrice"), Is.EqualTo(price));
             object[] args = { price, null };
             Assert.That((bool)Economy("TryUnlockNextSkin", args), Is.True);
@@ -261,38 +304,38 @@ public sealed class BalloonDogEconomyTests
             Assert.That((bool)Economy("IsOwned", id), Is.True);
             Assert.That(PlayerPrefs.GetString("BalloonDog.Skin.Equipped"), Is.EqualTo(id));
             spent += price;
-            Assert.That(Balance("Coins"), Is.EqualTo(10000 - spent));
+            Assert.That(Balance("Coins"), Is.EqualTo(100000 - spent));
             Assert.That(Balance("CasesOpened"), Is.EqualTo(count + 1));
         }
-        Assert.That(spent, Is.EqualTo(5700));
+        Assert.That(spent, Is.EqualTo(57000));
         Assert.That(Balance("Gems"), Is.EqualTo(5));
-        Assert.That(Balance("CasePrice"), Is.EqualTo(600));
-        object[] completed = { 600, null };
+        Assert.That(Balance("CasePrice"), Is.EqualTo(6000));
+        object[] completed = { 6000, null };
         Assert.That((bool)Economy("TryUnlockNextSkin", completed), Is.False);
-        Assert.That(Balance("Coins"), Is.EqualTo(4300));
+        Assert.That(Balance("Coins"), Is.EqualTo(43000));
         Assert.That(Balance("CasesOpened"), Is.EqualTo(15));
     }
 
     [Test]
     public void InsufficientBalanceOrStalePriceNeverSpendsOrAdvancesTheCase()
     {
-        Economy("AddCoins", 49);
-        object[] insufficient = { 50, null };
+        Economy("AddCoins", 499);
+        object[] insufficient = { 500, null };
         Assert.That((bool)Economy("TryUnlockNextSkin", insufficient), Is.False);
-        Economy("AddCoins", 951);
-        foreach (int quote in new[] { -1, 0, 49, 100 })
+        Economy("AddCoins", 9501);
+        foreach (int quote in new[] { -1, 0, 499, 1000 })
         {
             object[] invalid = { quote, null };
             Assert.That((bool)Economy("TryUnlockNextSkin", invalid), Is.False);
         }
-        Assert.That(Balance("Coins"), Is.EqualTo(1000));
+        Assert.That(Balance("Coins"), Is.EqualTo(10000));
         Assert.That(Balance("CasesOpened"), Is.Zero);
-        object[] first = { 50, null };
+        object[] first = { 500, null };
         Assert.That((bool)Economy("TryUnlockNextSkin", first), Is.True);
-        object[] stale = { 50, null };
+        object[] stale = { 500, null };
         Assert.That((bool)Economy("TryUnlockNextSkin", stale), Is.False);
-        Assert.That(Balance("Coins"), Is.EqualTo(950));
-        Assert.That(Balance("CasePrice"), Is.EqualTo(100));
+        Assert.That(Balance("Coins"), Is.EqualTo(9500));
+        Assert.That(Balance("CasePrice"), Is.EqualTo(1000));
         Assert.That((bool)Economy("Equip", SkinId(Skins.GetValue(2))), Is.False, "Locked model selection stays blocked.");
     }
 
@@ -308,7 +351,7 @@ public sealed class BalloonDogEconomyTests
         PlayerPrefs.SetString("BalloonDog.Skin.Equipped", SkinId(Skins.GetValue(15)));
         PlayerPrefs.SetString(LegacySelection, SkinId(Skins.GetValue(15)));
         PlayerPrefs.DeleteKey(CaseReset);
-        Assert.That(Balance("CasePrice"), Is.EqualTo(50));
+        Assert.That(Balance("CasePrice"), Is.EqualTo(500));
         foreach (object skin in Skins)
             Assert.That((bool)Economy("IsOwned", SkinId(skin)), Is.EqualTo(SkinId(skin) == "classic"));
         Assert.That(PlayerPrefs.HasKey("BalloonDog.Skin.Owned.mint"), Is.False);
@@ -317,9 +360,9 @@ public sealed class BalloonDogEconomyTests
         Assert.That(Balance("Coins"), Is.EqualTo(1000));
         Assert.That(Balance("Gems"), Is.EqualTo(7));
         Assert.That(PlayerPrefs.GetInt(Best), Is.EqualTo(1234));
-        object[] opening = { 50, null };
+        object[] opening = { 500, null };
         Assert.That((bool)Economy("TryUnlockNextSkin", opening), Is.True);
-        Assert.That(Balance("CasePrice"), Is.EqualTo(100));
+        Assert.That(Balance("CasePrice"), Is.EqualTo(1000));
         Assert.That((bool)Economy("IsOwned", SkinId(opening[1])), Is.True);
         Assert.That(PlayerPrefs.GetString("BalloonDog.Skin.Equipped"), Is.EqualTo(SkinId(opening[1])));
     }
@@ -362,11 +405,11 @@ public sealed class BalloonDogEconomyTests
             Is.SameAs(Resources.Load<Sprite>("MarketUI/Extras/Icon_Coins")));
         Type textType = Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro", true);
         Component text = price.Find("Amount").GetComponent(textType);
-        Assert.That((string)textType.GetProperty("text").GetValue(text), Is.EqualTo("50"));
+        Assert.That((string)textType.GetProperty("text").GetValue(text), Is.EqualTo("500"));
         Economy("AddCoins", 1000);
-        object[] first = { 50, null };
+        object[] first = { 500, null };
         Assert.That((bool)Economy("TryUnlockNextSkin", first), Is.True);
-        Assert.That((string)textType.GetProperty("text").GetValue(text), Is.EqualTo("100"));
+        Assert.That((string)textType.GetProperty("text").GetValue(text), Is.EqualTo(1000.ToString("N0")));
     }
 
     [TestCase("skin_caramel", "COMMON")]
@@ -481,7 +524,7 @@ public sealed class BalloonDogEconomyTests
         wallet.SetActive(false);
         Assert.That(Balance("Coins"), Is.EqualTo(1000));
         Assert.That(Balance("CasesOpened"), Is.Zero);
-        Assert.That(Balance("CasePrice"), Is.EqualTo(50));
+        Assert.That(Balance("CasePrice"), Is.EqualTo(500));
         wallet.SetActive(true);
         Assert.That(Quaternion.Angle(crank.localRotation, Quaternion.identity), Is.LessThan(.01f));
         Assert.That(wallet.transform.Find("CaseMachine/MachineVisual/DispensedCapsule").gameObject.activeSelf, Is.False);

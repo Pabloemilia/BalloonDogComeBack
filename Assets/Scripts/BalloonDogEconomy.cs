@@ -40,12 +40,14 @@ public static class BalloonDogEconomy
     private const string GemsKey = "BalloonDog.Gems";
     public const double MetresPerCoin = 10d;
     public const double RunCoinMultiplier = 1.2d;
+    public const int CoinScale = 10;
+    private const string CoinScaleMigrationKey = "BalloonDog.Coins.Scale10.v1";
     private const string EquippedSkinKey = "BalloonDog.Skin.Equipped";
     private const string OwnedSkinPrefix = "BalloonDog.Skin.Owned.";
     private const string CaseCollectionResetKey = "BalloonDog.Skins.CaseEconomy.v1";
     private const string CasesOpenedKey = "BalloonDog.Cases.Opened.v1";
-    public const int StartingCasePrice = 50;
-    public const int MaximumCasePrice = 600;
+    public const int StartingCasePrice = 50 * CoinScale;
+    public const int MaximumCasePrice = 600 * CoinScale;
 
     // These IDs match the fifteen existing prefab names in the player's switcher.
     private static readonly BalloonDogSkinDefinition[] SkinCatalog =
@@ -262,7 +264,11 @@ public static class BalloonDogEconomy
         return true;
     }
 
-    public static int CalculateRunCoins(double metres) => DistanceReward(metres, MetresPerCoin);
+    // Convert base coin amounts once at their source; wallet APIs always use current units.
+    public static int ScaleCoins(int baseCoins) =>
+        (int)Math.Min(int.MaxValue, (long)Math.Max(0, baseCoins) * CoinScale);
+
+    public static int CalculateRunCoins(double metres) => ScaleCoins(DistanceReward(metres, MetresPerCoin));
     private static int DistanceReward(double metres, double interval)
     {
         if (double.IsNaN(metres) || double.IsInfinity(metres) || metres <= 0d) return 0;
@@ -296,6 +302,13 @@ public static class BalloonDogEconomy
             PlayerPrefs.DeleteKey("BalloonDog.SelectedSkin.V5");
             PlayerPrefs.SetInt(CasesOpenedKey, 0);
             PlayerPrefs.SetInt(CaseCollectionResetKey, 1);
+            changed = true;
+        }
+        // Preserve purchasing power for existing saves; never multiply on subsequent launches.
+        if (PlayerPrefs.GetInt(CoinScaleMigrationKey, 0) != 1)
+        {
+            PlayerPrefs.SetInt(CoinsKey, ScaleCoins(PlayerPrefs.GetInt(CoinsKey, 0)));
+            PlayerPrefs.SetInt(CoinScaleMigrationKey, 1);
             changed = true;
         }
         if (changed) PlayerPrefs.Save();
