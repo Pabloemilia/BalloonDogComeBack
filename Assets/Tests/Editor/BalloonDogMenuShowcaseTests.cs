@@ -140,5 +140,52 @@ public sealed class BalloonDogMenuShowcaseTests
     {
         Assert.That(Resources.Load<Sprite>("MenuRefresh/MenuCloudSky"), Is.Not.Null);
         Assert.That(Resources.Load<Shader>("MenuRefresh/MenuStudioBalloon"), Is.Not.Null);
+        Assert.That(Resources.Load<Texture2D>("MenuRefresh/MenuPlatform"), Is.Not.Null);
+        Assert.That(Resources.Load<Shader>("MenuRefresh/MenuPlatformArtwork"), Is.Not.Null);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void ApprovedPlatformReplacesTheCylindersAndItsSurfaceAlignsWithTheDogFeet(bool compact)
+    {
+        menu.SetActive(false);
+        showcase.GetType().GetProperty("CompactPreview").SetValue(showcase, compact);
+        menu.SetActive(true);
+        Tick();
+        GameObject stage = (GameObject)Field(showcase, "stage").GetValue(showcase);
+        Camera camera = (Camera)Field(showcase, "studioCamera").GetValue(showcase);
+        Transform platform = stage.transform.Find("ApprovedPlatformArtwork");
+        Assert.That(platform, Is.Not.Null);
+        Assert.That(stage.transform.Find("WhitePedestal"), Is.Null);
+        Assert.That(stage.transform.Find("CyanRim"), Is.Null);
+        Assert.That(stage.transform.Find("CyanTop"), Is.Null);
+        Assert.That(stage.GetComponentsInChildren<Collider>(), Is.Empty);
+        Material material = platform.GetComponent<Renderer>().sharedMaterial;
+        Texture2D artwork = Resources.Load<Texture2D>("MenuRefresh/MenuPlatform");
+        Assert.That(material.mainTexture, Is.SameAs(artwork));
+        Assert.That(material.shader.name, Is.EqualTo("BalloonDog/MenuPlatformArtwork"));
+        Mesh mesh = platform.GetComponent<MeshFilter>().sharedMesh;
+        Assert.That(mesh.bounds.size.x, Is.EqualTo(4.5f * (compact ? .52f : 1f)).Within(.001f));
+        Assert.That(mesh.bounds.size.y / mesh.bounds.size.x,
+            Is.EqualTo((float)artwork.height / artwork.width).Within(.001f));
+        Vector3 feet = stage.transform.position + Vector3.up * .075f;
+        Vector3 surface = platform.TransformPoint(Vector3.up * (mesh.bounds.size.y * .10f));
+        Vector3 feetView = camera.WorldToViewportPoint(feet);
+        Vector3 surfaceView = camera.WorldToViewportPoint(surface);
+        Assert.That(surfaceView.x, Is.EqualTo(feetView.x).Within(.002f));
+        Assert.That(surfaceView.y, Is.EqualTo(feetView.y).Within(.002f));
+        Assert.That(surfaceView.z, Is.GreaterThan(feetView.z + 5f),
+            "The painted plate must stay behind the live dog instead of covering its feet.");
+        foreach (Vector3 vertex in mesh.vertices)
+        {
+            Vector3 screen = camera.WorldToViewportPoint(platform.TransformPoint(vertex));
+            Assert.That(screen.x, Is.InRange(0f, 1f));
+            Assert.That(screen.y, Is.InRange(0f, 1f));
+        }
+        Quaternion rotation = platform.rotation;
+        Tick();
+        Assert.That(platform.rotation, Is.EqualTo(rotation), "The drawing must not rotate with the dog.");
+        menu.SetActive(false);
+        Assert.That(mesh == null, Is.True, "Closing the preview must release its generated plate mesh.");
     }
 }

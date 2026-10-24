@@ -18,6 +18,8 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
     private GameObject stage;
     private Transform dogPivot;
     private Transform dog;
+    private Transform platform;
+    private Mesh platformMesh;
     private Camera studioCamera;
     private Camera worldCamera;
     private bool worldCameraWasEnabled;
@@ -166,29 +168,48 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         cameraObject.transform.localPosition = new Vector3(5f, 3.5f, -7f);
         cameraObject.transform.LookAt(stage.transform.position + Vector3.up * 1.35f);
 
-        // A real 3D pedestal; primitives have no active physics in the studio.
-        float platformScale = CompactPreview ? .52f : 1f;
-        AddPlatform("WhitePedestal", -.18f, 4.15f * platformScale, .32f, new Color(.80f, .94f, 1f));
-        AddPlatform("CyanRim", -.005f, 4.10f * platformScale, .075f, new Color(.07f, .74f, .95f));
-        AddPlatform("CyanTop", .045f, 3.97f * platformScale, .05f, new Color(.20f, .90f, .96f));
+        BuildPlatform();
         dogPivot = new GameObject("EquippedDogTurntable").transform;
         dogPivot.SetParent(stage.transform, false);
     }
 
-    private void AddPlatform(string name, float y, float diameter, float height, Color color)
+    private void BuildPlatform()
     {
-        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        go.name = name;
+        Texture2D artwork = Resources.Load<Texture2D>("MenuRefresh/MenuPlatform");
+        Shader shader = Resources.Load<Shader>("MenuRefresh/MenuPlatformArtwork");
+        if (artwork == null || shader == null) return;
+        GameObject go = new GameObject("ApprovedPlatformArtwork", typeof(MeshFilter), typeof(MeshRenderer));
         go.layer = PreviewLayer;
         go.transform.SetParent(stage.transform, false);
-        go.transform.localPosition = Vector3.up * y;
-        go.transform.localScale = new Vector3(diameter, height * .5f, diameter);
-        Collider collider = go.GetComponent<Collider>();
-        collider.enabled = false;
-        Dispose(collider);
-        Material material = MakeMaterial(null, color);
+        platform = go.transform;
+        // A camera-facing plate preserves the approved drawing's perspective
+        // and contour while the dog remains a live, independently rotating model.
+        platform.rotation = studioCamera.transform.rotation;
+        float width = 4.5f * (CompactPreview ? .52f : 1f);
+        float height = width * artwork.height / artwork.width;
+        Vector3 feet = stage.transform.position + Vector3.up * .075f;
+        // The centre of the turquoise standing surface lies at UV (.5, .60).
+        // Put the plate behind all dog geometry, with that point aligned to its feet.
+        platform.position = feet + studioCamera.transform.forward * 6f
+            - studioCamera.transform.up * (height * .10f);
+        platformMesh = new Mesh { name = "ApprovedPlatformQuad", hideFlags = HideFlags.HideAndDontSave };
+        platformMesh.vertices = new[] {
+            new Vector3(-width * .5f, -height * .5f, 0f),
+            new Vector3(-width * .5f, height * .5f, 0f),
+            new Vector3(width * .5f, height * .5f, 0f),
+            new Vector3(width * .5f, -height * .5f, 0f)
+        };
+        platformMesh.uv = new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right };
+        platformMesh.triangles = new[] { 0, 1, 2, 2, 3, 0 };
+        platformMesh.RecalculateBounds();
+        go.GetComponent<MeshFilter>().sharedMesh = platformMesh;
+        Material material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+        material.SetTexture("_MainTex", artwork);
         stageMaterials.Add(material);
-        go.GetComponent<Renderer>().sharedMaterial = material;
+        MeshRenderer renderer = go.GetComponent<MeshRenderer>();
+        renderer.sharedMaterial = material;
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
     }
 
     private bool BuildEquippedDog(GameObject visual)
@@ -327,12 +348,20 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         foreach (Renderer renderer in stage.GetComponentsInChildren<Renderer>())
         {
             Bounds b = renderer.bounds;
+            Matrix4x4 toWorld = Matrix4x4.identity;
+            // Fit the actual plate corners rather than its inflated world AABB.
+            // This keeps the drawing's transparent margins inside the preview.
+            if (renderer.transform == platform && platformMesh != null)
+            {
+                b = platformMesh.bounds;
+                toWorld = platform.localToWorldMatrix;
+            }
             for (int x = -1; x <= 1; x += 2)
             for (int y = -1; y <= 1; y += 2)
             for (int z = -1; z <= 1; z += 2)
             {
-                Vector3 point = studioCamera.transform.InverseTransformPoint(
-                    b.center + Vector3.Scale(b.extents, new Vector3(x, y, z)));
+                Vector3 point = studioCamera.transform.InverseTransformPoint(toWorld.MultiplyPoint3x4(
+                    b.center + Vector3.Scale(b.extents, new Vector3(x, y, z))));
                 maxX = Mathf.Max(maxX, Mathf.Abs(point.x));
                 maxY = Mathf.Max(maxY, Mathf.Abs(point.y));
             }
@@ -387,6 +416,8 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         foreach (Material material in stageMaterials) Dispose(material);
         stageMaterials.Clear();
         if (stage != null) { stage.SetActive(false); Dispose(stage); stage = null; }
+        platform = null;
+        if (platformMesh != null) { Dispose(platformMesh); platformMesh = null; }
     }
 
     private void OnDestroy()
