@@ -44,6 +44,19 @@ public static class BalloonDogTitanFont
                 AtlasPopulationMode.Dynamic,
                 true);
             cachedAsset.name = "Titan One Runtime SDF";
+            // Titan One has no U+20BA glyph. Bundle a fallback so prices render
+            // the real Turkish lira sign on devices, without an OS font dependency.
+            Font symbols = Resources.Load<Font>("Fonts/Audex-Regular");
+            if (symbols != null)
+            {
+                TMP_FontAsset fallback = TMP_FontAsset.CreateFontAsset(
+                    symbols, 96, 10, GlyphRenderMode.SDFAA, 512, 512,
+                    AtlasPopulationMode.Dynamic, true);
+                fallback.name = "Currency Symbols Runtime SDF";
+                fallback.TryAddCharacters("₺");
+                cachedAsset.fallbackFontAssetTable =
+                    new System.Collections.Generic.List<TMP_FontAsset> { fallback };
+            }
             return cachedAsset;
         }
         catch (System.Exception exception)

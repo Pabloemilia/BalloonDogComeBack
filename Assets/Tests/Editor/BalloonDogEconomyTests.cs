@@ -568,11 +568,28 @@ public sealed class BalloonDogEconomyTests
             Transform button = layout.Find(currency + "Pack" + (i + 1));
             Component price = button.Find("PressContent/PackPrice").GetComponent(textType);
             Assert.That((string)textType.GetProperty("text").GetValue(price), Is.EqualTo(prices[i]));
-            Image surface = button.Find("PressContent").GetComponent<Image>();
-            Assert.That(surface.sprite, Is.Not.Null);
+            Graphic surface = button.Find("PressContent").GetComponent<Graphic>();
+            Assert.That(surface.GetComponent<Image>(), Is.Null,
+                "Feedback must not draw another copy of the painted price button.");
             Assert.That(surface.GetType(), Is.EqualTo(Runtime("BalloonDogShopPriceFace")));
             Component press = button.GetComponent(Runtime("BalloonDogDirectPressButton"));
             Assert.That(press, Is.Not.Null);
+            object font = textType.GetProperty("font").GetValue(price);
+            MethodInfo hasCharacter = font.GetType().GetMethod("HasCharacter",
+                new[] { typeof(char), typeof(bool), typeof(bool) });
+            Assert.That((bool)hasCharacter.Invoke(font, new object[] { '₺', true, true }), Is.True,
+                "Every price must resolve the real lira glyph through the bundled font fallback.");
+            RectTransform labelRect = (RectTransform)price.transform;
+            Vector2 labelPosition = labelRect.anchoredPosition;
+            Vector2 facePosition = surface.rectTransform.anchoredPosition;
+            Assert.That(surface.color.a, Is.Zero);
+            Set(press, "depth", 1f);
+            Call(press, "Apply");
+            Assert.That(surface.color.a, Is.EqualTo(.18f).Within(.001f));
+            Assert.That(((Graphic)price).color, Is.EqualTo(Color.white), "Prices must stay white during a press.");
+            Assert.That(surface.rectTransform.localScale, Is.EqualTo(Vector3.one));
+            Assert.That(surface.rectTransform.anchoredPosition, Is.EqualTo(facePosition));
+            Assert.That(labelRect.anchoredPosition, Is.EqualTo(labelPosition + Vector2.down * 2f));
             using (var vertices = new UnityEngine.UI.VertexHelper())
             {
                 surface.GetType().GetMethod("OnPopulateMesh", Private).Invoke(surface, new object[] { vertices });
@@ -584,23 +601,32 @@ public sealed class BalloonDogEconomyTests
                     Rect full = surface.rectTransform.rect;
                     Assert.That(face.width, Is.LessThan(full.width));
                     Assert.That(face.height, Is.LessThan(full.height));
+                    Assert.That(mesh.vertexCount, Is.EqualTo(133));
+                    Color32[] colors = mesh.colors32;
                     float radius = face.height * .5f;
-                    foreach (Vector3 vertex in mesh.vertices)
+                    Vector3[] points = mesh.vertices;
+                    for (int v = 0; v < points.Length; v++)
                     {
+                        Vector3 vertex = points[v];
                         float x = Mathf.Max(0f, Mathf.Abs(vertex.x - face.center.x) - (face.width * .5f - radius));
                         float y = Mathf.Abs(vertex.y - face.center.y);
                         Assert.That(x * x + y * y, Is.LessThanOrEqualTo(radius * radius + .1f),
                             "The tinted mesh must stay inside the orange capsule, excluding atlas corners.");
+                        if (v > 0 && v % 2 == 0)
+                            Assert.That(colors[v].a, Is.Zero, "The outer edge must feather to transparent.");
                     }
                 }
                 finally { UnityEngine.Object.DestroyImmediate(mesh); }
             }
-            Set(press, "depth", 1f);
-            Call(press, "Apply");
-            Assert.That(surface.color.r, Is.EqualTo(.86f).Within(.001f));
             Set(press, "depth", 0f);
             Call(press, "Apply");
-            Assert.That(surface.color, Is.EqualTo(Color.white));
+            Assert.That(surface.color.a, Is.Zero);
+            Assert.That(labelRect.anchoredPosition, Is.EqualTo(labelPosition));
+            Set(press, "depth", 1f);
+            Call(press, "Apply");
+            Call(press, "OnDisable");
+            Assert.That(surface.color.a, Is.Zero, "Closing the page must clear all press feedback.");
+            Assert.That(labelRect.anchoredPosition, Is.EqualTo(labelPosition));
         }
         Image back = layout.Find("BackToExtras").GetComponent<Image>();
         Sprite originalBlue = (Sprite)Runtime("BalloonDogMenuArtwork").GetMethod("Get")

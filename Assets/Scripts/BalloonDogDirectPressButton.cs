@@ -22,9 +22,20 @@ public sealed class BalloonDogDirectPressButton : MonoBehaviour
     private bool waitForRelease;
     private float depth;
     private float visibleUntil;
-    private float pressDimming = .27f;
+    private Graphic pressOverlay;
+    private Color overlayColor;
+    private RectTransform overlayLabel;
+    private Vector2 overlayLabelPosition;
 
-    public void SetPressDimming(float amount) { pressDimming = Mathf.Clamp01(amount); }
+    // Artwork already painted into a panel must not be copied, scaled or tinted twice.
+    public void UseFaceOverlay(Graphic overlay, RectTransform label)
+    {
+        pressOverlay = overlay;
+        overlayColor = overlay.color;
+        overlayLabel = label;
+        overlayLabelPosition = label.anchoredPosition;
+        Apply();
+    }
 
     public void Configure(Button button, RectTransform visualRoot, Vector2 radius, bool inset)
     {
@@ -130,6 +141,15 @@ public sealed class BalloonDogDirectPressButton : MonoBehaviour
     private void Apply()
     {
         if (!ready || visual == null) return;
+        if (pressOverlay != null)
+        {
+            Color c = overlayColor;
+            c.a *= depth;
+            pressOverlay.color = c;
+            if (overlayLabel != null)
+                overlayLabel.anchoredPosition = overlayLabelPosition + Vector2.down * (2f * depth);
+            return;
+        }
         if (panelPressMaterial != null)
         {
             panelPressMaterial.SetFloat("_Press", depth);
@@ -138,7 +158,7 @@ public sealed class BalloonDogDirectPressButton : MonoBehaviour
         visual.localScale = Vector3.Scale(baseScale, new Vector3(1f - (insetFace ? .027f : .04f) * depth,
             1f - (insetFace ? .06f : .04f) * depth, 1f));
         visual.anchoredPosition = basePosition + Vector2.down * ((insetFace ? 3.5f : 5f) * depth);
-        float brightness = 1f - pressDimming * depth;
+        float brightness = 1f - .27f * depth;
         for (int i = 0; i < graphics.Length; i++)
         {
             if (graphics[i] == null) continue;

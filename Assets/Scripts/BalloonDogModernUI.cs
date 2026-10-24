@@ -1092,7 +1092,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             CreateCurrencyLabel(layout, currency + "PackAmount" + (i + 1),
                 quantity.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")),
                 quantityCentres[i], new Vector2(i == 4 ? 495f : 440f, 125f), 98f);
-            CreateCurrencyArtworkButton(layout, currency + "Pack" + (i + 1), art, priceFaces[i], prices[i], 70f,
+            CreateCurrencyArtworkButton(layout, currency + "Pack" + (i + 1), priceFaces[i], prices[i], 70f,
                 () => ShowToast(quantity + " " + currency + " - PURCHASE COMING SOON"));
         }
         CreateMarketArtworkButton(layout, "BackToExtras", "BACK",
@@ -1118,7 +1118,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         return label;
     }
 
-    private static void CreateCurrencyArtworkButton(Transform parent, string name, string art,
+    private static void CreateCurrencyArtworkButton(Transform parent, string name,
         Rect sourceRect, string value, float fontSize, UnityAction action)
     {
         RectTransform hit = CreateRect(name, parent);
@@ -1126,33 +1126,20 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         SetRect(hit, CurrencyPoint(sourceRect.center), size);
         RectTransform face = CreateRect("PressContent", hit);
         SetRect(face, Vector2.zero, size);
-        // Only the orange pill is drawn; atlas padding must never become a tinted rectangle.
-        Image image = face.gameObject.AddComponent<BalloonDogShopPriceFace>();
-        string key = art + "#" + name;
-        if (!ResourceSprites.TryGetValue(key, out Sprite sprite) || sprite == null)
-        {
-            Texture2D texture = Resources.Load<Texture2D>(art);
-            if (texture != null)
-            {
-                Rect region = new Rect(sourceRect.x / 941f * texture.width,
-                    (1672f - sourceRect.yMax) / 1672f * texture.height,
-                    sourceRect.width / 941f * texture.width, sourceRect.height / 1672f * texture.height);
-                sprite = Sprite.Create(texture, region, new Vector2(.5f, .5f), 100f);
-                ResourceSprites[key] = sprite;
-            }
-        }
-        image.sprite = sprite;
-        image.enabled = sprite != null;
-        image.raycastTarget = false;
-        CreateCurrencyLabel(face, "PackPrice", value, new Vector2(470.5f, 836f),
+        // Keep the painted button and its highlight stationary. A feathered tint
+        // provides feedback without drawing a second, offset copy of the artwork.
+        Graphic overlay = face.gameObject.AddComponent<BalloonDogShopPriceFace>();
+        overlay.color = new Color(.32f, .12f, 0f, .18f);
+        overlay.raycastTarget = false;
+        TMP_Text label = CreateCurrencyLabel(face, "PackPrice", value, new Vector2(470.5f, 836f),
             size - new Vector2(20f, 8f), fontSize);
         Button button = hit.gameObject.AddComponent<Button>();
-        button.targetGraphic = image;
+        button.targetGraphic = overlay;
         button.navigation = new Navigation { mode = Navigation.Mode.None };
         button.onClick.AddListener(action);
         BalloonDogDirectPressButton press = hit.gameObject.AddComponent<BalloonDogDirectPressButton>();
-        press.SetPressDimming(.14f);
         press.Configure(button, face, new Vector2(.15f, .49f), true);
+        press.UseFaceOverlay(overlay, label.rectTransform);
     }
 
     private void BindCurrencyCounters()
