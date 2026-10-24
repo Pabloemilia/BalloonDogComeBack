@@ -18,6 +18,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
     private readonly List<Sprite> generatedSprites = new List<Sprite>();
     private readonly List<RectTransform> capsules = new List<RectTransform>();
     private readonly List<Vector2> capsuleOrigins = new List<Vector2>();
+    private readonly List<float> capsuleAngles = new List<float>();
     private RectTransform machineVisual;
     private RectTransform crank;
     private RectTransform droppedCapsule;
@@ -45,15 +46,22 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
 
         // Capsules are behind the semi-transparent glass sprite, never baked into it.
         Vector2[] positions = {
-            new Vector2(-195f, -90f), new Vector2(-65f, -90f), new Vector2(65f, -90f), new Vector2(195f, -90f),
-            new Vector2(-230f, 10f), new Vector2(-115f, 10f), new Vector2(0f, 10f), new Vector2(115f, 10f), new Vector2(230f, 10f),
-            new Vector2(-220f, 110f), new Vector2(-110f, 110f), new Vector2(0f, 110f), new Vector2(110f, 110f), new Vector2(220f, 110f),
-            new Vector2(-150f, 200f), new Vector2(-50f, 200f), new Vector2(50f, 200f), new Vector2(150f, 200f)
+            new Vector2(-183f, -92f), new Vector2(-56f, -104f), new Vector2(78f, -87f), new Vector2(192f, -66f),
+            new Vector2(-234f, 13f), new Vector2(-119f, 27f), new Vector2(12f, -2f), new Vector2(129f, 42f), new Vector2(239f, 18f),
+            new Vector2(-210f, 119f), new Vector2(-87f, 137f), new Vector2(32f, 100f), new Vector2(140f, 146f), new Vector2(217f, 115f),
+            new Vector2(-147f, 197f), new Vector2(-35f, 222f), new Vector2(68f, 193f), new Vector2(161f, 208f)
         };
+        // Decorative mixture only: 8 uncommon, 5 common, 3 rare, 1 epic, 1 legendary.
+        // This does not change the existing skin-unlock economy or introduce drop probabilities.
+        int[] tiers = { 1, 0, 1, 2, 1, 3, 0, 1, 2, 1, 0, 1, 4, 0, 2, 1, 0, 1 };
         for (int i = 0; i < positions.Length; i++)
         {
-            Image capsule = Artwork(machineVisual, "Capsule" + i, Load("Capsule"), positions[i], new Vector2(160f, 154f));
-            TintCapsule(capsule, Tints[i % Tints.Length]);
+            float size = 148f + (i * 11 % 27);
+            Image capsule = Artwork(machineVisual, "Capsule" + i, Load("Capsule"), positions[i], new Vector2(size, size * .9625f));
+            TintCapsule(capsule, Tints[tiers[i]]);
+            float angle = (i * 29 % 47) - 23f;
+            capsule.rectTransform.localRotation = Quaternion.Euler(0f, 0f, angle);
+            capsuleAngles.Add(angle);
             capsules.Add(capsule.rectTransform);
             capsuleOrigins.Add(positions[i]);
         }
@@ -218,7 +226,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         for (int i = 0; i < capsules.Count; i++)
         {
             capsules[i].anchoredPosition = capsuleOrigins[i];
-            capsules[i].localRotation = Quaternion.identity;
+            capsules[i].localRotation = Quaternion.Euler(0f, 0f, capsuleAngles[i]);
         }
     }
 
@@ -257,7 +265,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
                 float phase = elapsed * 24f + i * 1.7f;
                 capsules[i].anchoredPosition = capsuleOrigins[i] +
                     new Vector2(Mathf.Sin(phase) * 9f, Mathf.Cos(phase * .8f) * 13f) * amplitude;
-                capsules[i].localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(phase) * 12f * amplitude);
+                capsules[i].localRotation = Quaternion.Euler(0f, 0f, capsuleAngles[i] + Mathf.Sin(phase) * 12f * amplitude);
             }
             yield return null;
         }
@@ -265,7 +273,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         for (int i = 0; i < capsules.Count; i++)
         {
             capsules[i].anchoredPosition = capsuleOrigins[i];
-            capsules[i].localRotation = Quaternion.identity;
+            capsules[i].localRotation = Quaternion.Euler(0f, 0f, capsuleAngles[i]);
         }
         droppedCapsule.gameObject.SetActive(true);
         elapsed = 0f;

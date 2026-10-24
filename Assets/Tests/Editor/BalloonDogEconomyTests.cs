@@ -375,14 +375,23 @@ public sealed class BalloonDogEconomyTests
         Assert.That(visual.Find("BodyAndGlass").GetComponent<Image>().sprite, Is.Not.Null);
         Assert.That(((RectTransform)visual.Find("Crank")).pivot, Is.EqualTo(new Vector2(.255f, .395f)));
         Assert.That(visual.Find("DispensedCapsule").gameObject.activeSelf, Is.False);
+        int uncommon = 0, legendary = 0;
+        var positions = new HashSet<Vector2>();
         for (int i = 0; i < 18; i++)
         {
             Image capsule = visual.Find("Capsule" + i).GetComponent<Image>();
             Assert.That(capsule.sprite, Is.Not.Null);
             Assert.That(capsule.material.shader.name, Is.EqualTo("BalloonDog/UI/CapsuleTint"));
             Assert.That(capsule.raycastTarget, Is.False);
+            Color tint = capsule.material.GetColor("_CapsuleColor");
+            if (tint.g > .9f && tint.r < .3f) uncommon++;
+            if (tint.r > .9f && tint.g > .5f) legendary++;
+            positions.Add(capsule.rectTransform.anchoredPosition);
             Assert.That(capsule.transform.GetSiblingIndex(), Is.LessThan(visual.Find("BodyAndGlass").GetSiblingIndex()));
         }
+        Assert.That(positions.Count, Is.EqualTo(18));
+        Assert.That(uncommon, Is.GreaterThan(legendary));
+        Assert.That(legendary, Is.EqualTo(1));
         Transform reward = (Transform)machine.GetType().GetField("rewardPanel", Private).GetValue(machine);
         Assert.That(reward.parent, Is.Null);
         Assert.That(reward.GetComponent<Canvas>().renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));

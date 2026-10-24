@@ -1352,10 +1352,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Image artwork = CreateResourceImage(parent, name, "CollectionUI/PageArrow",
             position, new Vector2(215f, 130f));
         BalloonDogMenuArtwork.ApplyButtonBackground(artwork, false);
-        CreatePauseText(artwork.transform, "PageArrow", ">", Vector2.zero,
-            new Vector2(170f, 100f), 76f, Color.white, TextAlignmentOptions.Center);
+        RectTransform arrow = CreateRect("PageArrow", artwork.transform);
+        SetRect(arrow, Vector2.zero, new Vector2(36f, 54f));
+        BalloonDogPageChevron chevron = arrow.gameObject.AddComponent<BalloonDogPageChevron>();
+        chevron.Previous = previous;
+        chevron.color = Color.white;
+        chevron.raycastTarget = false;
         artwork.raycastTarget = true;
-        if (previous) artwork.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
         Button button = artwork.gameObject.AddComponent<Button>();
         button.targetGraphic = artwork;
         button.navigation = new Navigation { mode = Navigation.Mode.None };
