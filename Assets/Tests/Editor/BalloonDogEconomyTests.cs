@@ -568,9 +568,45 @@ public sealed class BalloonDogEconomyTests
             Transform button = layout.Find(currency + "Pack" + (i + 1));
             Component price = button.Find("PressContent/PackPrice").GetComponent(textType);
             Assert.That((string)textType.GetProperty("text").GetValue(price), Is.EqualTo(prices[i]));
-            Assert.That(button.Find("PressContent").GetComponent<Image>().sprite, Is.Not.Null);
-            Assert.That(button.GetComponent(Runtime("BalloonDogDirectPressButton")), Is.Not.Null);
+            Image surface = button.Find("PressContent").GetComponent<Image>();
+            Assert.That(surface.sprite, Is.Not.Null);
+            Assert.That(surface.GetType(), Is.EqualTo(Runtime("BalloonDogShopPriceFace")));
+            Component press = button.GetComponent(Runtime("BalloonDogDirectPressButton"));
+            Assert.That(press, Is.Not.Null);
+            using (var vertices = new UnityEngine.UI.VertexHelper())
+            {
+                surface.GetType().GetMethod("OnPopulateMesh", Private).Invoke(surface, new object[] { vertices });
+                var mesh = new Mesh();
+                try
+                {
+                    vertices.FillMesh(mesh);
+                    Rect face = (Rect)surface.GetType().GetProperty("FaceBounds").GetValue(surface);
+                    Rect full = surface.rectTransform.rect;
+                    Assert.That(face.width, Is.LessThan(full.width));
+                    Assert.That(face.height, Is.LessThan(full.height));
+                    float radius = face.height * .5f;
+                    foreach (Vector3 vertex in mesh.vertices)
+                    {
+                        float x = Mathf.Max(0f, Mathf.Abs(vertex.x - face.center.x) - (face.width * .5f - radius));
+                        float y = Mathf.Abs(vertex.y - face.center.y);
+                        Assert.That(x * x + y * y, Is.LessThanOrEqualTo(radius * radius + .1f),
+                            "The tinted mesh must stay inside the orange capsule, excluding atlas corners.");
+                    }
+                }
+                finally { UnityEngine.Object.DestroyImmediate(mesh); }
+            }
+            Set(press, "depth", 1f);
+            Call(press, "Apply");
+            Assert.That(surface.color.r, Is.EqualTo(.86f).Within(.001f));
+            Set(press, "depth", 0f);
+            Call(press, "Apply");
+            Assert.That(surface.color, Is.EqualTo(Color.white));
         }
+        Image back = layout.Find("BackToExtras").GetComponent<Image>();
+        Sprite originalBlue = (Sprite)Runtime("BalloonDogMenuArtwork").GetMethod("Get")
+            .Invoke(null, new object[] { "butonmavi" });
+        Assert.That(back.sprite, Is.SameAs(originalBlue));
+        Assert.That(back.GetComponent(Runtime("BalloonDogDirectPressButton")), Is.Null);
         RectTransform left = (RectTransform)layout.Find(currency + "Pack1");
         RectTransform right = (RectTransform)layout.Find(currency + "Pack2");
         Assert.That(left.anchoredPosition.x, Is.LessThan(0f));

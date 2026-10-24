@@ -1095,8 +1095,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             CreateCurrencyArtworkButton(layout, currency + "Pack" + (i + 1), art, priceFaces[i], prices[i], 70f,
                 () => ShowToast(quantity + " " + currency + " - PURCHASE COMING SOON"));
         }
-        CreateCurrencyArtworkButton(layout, "BackToExtras", art, new Rect(309f, 1535f, 326f, 118f),
-            "BACK", 88f, ReturnFromCurrencyPacks);
+        CreateMarketArtworkButton(layout, "BackToExtras", "BACK",
+            new Vector2(0f, -870f), new Vector2(530f, 150f), ReturnFromCurrencyPacks, 61f);
         return screen;
     }
 
@@ -1126,7 +1126,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         SetRect(hit, CurrencyPoint(sourceRect.center), size);
         RectTransform face = CreateRect("PressContent", hit);
         SetRect(face, Vector2.zero, size);
-        Image image = face.gameObject.AddComponent<Image>();
+        // Only the orange pill is drawn; atlas padding must never become a tinted rectangle.
+        Image image = face.gameObject.AddComponent<BalloonDogShopPriceFace>();
         string key = art + "#" + name;
         if (!ResourceSprites.TryGetValue(key, out Sprite sprite) || sprite == null)
         {
@@ -1149,8 +1150,9 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         button.targetGraphic = image;
         button.navigation = new Navigation { mode = Navigation.Mode.None };
         button.onClick.AddListener(action);
-        hit.gameObject.AddComponent<BalloonDogDirectPressButton>()
-            .Configure(button, face, new Vector2(.15f, .49f), true);
+        BalloonDogDirectPressButton press = hit.gameObject.AddComponent<BalloonDogDirectPressButton>();
+        press.SetPressDimming(.14f);
+        press.Configure(button, face, new Vector2(.15f, .49f), true);
     }
 
     private void BindCurrencyCounters()

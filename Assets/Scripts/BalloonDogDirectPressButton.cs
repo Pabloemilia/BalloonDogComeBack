@@ -22,6 +22,9 @@ public sealed class BalloonDogDirectPressButton : MonoBehaviour
     private bool waitForRelease;
     private float depth;
     private float visibleUntil;
+    private float pressDimming = .27f;
+
+    public void SetPressDimming(float amount) { pressDimming = Mathf.Clamp01(amount); }
 
     public void Configure(Button button, RectTransform visualRoot, Vector2 radius, bool inset)
     {
@@ -135,7 +138,7 @@ public sealed class BalloonDogDirectPressButton : MonoBehaviour
         visual.localScale = Vector3.Scale(baseScale, new Vector3(1f - (insetFace ? .027f : .04f) * depth,
             1f - (insetFace ? .06f : .04f) * depth, 1f));
         visual.anchoredPosition = basePosition + Vector2.down * ((insetFace ? 3.5f : 5f) * depth);
-        float brightness = 1f - .27f * depth;
+        float brightness = 1f - pressDimming * depth;
         for (int i = 0; i < graphics.Length; i++)
         {
             if (graphics[i] == null) continue;
