@@ -783,7 +783,8 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         out Color fill,
         out Color outline)
     {
-        int tier = Mathf.Clamp(index / 3, 0, 4);
+        BalloonDogSkinDefinition[] skins = BalloonDogEconomy.Skins;
+        int tier = (int)skins[Mathf.Clamp(index, 0, skins.Length - 1)].Rarity;
         switch (tier)
         {
             case 0:

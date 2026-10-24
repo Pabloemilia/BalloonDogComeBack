@@ -364,6 +364,31 @@ public sealed class BalloonDogEconomyTests
         Assert.That((string)textType.GetProperty("text").GetValue(text), Is.EqualTo("100"));
     }
 
+    [TestCase("skin_caramel", "COMMON")]
+    [TestCase("skin_clown", "UNCOMMON")]
+    [TestCase("skin_dino", "RARE")]
+    [TestCase("skin_honey", "EPIC")]
+    [TestCase("skin_traxex", "LEGENDARY")]
+    public void DispensedCapsuleMatchesTheAwardedSkinsRarityInsteadOfItsBodyColor(string skinId, string rarity)
+    {
+        wallet = new GameObject("DispensedCapsuleColorTest", typeof(RectTransform));
+        Component machine = wallet.AddComponent(Runtime("BalloonDogCaseOpening"));
+        Call(machine, "Build");
+        Image capsule = wallet.transform.Find("CaseMachine/MachineVisual/DispensedCapsule").GetComponent<Image>();
+        Material reusedMaterial = capsule.material;
+        // First use a different tier, verifying successive openings update the existing material.
+        Call(machine, "PrepareDispensedCapsule", Economy("FindSkin", "skin_cyber"));
+        object skin = Economy("FindSkin", skinId);
+        Call(machine, "PrepareDispensedCapsule", skin);
+        Color expected = wallet.transform.Find("CaseMachine/" + rarity + "Swatch")
+            .GetComponent<Image>().material.GetColor("_CapsuleColor");
+        Assert.That(capsule.material, Is.SameAs(reusedMaterial));
+        Assert.That(capsule.material.GetColor("_CapsuleColor"), Is.EqualTo(expected));
+        Assert.That(skin.GetType().GetProperty("Rarity").GetValue(skin).ToString().ToUpperInvariant(), Is.EqualTo(rarity));
+        Assert.That(Balance("CasesOpened"), Is.Zero);
+        Assert.That(Balance("Coins"), Is.Zero);
+    }
+
     [Test]
     public void CapsuleMachineSeparatesMovingPartsAndUsesTheEquippedModelForTheReward()
     {

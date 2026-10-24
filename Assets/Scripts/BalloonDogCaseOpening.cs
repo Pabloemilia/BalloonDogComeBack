@@ -22,6 +22,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
     private RectTransform machineVisual;
     private RectTransform crank;
     private RectTransform droppedCapsule;
+    private Material dispensedCapsuleMaterial;
     private RectTransform rewardPanel;
     private TMP_Text rewardName;
     private RectTransform rewardContent;
@@ -71,8 +72,10 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         // Pivot measured at the round mounting hub, rather than the PNG centre.
         crank.pivot = new Vector2(.255f, .395f);
 
-        droppedCapsule = Artwork(machineVisual, "DispensedCapsule", Load("Capsule"),
-            new Vector2(-65f, -365f), new Vector2(156f, 150f)).rectTransform;
+        Image dispensed = Artwork(machineVisual, "DispensedCapsule", Load("Capsule"),
+            new Vector2(-65f, -365f), new Vector2(156f, 150f));
+        dispensedCapsuleMaterial = TintCapsule(dispensed, Tints[(int)BalloonDogSkinRarity.Common]);
+        droppedCapsule = dispensed.rectTransform;
         droppedCapsule.gameObject.SetActive(false);
 
         for (int i = 0; i < Rarities.Length; i++)
@@ -251,6 +254,7 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
     private IEnumerator Dispense()
     {
         BalloonDogSkinDefinition reward = BalloonDogEconomy.PeekNextLockedSkin();
+        PrepareDispensedCapsule(reward);
         status.text = "OPENING...";
         float elapsed = 0f;
         const float mixingDuration = 1.25f;
@@ -322,14 +326,22 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         return -55f * Mathf.Sin(stroke * Mathf.PI);
     }
 
-    private void TintCapsule(Image image, Color tint)
+    private void PrepareDispensedCapsule(BalloonDogSkinDefinition reward)
+    {
+        // Rarity belongs to the awarded skin, not its paint color or the decorative globe mixture.
+        if (dispensedCapsuleMaterial != null)
+            dispensedCapsuleMaterial.SetColor("_CapsuleColor", Tints[(int)reward.Rarity]);
+    }
+
+    private Material TintCapsule(Image image, Color tint)
     {
         Shader shader = Resources.Load<Shader>(Art + "CapsuleTint");
-        if (shader == null) return;
+        if (shader == null) return null;
         Material material = new Material(shader);
         material.SetColor("_CapsuleColor", tint);
         materials.Add(material);
         image.material = material;
+        return material;
     }
 
     private Sprite Load(string name)
