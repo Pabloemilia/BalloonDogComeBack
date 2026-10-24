@@ -4,73 +4,180 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Artwork-backed case UI. Uses the existing deterministic ownership economy.</summary>
+/// <summary>Layered capsule machine presentation backed by the existing ownership economy.</summary>
 public sealed class BalloonDogCaseOpening : MonoBehaviour
 {
-    private const string Art = "MarketUI/SkinCase/";
+    private const string Art = "MarketUI/CapsuleMachine/";
     private static int Cost => BalloonDogEconomy.CasePrice;
-    private const float Step = 184f;
     private static readonly string[] Rarities = { "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY" };
-    private readonly List<Sprite> ownedSprites = new List<Sprite>();
-    private readonly List<GameObject> cells = new List<GameObject>();
-    private Sprite[] cards;
-    private RectTransform reel;
-    private RectTransform selector;
-    private Button open;
+    private static readonly Color[] Tints = {
+        new Color(.68f, .74f, .82f), new Color(.25f, .95f, .22f),
+        new Color(.08f, .75f, 1f), new Color(.72f, .15f, 1f), new Color(1f, .68f, .06f)
+    };
+    private readonly List<Material> materials = new List<Material>();
+    private readonly List<Sprite> generatedSprites = new List<Sprite>();
+    private readonly List<RectTransform> capsules = new List<RectTransform>();
+    private readonly List<Vector2> capsuleOrigins = new List<Vector2>();
+    private readonly List<float> capsuleAngles = new List<float>();
+    private RectTransform machineVisual;
+    private RectTransform crank;
+    private RectTransform droppedCapsule;
+    private RectTransform rewardPanel;
+    private TMP_Text rewardName;
+    private RectTransform rewardContent;
+    private CanvasGroup marketInput;
+    private bool marketWasInteractable;
+    private bool marketInputLocked;
     private TMP_Text status;
     private TMP_Text priceLabel;
+    private TMP_Text actionLabel;
+    private Button open;
     private int openingCost;
     private bool spinning;
     private bool built;
     private string resultMessage;
-    private Sprite silhouette;
 
     public void Build()
     {
         if (built) return;
         built = true;
-        cards = LoadCards();
-        silhouette = Resources.Load<Sprite>("Market/MysteryDog");
         RectTransform machine = CreateRect("CaseMachine", transform, Vector2.zero, new Vector2(910f, 1240f));
-        Artwork(machine, "Backplate", Load("CaseMachine"), Vector2.zero, new Vector2(910f, 1240f));
+        machineVisual = CreateRect("MachineVisual", machine, new Vector2(0f, 135f), new Vector2(744f, 930f));
 
-        RectTransform viewport = CreateRect("ReelViewport", machine, new Vector2(0f, 215f), new Vector2(800f, 334f));
-        viewport.gameObject.AddComponent<RectMask2D>();
-        reel = CreateRect("MovingCards", viewport, Vector2.zero, new Vector2(800f, 314f));
-        selector = Artwork(machine, "GoldSelector", Load("CaseSelector"), new Vector2(0f, 215f),
-            new Vector2(228f, 406f)).rectTransform;
-
-        for (int i = 0; i < 5; i++)
+        // Capsules are behind the semi-transparent glass sprite, never baked into it.
+        Vector2[] positions = {
+            new Vector2(-183f, -92f), new Vector2(-56f, -104f), new Vector2(78f, -87f), new Vector2(192f, -66f),
+            new Vector2(-234f, 13f), new Vector2(-119f, 27f), new Vector2(12f, -2f), new Vector2(129f, 42f), new Vector2(239f, 18f),
+            new Vector2(-210f, 119f), new Vector2(-87f, 137f), new Vector2(32f, 100f), new Vector2(140f, 146f), new Vector2(217f, 115f),
+            new Vector2(-147f, 197f), new Vector2(-35f, 222f), new Vector2(68f, 193f), new Vector2(161f, 208f)
+        };
+        // Decorative mixture only: 8 uncommon, 5 common, 3 rare, 1 epic, 1 legendary.
+        // This does not change the existing skin-unlock economy or introduce drop probabilities.
+        int[] tiers = { 1, 0, 1, 2, 1, 3, 0, 1, 2, 1, 0, 1, 4, 0, 2, 1, 0, 1 };
+        for (int i = 0; i < positions.Length; i++)
         {
-            float x = (i - 2) * 166f;
-            Artwork(machine, Rarities[i] + "Swatch", cards[i], new Vector2(x, -85f), new Vector2(61f, 67f));
-            Label(machine, Rarities[i], new Vector2(x, -139f), new Vector2(164f, 34f), i == 1 || i == 4 ? 19f : 22f);
+            float size = 148f + (i * 11 % 27);
+            Image capsule = Artwork(machineVisual, "Capsule" + i, Load("Capsule"), positions[i], new Vector2(size, size * .9625f));
+            TintCapsule(capsule, Tints[tiers[i]]);
+            float angle = (i * 29 % 47) - 23f;
+            capsule.rectTransform.localRotation = Quaternion.Euler(0f, 0f, angle);
+            capsuleAngles.Add(angle);
+            capsules.Add(capsule.rectTransform);
+            capsuleOrigins.Add(positions[i]);
+        }
+        Artwork(machineVisual, "BodyAndGlass", Load("Machine"), Vector2.zero, new Vector2(744f, 930f));
+        Image handle = Artwork(machineVisual, "Crank", Load("Crank"), new Vector2(116f, -279f), new Vector2(390f, 260f));
+        crank = handle.rectTransform;
+        // Pivot measured at the round mounting hub, rather than the PNG centre.
+        crank.pivot = new Vector2(.255f, .395f);
+
+        droppedCapsule = Artwork(machineVisual, "DispensedCapsule", Load("Capsule"),
+            new Vector2(-65f, -365f), new Vector2(156f, 150f)).rectTransform;
+        droppedCapsule.gameObject.SetActive(false);
+
+        for (int i = 0; i < Rarities.Length; i++)
+        {
+            float x = (i - 2) * 164f;
+            Image swatch = Artwork(machine, Rarities[i] + "Swatch", Load("Capsule"),
+                new Vector2(x, -377f), new Vector2(65f, 63f));
+            TintCapsule(swatch, Tints[i]);
+            Label(machine, Rarities[i], new Vector2(x, -425f), new Vector2(164f, 35f), i == 1 || i == 4 ? 18f : 21f);
         }
 
-        Image buttonArt = Artwork(machine, "OpenCase", Load("OpenCaseButton"), new Vector2(0f, -347f),
-            new Vector2(880f, 418f));
-        buttonArt.preserveAspect = true;
-        // The decorative frame stays still; only the orange face receives input.
-        RectTransform faceRect = CreateRect("OrangeFace", buttonArt.transform, Vector2.zero,
-            buttonArt.rectTransform.sizeDelta);
-        BalloonDogCaseButtonFace face = faceRect.gameObject.AddComponent<BalloonDogCaseButtonFace>();
-        face.sprite = buttonArt.sprite;
-        face.raycastTarget = true;
-        open = faceRect.gameObject.AddComponent<BalloonDogCaseFaceButton>();
-        open.targetGraphic = face;
+        // The entire visible orange pill depresses; decorative transparent padding is not a hit area.
+        RectTransform buttonRoot = CreateRect("OpenCase", machine, new Vector2(0f, -533f), new Vector2(850f, 152f));
+        RectTransform face = CreateRect("OrangeFace", buttonRoot, Vector2.zero, buttonRoot.sizeDelta);
+        Image buttonArt = Artwork(face, "Artwork", Load("OpenButton"), Vector2.zero, buttonRoot.sizeDelta);
+        buttonArt.preserveAspect = false;
+        open = buttonRoot.gameObject.AddComponent<Button>();
+        open.targetGraphic = buttonArt;
         open.navigation = new Navigation { mode = Navigation.Mode.None };
-        open.transition = Selectable.Transition.None;
         open.onClick.AddListener(OpenCase);
-        RectTransform price = CreateRect("CasePrice", faceRect, new Vector2(0f, -20f), new Vector2(340f, 150f));
-        Image coin = Artwork(price, "CoinIcon", Resources.Load<Sprite>("MarketUI/Extras/Icon_Coins"),
-            new Vector2(-105f, 0f), new Vector2(90f, 90f));
-        coin.preserveAspect = true;
-        priceLabel = Label(price, Cost.ToString("N0"), new Vector2(50f, 0f), new Vector2(210f, 150f), 78f);
+        RectTransform price = CreateRect("CasePrice", face, new Vector2(-233f, 0f), new Vector2(305f, 110f));
+        Artwork(price, "CoinIcon", Resources.Load<Sprite>("MarketUI/Extras/Icon_Coins"),
+            new Vector2(-88f, 0f), new Vector2(74f, 74f));
+        priceLabel = Label(price, Cost.ToString("N0"), new Vector2(42f, 0f), new Vector2(180f, 100f), 62f);
         priceLabel.name = "Amount";
-        priceLabel.outlineColor = new Color32(91, 35, 62, 255);
-        priceLabel.outlineWidth = 0.18f;
-        ((BalloonDogCaseFaceButton)open).Configure(face, price);
-        status = Label(machine, "", new Vector2(0f, -549f), new Vector2(780f, 59f), 25f);
+        actionLabel = Label(face, "OPEN CASE", new Vector2(143f, 0f), new Vector2(435f, 105f), 49f);
+        buttonRoot.gameObject.AddComponent<BalloonDogDirectPressButton>()
+            .Configure(open, face, new Vector2(.09f, .49f), true);
+        status = Label(machine, "", new Vector2(0f, -633f), new Vector2(860f, 37f), 22f);
+
+        BuildRewardPanel();
+        ShowIdle();
+        Refresh();
+    }
+
+    private void BuildRewardPanel()
+    {
+        // A separate overlay canvas covers the whole display, outside the market's shelf and animation scale.
+        rewardPanel = CreateRect("CapsuleRewardScreen", null, Vector2.zero, new Vector2(1080f, 1920f));
+        rewardPanel.gameObject.SetActive(false);
+        Canvas pageCanvas = rewardPanel.gameObject.AddComponent<Canvas>();
+        pageCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        Canvas marketCanvas = GetComponentInParent<Canvas>();
+        pageCanvas.sortingOrder = marketCanvas != null ? marketCanvas.rootCanvas.sortingOrder + 100 : 100;
+        CanvasScaler scaler = rewardPanel.gameObject.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1080f, 1920f);
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
+        rewardPanel.gameObject.AddComponent<GraphicRaycaster>();
+        Image background = Artwork(rewardPanel, "Backdrop", Load("Background"), Vector2.zero, Vector2.zero);
+        background.rectTransform.anchorMin = Vector2.zero;
+        background.rectTransform.anchorMax = Vector2.one;
+        background.rectTransform.offsetMin = background.rectTransform.offsetMax = Vector2.zero;
+        background.preserveAspect = false;
+        background.color = new Color(.30f, .43f, .83f, 1f);
+        background.raycastTarget = true;
+        RectTransform effects = CreateRect("Celebration", rewardPanel, Vector2.zero, new Vector2(1080f, 1920f));
+        effects.gameObject.AddComponent<BalloonDogSkinRewardEffects>().raycastTarget = false;
+
+        rewardContent = CreateRect("RewardContent", rewardPanel, Vector2.zero, new Vector2(1080f, 1920f));
+        TMP_Text heading = Label(rewardContent, "NEW SKIN!", new Vector2(0f, 685f), new Vector2(990f, 160f), 122f);
+        heading.outlineColor = new Color(.12f, .12f, .45f, 1f);
+        heading.outlineWidth = .18f;
+        Label(rewardContent, "LOOK WHO YOU UNLOCKED", new Vector2(0f, 560f), new Vector2(950f, 60f), 33f);
+        RectTransform preview = CreateRect("EquippedSkinPreview", rewardContent, new Vector2(0f, 40f), new Vector2(980f, 960f));
+        preview.gameObject.AddComponent<BalloonDogMenuShowcase>().CompactPreview = true;
+        rewardName = Label(rewardContent, "", new Vector2(0f, -505f), new Vector2(980f, 125f), 90f);
+        rewardName.outlineColor = new Color(.12f, .12f, .45f, 1f);
+        rewardName.outlineWidth = .16f;
+        Label(rewardContent, "UNLOCKED + EQUIPPED", new Vector2(0f, -610f), new Vector2(950f, 65f), 37f);
+
+        RectTransform buttonRoot = CreateRect("RewardContinue", rewardContent, new Vector2(0f, -775f), new Vector2(790f, 160f));
+        RectTransform face = CreateRect("Face", buttonRoot, Vector2.zero, buttonRoot.sizeDelta);
+        Image faceArt = Artwork(face, "Artwork", Load("OpenButton"), Vector2.zero, buttonRoot.sizeDelta);
+        faceArt.preserveAspect = false;
+        Label(face, "CONTINUE", Vector2.zero, new Vector2(720f, 120f), 64f);
+        Button button = buttonRoot.gameObject.AddComponent<Button>();
+        button.targetGraphic = faceArt;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.AddListener(DismissReward);
+        buttonRoot.gameObject.AddComponent<BalloonDogDirectPressButton>()
+            .Configure(button, face, new Vector2(.1f, .49f), true);
+    }
+
+    private void SetMarketInputLocked(bool locked)
+    {
+        if (locked == marketInputLocked) return;
+        if (locked)
+        {
+            Transform market = transform;
+            for (Transform ancestor = transform; ancestor != null; ancestor = ancestor.parent)
+                if (ancestor.name == "ModernMarketScreen") { market = ancestor; break; }
+            marketInput = market.GetComponent<CanvasGroup>();
+            if (marketInput == null) marketInput = market.gameObject.AddComponent<CanvasGroup>();
+            marketWasInteractable = marketInput.interactable;
+            marketInput.interactable = false;
+        }
+        else if (marketInput != null) marketInput.interactable = marketWasInteractable;
+        marketInputLocked = locked;
+    }
+
+    private void DismissReward()
+    {
+        if (spinning) return;
+        resultMessage = null;
         ShowIdle();
         Refresh();
     }
@@ -87,146 +194,158 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         BalloonDogEconomy.Changed -= Refresh;
         StopAllCoroutines();
         spinning = false;
-        if (selector != null) selector.localScale = Vector3.one;
-        // Cancellation before the reveal does not spend coins or grant a reward.
+        if (built) ShowIdle();
+        // Purchases commit at the reveal. Leaving before then spends nothing.
+        // Leaving after the reveal never rolls back an already saved reward.
     }
 
     private void Refresh()
     {
         if (!built || status == null || open == null) return;
-        bool complete = BalloonDogEconomy.AllSkinsOwned;
-        bool enough = BalloonDogEconomy.Coins >= Cost;
         priceLabel.text = (spinning ? openingCost : Cost).ToString("N0");
-        // Keep tactile feedback available even when no purchase is possible.
-        // OpenCase separately guards ownership and coin balance before spending.
-        open.interactable = !spinning;
+        bool showingReward = rewardPanel != null && rewardPanel.gameObject.activeSelf;
+        open.interactable = !spinning && !showingReward;
+        priceLabel.transform.parent.gameObject.SetActive(true);
+        actionLabel.rectTransform.anchoredPosition = new Vector2(143f, 0f);
+        actionLabel.text = "OPEN CASE";
         if (spinning) return;
-        status.color = Color.white;
         if (!string.IsNullOrEmpty(resultMessage)) status.text = resultMessage;
-        else if (complete) status.text = "COLLECTION COMPLETE";
-        else if (!enough) status.text = "NEED " + Cost + " COINS";
-        else status.text = "OPEN CASE  •  " + Cost + " COINS";
+        else if (BalloonDogEconomy.AllSkinsOwned) status.text = "COLLECTION COMPLETE";
+        else if (BalloonDogEconomy.Coins < Cost) status.text = "NEED " + Cost + " COINS";
+        else status.text = "UNLOCK A NEW LOOK!";
     }
 
     private void ShowIdle()
     {
-        ClearCells();
-        reel.anchoredPosition = Vector2.zero;
-        for (int i = -3; i <= 3; i++) AddCell(i * Step, (i + 7) % 5, "?", null);
-    }
-
-    private void ClearCells()
-    {
-        foreach (GameObject cell in cells)
+        machineVisual.gameObject.SetActive(true);
+        machineVisual.localScale = Vector3.one;
+        crank.localRotation = Quaternion.identity;
+        droppedCapsule.gameObject.SetActive(false);
+        rewardPanel.gameObject.SetActive(false);
+        SetMarketInputLocked(false);
+        for (int i = 0; i < capsules.Count; i++)
         {
-            if (cell != null) { cell.SetActive(false); Destroy(cell); }
+            capsules[i].anchoredPosition = capsuleOrigins[i];
+            capsules[i].localRotation = Quaternion.Euler(0f, 0f, capsuleAngles[i]);
         }
-        cells.Clear();
-    }
-
-    private TMP_Text AddCell(float x, int tier, string mark, string skinName)
-    {
-        RectTransform cell = CreateRect("CaseCard", reel, new Vector2(x, 0f), new Vector2(172f, 302f));
-        cells.Add(cell.gameObject);
-        Artwork(cell, "Card", cards[tier], Vector2.zero, new Vector2(172f, 302f));
-        if (silhouette != null)
-        {
-            Image dog = Artwork(cell, "Dog", silhouette, new Vector2(0f, 4f), new Vector2(126f, 156f));
-            dog.preserveAspect = true;
-            dog.color = new Color(0.025f, 0.14f, 0.27f, 0.78f);
-        }
-        TMP_Text question = Label(cell, mark, new Vector2(0f, 4f), new Vector2(130f, 135f), 96f);
-        Label(cell, skinName ?? Rarities[tier], new Vector2(0f, -116f), new Vector2(150f, 34f), 17f);
-        return question;
     }
 
     private void OpenCase()
     {
-        if (spinning || BalloonDogEconomy.AllSkinsOwned || BalloonDogEconomy.Coins < Cost) return;
+        if (spinning) return;
+        if (rewardPanel.gameObject.activeSelf)
+        {
+            resultMessage = null;
+            ShowIdle();
+            Refresh();
+            return;
+        }
+        if (BalloonDogEconomy.AllSkinsOwned || BalloonDogEconomy.Coins < Cost) return;
         resultMessage = null;
         openingCost = Cost;
         spinning = true;
         Refresh();
-        StartCoroutine(Spin());
+        StartCoroutine(Dispense());
     }
 
-    private IEnumerator Spin()
+    private IEnumerator Dispense()
     {
-        // Preserve the existing economy: the next unowned skin is awarded.
         BalloonDogSkinDefinition reward = BalloonDogEconomy.PeekNextLockedSkin();
-        ClearCells();
-        const int winningIndex = 28;
-        TMP_Text winningMark = null;
-        for (int i = -3; i <= winningIndex + 3; i++)
-        {
-            int style = (i + 35) % 5;
-            if (i == winningIndex)
-            {
-                // Card color is a visual swatch, not a new rarity/drop probability rule.
-                Color.RGBToHSV(reward.PrimaryColor, out float hue, out float saturation, out float value);
-                style = saturation < 0.2f ? 0 : hue < 0.15f ? 4 : hue < 0.48f ? 1 : hue < 0.67f ? 2 : 3;
-            }
-            TMP_Text mark = AddCell(i * Step, style, "?", i == winningIndex ? reward.DisplayName : null);
-            if (i == winningIndex) winningMark = mark;
-        }
         status.text = "OPENING...";
         float elapsed = 0f;
-        const float duration = 4.2f;
-        while (elapsed < duration)
+        const float mixingDuration = 1.25f;
+        while (elapsed < mixingDuration)
         {
             elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            // A single continuous strip settles exactly on the reward, with no resets.
-            float progress = 1f - Mathf.Pow(1f - t, 4f);
-            reel.anchoredPosition = new Vector2(-winningIndex * Step * progress, 0f);
+            float t = Mathf.Clamp01(elapsed / mixingDuration);
+            crank.localRotation = Quaternion.Euler(0f, 0f, CrankAngle(t));
+            float amplitude = Mathf.Sin(t * Mathf.PI);
+            for (int i = 0; i < capsules.Count; i++)
+            {
+                float phase = elapsed * 24f + i * 1.7f;
+                capsules[i].anchoredPosition = capsuleOrigins[i] +
+                    new Vector2(Mathf.Sin(phase) * 9f, Mathf.Cos(phase * .8f) * 13f) * amplitude;
+                capsules[i].localRotation = Quaternion.Euler(0f, 0f, capsuleAngles[i] + Mathf.Sin(phase) * 12f * amplitude);
+            }
             yield return null;
         }
-        reel.anchoredPosition = new Vector2(-winningIndex * Step, 0f);
-        bool sameReward = BalloonDogEconomy.PeekNextLockedSkin().Id == reward.Id;
+        crank.localRotation = Quaternion.identity;
+        for (int i = 0; i < capsules.Count; i++)
+        {
+            capsules[i].anchoredPosition = capsuleOrigins[i];
+            capsules[i].localRotation = Quaternion.Euler(0f, 0f, capsuleAngles[i]);
+        }
+        droppedCapsule.gameObject.SetActive(true);
+        elapsed = 0f;
+        while (elapsed < .65f)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / .65f);
+            float bounce = Mathf.Abs(Mathf.Sin(t * Mathf.PI * 2f)) * (1f - t) * 26f;
+            droppedCapsule.anchoredPosition = new Vector2(-65f, Mathf.Lerp(-286f, -365f, t) + bounce);
+            droppedCapsule.localScale = Vector3.one * Mathf.Lerp(.55f, 1f, t);
+            yield return null;
+        }
+        // One atomic purchase, preserving the existing price, saved ownership and auto-equip rules.
+        bool sameReward = !BalloonDogEconomy.AllSkinsOwned && BalloonDogEconomy.PeekNextLockedSkin().Id == reward.Id;
         if (sameReward && BalloonDogEconomy.TryUnlockNextSkin(openingCost, out BalloonDogSkinDefinition unlocked))
         {
             BalloonDogSkinSystem.ApplySelectedSkin();
-            winningMark.text = "!";
-            resultMessage = unlocked.DisplayName + "\nUNLOCKED + EQUIPPED";
+            rewardName.text = unlocked.DisplayName;
+            machineVisual.gameObject.SetActive(false);
+            SetMarketInputLocked(true);
+            rewardPanel.gameObject.SetActive(true);
+            resultMessage = "ADDED TO YOUR COLLECTION";
+            elapsed = 0f;
+            while (elapsed < .28f)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                rewardContent.localScale = Vector3.one * Mathf.Lerp(.88f, 1f, Mathf.SmoothStep(0f, 1f, elapsed / .28f));
+                yield return null;
+            }
+            rewardContent.localScale = Vector3.one;
         }
-        else resultMessage = "CASE CANCELLED — TRY AGAIN";
-
-        elapsed = 0f;
-        while (elapsed < 0.45f)
+        else
         {
-            elapsed += Time.unscaledDeltaTime;
-            selector.localScale = Vector3.one * (1f + Mathf.Sin(Mathf.Clamp01(elapsed / 0.45f) * Mathf.PI) * 0.07f);
-            yield return null;
+            ShowIdle();
+            resultMessage = "CASE CANCELLED - TRY AGAIN";
         }
-        selector.localScale = Vector3.one;
         spinning = false;
         Refresh();
+    }
+
+    // One short down/up stroke, followed by a stationary handle during dispensing.
+    public static float CrankAngle(float progress)
+    {
+        if (progress <= 0f || progress >= .64f) return 0f;
+        float stroke = Mathf.SmoothStep(0f, 1f, progress / .64f);
+        return -55f * Mathf.Sin(stroke * Mathf.PI);
+    }
+
+    private void TintCapsule(Image image, Color tint)
+    {
+        Shader shader = Resources.Load<Shader>(Art + "CapsuleTint");
+        if (shader == null) return;
+        Material material = new Material(shader);
+        material.SetColor("_CapsuleColor", tint);
+        materials.Add(material);
+        image.material = material;
     }
 
     private Sprite Load(string name)
     {
         Sprite sprite = Resources.Load<Sprite>(Art + name);
-        if (sprite == null) Debug.LogError("Missing case sprite: " + Art + name);
-        return sprite;
-    }
-
-    private Sprite[] LoadCards()
-    {
-        Texture2D atlas = Resources.Load<Texture2D>(Art + "CaseCards");
-        Sprite[] result = new Sprite[5];
-        if (atlas == null) { Debug.LogError("Missing CaseCards atlas"); return result; }
-        Rect[] regions = { new Rect(33,94,385,539), new Rect(463,94,386,539), new Rect(893,94,386,539),
-            new Rect(1323,93,386,540), new Rect(1754,93,385,540) };
-        for (int i = 0; i < result.Length; i++)
+        if (sprite == null) Debug.LogError("Missing capsule machine sprite: " + Art + name);
+        if (sprite != null && name == "OpenButton")
         {
-            // Coordinates are measured on the original 2172 x 724 atlas; handle import scaling.
-            Rect r = regions[i];
-            r.x *= atlas.width / 2172f; r.width *= atlas.width / 2172f;
-            r.y *= atlas.height / 724f; r.height *= atlas.height / 724f;
-            result[i] = Sprite.Create(atlas, r, new Vector2(0.5f,0.5f), 100f);
-            ownedSprites.Add(result[i]);
+            // Exclude export padding from the UI face and its rounded hit area.
+            Texture2D texture = sprite.texture;
+            Rect frame = new Rect(50f / 2172f * texture.width, 137f / 724f * texture.height,
+                2072f / 2172f * texture.width, 450f / 724f * texture.height);
+            sprite = Sprite.Create(texture, frame, new Vector2(.5f, .5f), 100f, 0, SpriteMeshType.FullRect);
+            generatedSprites.Add(sprite);
         }
-        return result;
+        return sprite;
     }
 
     private static RectTransform CreateRect(string name, Transform parent, Vector2 position, Vector2 size)
@@ -234,8 +353,9 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
         GameObject go = new GameObject(name, typeof(RectTransform));
         RectTransform rect = (RectTransform)go.transform;
         rect.SetParent(parent, false);
-        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = position; rect.sizeDelta = size;
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
+        rect.anchoredPosition = position;
+        rect.sizeDelta = size;
         return rect;
     }
 
@@ -243,8 +363,9 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
     {
         Image image = CreateRect(name, parent, position, size).gameObject.AddComponent<Image>();
         image.sprite = sprite;
+        image.preserveAspect = true;
         image.raycastTarget = false;
-        image.enabled = sprite != null; // Never render a white rectangle for a missing sprite.
+        image.enabled = sprite != null;
         return image;
     }
 
@@ -252,7 +373,12 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
     {
         TextMeshProUGUI label = CreateRect("Label", parent, position, size).gameObject.AddComponent<TextMeshProUGUI>();
         BalloonDogTitanFont.Apply(label);
-        label.text = value; label.fontSize = fontSize; label.color = Color.white;
+        label.text = value;
+        label.fontSize = fontSize;
+        label.enableAutoSizing = true;
+        label.fontSizeMin = fontSize * .65f;
+        label.fontSizeMax = fontSize;
+        label.color = Color.white;
         label.alignment = TextAlignmentOptions.Center;
         label.enableWordWrapping = false;
         label.raycastTarget = false;
@@ -262,6 +388,16 @@ public sealed class BalloonDogCaseOpening : MonoBehaviour
     private void OnDestroy()
     {
         BalloonDogEconomy.Changed -= Refresh;
-        foreach (Sprite sprite in ownedSprites) if (sprite != null) Destroy(sprite);
+        SetMarketInputLocked(false);
+        if (rewardPanel != null)
+        {
+            rewardPanel.gameObject.SetActive(false);
+            if (Application.isPlaying) Destroy(rewardPanel.gameObject);
+            else DestroyImmediate(rewardPanel.gameObject);
+        }
+        foreach (Material material in materials)
+            if (material != null) { if (Application.isPlaying) Destroy(material); else DestroyImmediate(material); }
+        foreach (Sprite sprite in generatedSprites)
+            if (sprite != null) { if (Application.isPlaying) Destroy(sprite); else DestroyImmediate(sprite); }
     }
 }

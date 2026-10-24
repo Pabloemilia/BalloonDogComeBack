@@ -613,27 +613,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             new Color(0.13f, 0.44f, 0.96f, 1f),
             new Color(0.27f, 0.84f, 0.53f, 1f));
 
-        CreatePauseDogDecoration(marketScreen.transform, "MarketDogLeft",
-            new Vector2(-445f, 760f), new Vector2(175f, 160f), -9f,
-            0.10f, 8f, 9f, 19f, 0.21f, 1f);
-        CreatePauseDogDecoration(marketScreen.transform, "MarketDogRight",
-            new Vector2(450f, 655f), new Vector2(175f, 160f), 12f,
-            0.10f, 8f, 9f, 20f, 0.65f, 1f);
-        CreatePauseDogDecoration(marketScreen.transform, "MarketDogLowerLeft",
-            new Vector2(-450f, -700f), new Vector2(165f, 150f), 8f,
-            0.09f, 8f, 9f, 21f, 0.42f, 1.4f);
-        CreatePauseDogDecoration(marketScreen.transform, "MarketDogLowerRight",
-            new Vector2(450f, -725f), new Vector2(170f, 155f), -11f,
-            0.09f, 8f, 9f, 22f, 0.78f, 1.6f);
-        CreatePauseDogDecoration(marketScreen.transform, "MarketDogUpperLeft",
-            new Vector2(-475f, 350f), new Vector2(155f, 145f), 7f,
-            0.08f, 7f, 8f, 24f, 0.12f, 1.3f);
-        CreatePauseDogDecoration(marketScreen.transform, "MarketDogMiddleRight",
-            new Vector2(475f, 10f), new Vector2(160f, 148f), -8f,
-            0.08f, 7f, 8f, 23f, 0.58f, 1.2f);
-        CreatePauseDogDecoration(marketScreen.transform, "MarketDogMiddleLeft",
-            new Vector2(-470f, -350f), new Vector2(150f, 140f), 11f,
-            0.08f, 7f, 8f, 25f, 0.89f, 1.4f);
+        Image capsuleBackground = CreateResourceImage(marketScreen.transform,
+            "CapsuleMarketBackground", "MarketUI/CapsuleMachine/Background",
+            Vector2.zero, new Vector2(1080f, 2348f));
+        Stretch(capsuleBackground.rectTransform);
+        capsuleBackground.preserveAspect = false;
+        Transform marketPattern = marketScreen.transform.Find("FigmaPattern");
+        if (marketPattern != null) marketPattern.gameObject.SetActive(false);
 
         CreateTopBar(marketScreen.transform, "Market",
             () => ShowSettingsScreen(SettingsReturnTarget.Main));
@@ -1366,10 +1352,13 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         Image artwork = CreateResourceImage(parent, name, "CollectionUI/PageArrow",
             position, new Vector2(215f, 130f));
         BalloonDogMenuArtwork.ApplyButtonBackground(artwork, false);
-        CreatePauseText(artwork.transform, "PageArrow", ">", Vector2.zero,
-            new Vector2(170f, 100f), 76f, Color.white, TextAlignmentOptions.Center);
+        RectTransform arrow = CreateRect("PageArrow", artwork.transform);
+        SetRect(arrow, Vector2.zero, new Vector2(36f, 54f));
+        BalloonDogPageChevron chevron = arrow.gameObject.AddComponent<BalloonDogPageChevron>();
+        chevron.Previous = previous;
+        chevron.color = Color.white;
+        chevron.raycastTarget = false;
         artwork.raycastTarget = true;
-        if (previous) artwork.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
         Button button = artwork.gameObject.AddComponent<Button>();
         button.targetGraphic = artwork;
         button.navigation = new Navigation { mode = Navigation.Mode.None };

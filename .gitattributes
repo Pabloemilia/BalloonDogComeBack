@@ -197,3 +197,6 @@ Assets/Resources/MenuRefresh/*.png -filter -diff -merge -text
 
 # Shrink control artwork uses a regular Git blob.
 Assets/Resources/shrink_transform_icon.png -filter -diff -merge -text
+
+# Capsule machine runtime artwork uses regular Git blobs.
+Assets/Resources/MarketUI/CapsuleMachine/*.png -filter -diff -merge -text

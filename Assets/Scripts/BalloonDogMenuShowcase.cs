@@ -8,6 +8,8 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class BalloonDogMenuShowcase : MonoBehaviour
 {
+    // Reuse the equipped model renderer inside the capsule reward panel.
+    public bool CompactPreview { get; set; }
     private const int PreviewLayer = 30;
     private readonly List<Material> skinMaterials = new List<Material>();
     private readonly List<Mesh> bakedMeshes = new List<Mesh>();
@@ -37,7 +39,7 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         nextRetry = 0f;
         CanvasGroup group = GetComponent<CanvasGroup>();
         if (group != null) { group.alpha = 1f; group.interactable = true; }
-        if (Application.isPlaying) PrepareWorldCamera();
+        if (Application.isPlaying && !CompactPreview) PrepareWorldCamera();
     }
 
     private void PrepareWorldCamera()
@@ -141,8 +143,8 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         RectTransform frame = picture.rectTransform;
         frame.anchorMin = Vector2.zero;
         frame.anchorMax = Vector2.one;
-        frame.offsetMin = new Vector2(70f, 560f);
-        frame.offsetMax = new Vector2(-70f, -770f);
+        frame.offsetMin = CompactPreview ? Vector2.zero : new Vector2(70f, 560f);
+        frame.offsetMax = CompactPreview ? Vector2.zero : new Vector2(-70f, -770f);
 
         stage = new GameObject("__BalloonDogMenuStudio");
         stage.hideFlags = HideFlags.HideAndDontSave;
@@ -165,9 +167,10 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         cameraObject.transform.LookAt(stage.transform.position + Vector3.up * 1.35f);
 
         // A real 3D pedestal; primitives have no active physics in the studio.
-        AddPlatform("WhitePedestal", -.18f, 4.15f, .32f, new Color(.80f, .94f, 1f));
-        AddPlatform("CyanRim", -.005f, 4.10f, .075f, new Color(.07f, .74f, .95f));
-        AddPlatform("CyanTop", .045f, 3.97f, .05f, new Color(.20f, .90f, .96f));
+        float platformScale = CompactPreview ? .52f : 1f;
+        AddPlatform("WhitePedestal", -.18f, 4.15f * platformScale, .32f, new Color(.80f, .94f, 1f));
+        AddPlatform("CyanRim", -.005f, 4.10f * platformScale, .075f, new Color(.07f, .74f, .95f));
+        AddPlatform("CyanTop", .045f, 3.97f * platformScale, .05f, new Color(.20f, .90f, .96f));
         dogPivot = new GameObject("EquippedDogTurntable").transform;
         dogPivot.SetParent(stage.transform, false);
     }
