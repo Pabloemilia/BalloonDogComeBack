@@ -205,6 +205,10 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         go.GetComponent<MeshFilter>().sharedMesh = platformMesh;
         Material material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
         material.SetTexture("_MainTex", artwork);
+        // The reward plate is smaller beneath the same dog, so its contact
+        // shadow covers a larger share of the turquoise surface.
+        material.SetVector("_ContactShadow", new Vector4(.5f, .60f,
+            CompactPreview ? .28f : .16f, CompactPreview ? .12f : .095f));
         stageMaterials.Add(material);
         MeshRenderer renderer = go.GetComponent<MeshRenderer>();
         renderer.sharedMaterial = material;
