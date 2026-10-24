@@ -558,7 +558,7 @@ public sealed class BalloonDogEconomyTests
         Assert.That(page.GetComponentsInChildren<Button>(true).Length, Is.EqualTo(6));
         Type textType = Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro", true);
         int[] expected = gems ? new[] { 50, 150, 350, 750, 1600 } : new[] { 5000, 15000, 35000, 75000, 160000 };
-        string[] prices = { "$0.50", "$1", "$2", "$4", "$8" };
+        string[] prices = { "$0.49", "$0.99", "$1.99", "$3.99", "$7.99" };
         string currency = gems ? "GEMS" : "COINS";
         for (int i = 0; i < 5; i++)
         {

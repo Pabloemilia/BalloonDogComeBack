@@ -1014,7 +1014,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
             cardButton.onClick.AddListener(
                 () => ShowToast(title + " PURCHASE COMING SOON"));
 
-        string price = cardResource == "Card_AdsOff" ? "$2" : null;
+        string price = cardResource == "Card_AdsOff" ? "$1.99" : null;
         bool hasPrice = price != null;
 
         Image icon = CreateResourceImage(
@@ -1081,7 +1081,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
         int[] amounts = gems ? new[] { 50, 150, 350, 750, 1600 }
             : new[] { 500, 1500, 3500, 7500, 16000 };
-        string[] prices = { "$0.50", "$1", "$2", "$4", "$8" };
+        string[] prices = { "$0.49", "$0.99", "$1.99", "$3.99", "$7.99" };
         Vector2[] quantityCentres = { new Vector2(260f, 535f), new Vector2(681f, 535f),
             new Vector2(260f, 1024f), new Vector2(681f, 1024f), new Vector2(669f, 1314f) };
         Rect[] priceFaces = { new Rect(94f, 578f, 337f, 104f), new Rect(514f, 578f, 337f, 104f),
