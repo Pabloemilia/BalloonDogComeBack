@@ -365,6 +365,57 @@ public sealed class BalloonDogEconomyTests
     }
 
     [Test]
+    public void CapsuleMachineSeparatesMovingPartsAndUsesTheEquippedModelForTheReward()
+    {
+        wallet = new GameObject("CapsuleMachineUITest", typeof(RectTransform));
+        Component machine = wallet.AddComponent(Runtime("BalloonDogCaseOpening"));
+        Call(machine, "Build");
+        Transform visual = wallet.transform.Find("CaseMachine/MachineVisual");
+        Assert.That(visual, Is.Not.Null);
+        Assert.That(visual.Find("BodyAndGlass").GetComponent<Image>().sprite, Is.Not.Null);
+        Assert.That(((RectTransform)visual.Find("Crank")).pivot, Is.EqualTo(new Vector2(.255f, .395f)));
+        Assert.That(visual.Find("DispensedCapsule").gameObject.activeSelf, Is.False);
+        for (int i = 0; i < 5; i++)
+        {
+            Image capsule = visual.Find("Capsule" + i).GetComponent<Image>();
+            Assert.That(capsule.sprite, Is.Not.Null);
+            Assert.That(capsule.material.shader.name, Is.EqualTo("BalloonDog/UI/CapsuleTint"));
+            Assert.That(capsule.raycastTarget, Is.False);
+            Assert.That(capsule.transform.GetSiblingIndex(), Is.LessThan(visual.Find("BodyAndGlass").GetSiblingIndex()));
+        }
+        Transform reward = wallet.transform.Find("CaseMachine/RewardPanel");
+        Assert.That(reward.gameObject.activeSelf, Is.False);
+        Component preview = reward.Find("EquippedSkinPreview").GetComponent(Runtime("BalloonDogMenuShowcase"));
+        Assert.That((bool)preview.GetType().GetProperty("CompactPreview").GetValue(preview), Is.True);
+        Assert.That(wallet.transform.Find("CaseMachine/ReelViewport"), Is.Null);
+    }
+
+    [Test]
+    public void CapsuleMachineRejectsAnUnaffordableOpeningAndResetsWhenClosed()
+    {
+        wallet = new GameObject("CapsuleCancellationTest", typeof(RectTransform));
+        Component machine = wallet.AddComponent(Runtime("BalloonDogCaseOpening"));
+        Call(machine, "Build");
+        Call(machine, "OpenCase");
+        Assert.That((bool)machine.GetType().GetField("spinning", Private).GetValue(machine), Is.False);
+        Assert.That(Balance("CasesOpened"), Is.Zero);
+        Economy("AddCoins", 1000);
+        // Simulate leaving while the visual animation is in progress, before the purchase commits.
+        Set(machine, "spinning", true);
+        Transform crank = wallet.transform.Find("CaseMachine/MachineVisual/Crank");
+        crank.localRotation = Quaternion.Euler(0f, 0f, 150f);
+        wallet.transform.Find("CaseMachine/MachineVisual/DispensedCapsule").gameObject.SetActive(true);
+        wallet.SetActive(false);
+        Assert.That(Balance("Coins"), Is.EqualTo(1000));
+        Assert.That(Balance("CasesOpened"), Is.Zero);
+        Assert.That(Balance("CasePrice"), Is.EqualTo(50));
+        wallet.SetActive(true);
+        Assert.That(Quaternion.Angle(crank.localRotation, Quaternion.identity), Is.LessThan(.01f));
+        Assert.That(wallet.transform.Find("CaseMachine/MachineVisual/DispensedCapsule").gameObject.activeSelf, Is.False);
+        Assert.That(wallet.transform.Find("CaseMachine/OpenCase").GetComponent<Button>().interactable, Is.True);
+    }
+
+    [Test]
     public void MainAndMarketCountersShareTheSameLargeIconAndFontAndGemsSitOnTheRight()
     {
         wallet = new GameObject("WalletHeaderTest", typeof(RectTransform));
