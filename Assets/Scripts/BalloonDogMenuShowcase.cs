@@ -167,9 +167,10 @@ public sealed class BalloonDogMenuShowcase : MonoBehaviour
         cameraObject.transform.LookAt(stage.transform.position + Vector3.up * 1.35f);
 
         // A real 3D pedestal; primitives have no active physics in the studio.
-        AddPlatform("WhitePedestal", -.18f, 4.15f, .32f, new Color(.80f, .94f, 1f));
-        AddPlatform("CyanRim", -.005f, 4.10f, .075f, new Color(.07f, .74f, .95f));
-        AddPlatform("CyanTop", .045f, 3.97f, .05f, new Color(.20f, .90f, .96f));
+        float platformScale = CompactPreview ? .52f : 1f;
+        AddPlatform("WhitePedestal", -.18f, 4.15f * platformScale, .32f, new Color(.80f, .94f, 1f));
+        AddPlatform("CyanRim", -.005f, 4.10f * platformScale, .075f, new Color(.07f, .74f, .95f));
+        AddPlatform("CyanTop", .045f, 3.97f * platformScale, .05f, new Color(.20f, .90f, .96f));
         dogPivot = new GameObject("EquippedDogTurntable").transform;
         dogPivot.SetParent(stage.transform, false);
     }
