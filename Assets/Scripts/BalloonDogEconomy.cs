@@ -207,10 +207,12 @@ public static class BalloonDogEconomy
             return false;
         }
 
+        BalloonDogMissions.EnsureDay();
         PlayerPrefs.SetInt(CoinsKey, Coins - tokenCost);
         PlayerPrefs.SetInt(OwnedSkinPrefix + unlockedSkin.Id, 1);
         PlayerPrefs.SetString(EquippedSkinKey, unlockedSkin.Id);
         PlayerPrefs.SetInt(CasesOpenedKey, (int)Math.Min(int.MaxValue, (long)CasesOpened + 1));
+        BalloonDogMissions.OpenCase();
         PlayerPrefs.Save();
         Changed?.Invoke();
         return true;

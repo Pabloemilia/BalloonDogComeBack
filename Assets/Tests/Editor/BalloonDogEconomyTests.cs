@@ -23,6 +23,8 @@ public sealed class BalloonDogEconomyTests
     private readonly HashSet<string> presentKeys = new HashSet<string>();
     private string equipped;
     private string legacySelection;
+    private string missionSave;
+    private bool hadMissionSave;
     private float previousTimeScale;
     private bool previousAudioPause;
     private GameObject player;
@@ -48,6 +50,10 @@ public sealed class BalloonDogEconomyTests
     [SetUp]
     public void SetUp()
     {
+        hadMissionSave = PlayerPrefs.HasKey("BalloonDog.Missions.v1");
+        missionSave = PlayerPrefs.GetString("BalloonDog.Missions.v1", "");
+        PlayerPrefs.DeleteKey("BalloonDog.Missions.v1");
+        Runtime("BalloonDogMissions").GetMethod("ResetRuntime", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null,null);
         var keys = new HashSet<string> { Init, Coins, Gems, Best, Reset, CaseReset, Cases, CoinScaleMigration };
         foreach (object skin in Skins) keys.Add("BalloonDog.Skin.Owned." + SkinId(skin));
         foreach (string id in new[] { "mint", "sunset", "royal", "midnight", "candy" })
@@ -100,6 +106,9 @@ public sealed class BalloonDogEconomyTests
         else PlayerPrefs.DeleteKey("BalloonDog.Skin.Equipped");
         if (presentKeys.Contains(LegacySelection)) PlayerPrefs.SetString(LegacySelection, legacySelection);
         else PlayerPrefs.DeleteKey(LegacySelection);
+        if (hadMissionSave) PlayerPrefs.SetString("BalloonDog.Missions.v1", missionSave);
+        else PlayerPrefs.DeleteKey("BalloonDog.Missions.v1");
+        Runtime("BalloonDogMissions").GetMethod("ResetRuntime", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null,null);
         PlayerPrefs.Save();
         savedInts.Clear();
         presentKeys.Clear();
@@ -740,6 +749,69 @@ public sealed class BalloonDogEconomyTests
         content.gameObject.SetActive(true);
         Call(studio, "LateUpdate");
         Assert.That(studio.GetType().GetField("target", Private).GetValue(studio), Is.Not.Null);
+    }
+
+    [Test]
+    public void MissionsPopupSwitchesTabsAndBlocksTheMenuWithoutReplacingIt()
+    {
+        wallet = new GameObject("MissionsUiTest", typeof(RectTransform));
+        wallet.GetComponent<RectTransform>().sizeDelta = new Vector2(1080f,1920f);
+        Component ui = wallet.AddComponent(Runtime("BalloonDogModernUI"));
+        Set(ui,"safeRoot",wallet.GetComponent<RectTransform>());
+        GameObject main = new GameObject("Main",typeof(RectTransform));
+        main.transform.SetParent(wallet.transform,false);
+        Set(ui,"mainScreen",main);
+        Call(ui,"BuildMissionsPopup");
+        Call(ui,"ShowMissionsPopup");
+        Transform popup = wallet.transform.Find("MissionsPopup");
+        Assert.That(main.activeSelf,Is.True);
+        Assert.That(popup.gameObject.activeSelf,Is.True);
+        Assert.That(main.GetComponent<CanvasGroup>().interactable,Is.False);
+        Transform window = popup.Find("MissionsWindow");
+        Assert.That(window.GetComponent<Button>(),Is.Not.Null,"Empty panel taps must not bubble to outside-close.");
+        Assert.That(window.Find("MissionViewport/MissionList").childCount,Is.EqualTo(3));
+        window.Find("NormalTab").GetComponent<Button>().onClick.Invoke();
+        Transform list = window.Find("MissionViewport/MissionList");
+        int active = 0;
+        foreach (Transform row in list) if (row.gameObject.activeSelf) active++;
+        Assert.That(active,Is.EqualTo(12));
+        Assert.That(window.Find("MissionViewport").GetComponent<ScrollRect>().vertical,Is.True);
+        Assert.That(((RectTransform)list).rect.height,Is.GreaterThan(2000f));
+        Assert.That(window.Find("PermanentHint").gameObject.activeSelf,Is.True);
+        window.Find("MissionsClose").GetComponent<Button>().onClick.Invoke();
+        Assert.That(main.activeSelf,Is.True);
+        Assert.That(popup.gameObject.activeSelf,Is.False);
+        Assert.That(main.GetComponent<CanvasGroup>().interactable,Is.True);
+    }
+
+    [Test]
+    public void OpeningACaseInitializesMissionsWithoutCountingTheCaseTwice()
+    {
+        Economy("AddCoins",500);
+        object[] args = {500,null};
+        Assert.That((bool)Economy("TryUnlockNextSkin",args),Is.True);
+        object progress = Runtime("BalloonDogMissions").GetProperty("Progress").GetValue(null);
+        object lifetime = progress.GetType().GetField("Lifetime").GetValue(progress);
+        Assert.That((int)lifetime.GetType().GetField("Cases").GetValue(lifetime),Is.EqualTo(1));
+        object daily = progress.GetType().GetField("Daily").GetValue(progress);
+        Assert.That((int)daily.GetType().GetField("Cases").GetValue(daily),Is.EqualTo(1));
+    }
+
+    [Test]
+    public void MissionRewardsDoNotProgressCoinTasksAndClaimsSurviveReload()
+    {
+        Type missions = Runtime("BalloonDogMissions");
+        missions.GetMethod("BeginRun").Invoke(null,null);
+        missions.GetMethod("TickRun").Invoke(null,new object[]{60f,5000});
+        missions.GetMethod("EndRun").Invoke(null,new object[]{5000});
+        Assert.That((bool)missions.GetMethod("ClaimNormal").Invoke(null,new object[]{0}),Is.True);
+        Assert.That(Balance("Coins"),Is.EqualTo(500));
+        missions.GetMethod("ResetRuntime",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,null);
+        object progress = missions.GetProperty("Progress").GetValue(null);
+        object lifetime = progress.GetType().GetField("Lifetime").GetValue(progress);
+        Assert.That((int)lifetime.GetType().GetField("Coins").GetValue(lifetime),Is.EqualTo(5000));
+        Assert.That((bool)missions.GetMethod("ClaimNormal").Invoke(null,new object[]{0}),Is.False);
+        Assert.That(Balance("Coins"),Is.EqualTo(500));
     }
 
     private Component CurrencyUi(string originField, out GameObject origin, out GameObject coinsPage, out GameObject gemsPage, out GameObject gameplay)

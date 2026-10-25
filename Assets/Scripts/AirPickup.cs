@@ -62,6 +62,7 @@ public sealed class AirPickup : MonoBehaviour
         }
 
         collected = true;
+        BalloonDogMissions.CollectBalloon();
         airController.AddAir(airAmount);
 
         ScoreController scoreController =
