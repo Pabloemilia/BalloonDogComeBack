@@ -16,6 +16,7 @@ public sealed class GameManager : MonoBehaviour
     private BalloonDogContinuePrompt continuePrompt;
     private BalloonDogDeathAnimation deathAnimation;
     private bool runStarted;
+    private ScoreController missionScore;
     private bool rewardsSettled;
     private bool doubleRewardClaimed;
     public bool IsContinuePending { get; private set; }
@@ -170,7 +171,27 @@ public sealed class GameManager : MonoBehaviour
         BalloonDogSceneFlow.ReloadGame(false);
     }
 
-    public void BeginRun() => runStarted = true;
+    public void BeginRun()
+    {
+        if (runStarted) return;
+        runStarted = true;
+        missionScore = FindAnyObjectByType<ScoreController>();
+        BalloonDogMissions.BeginRun();
+    }
+
+    private void Update()
+    {
+        if (!runStarted || isGameOver || Time.deltaTime <= 0f) return;
+        int coins = missionScore != null ? BalloonDogEconomy.CalculateRunCoins(missionScore.DistanceTravelled) : 0;
+        BalloonDogMissions.TickRun(Time.deltaTime, coins);
+    }
+
+    private void OnApplicationPause(bool paused)
+    {
+        if (paused) BalloonDogMissions.Save();
+    }
+
+    private void OnApplicationQuit() => BalloonDogMissions.Save();
 
     private void SnapshotRun()
     {
@@ -184,7 +205,8 @@ public sealed class GameManager : MonoBehaviour
         if (rewardsSettled) return;
         rewardsSettled = true;
         LastCoinsReward = BalloonDogEconomy.CalculateRunCoins(LastDistance);
-        // Gems are reserved for purchases and successful rewarded ads.
+        BalloonDogMissions.EndRun(LastCoinsReward);
+        // Run payouts are coins; permanent mission milestones can also award gems.
         BalloonDogEconomy.AddCoins(LastCoinsReward);
     }
 

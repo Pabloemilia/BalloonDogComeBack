@@ -48,6 +48,7 @@ public sealed class BalloonDogEndlessContact : MonoBehaviour
         consumed=true;
         if(IsPickup)
         {
+            BalloonDogMissions.CollectBalloon();
             air.AddAir(14);air.GetComponent<ScoreController>()?.AddBonus(100);
             air.GetComponent<ComboController>()?.RegisterSuccess(1,60);
             GameAudioController.PlayPickup();gameObject.SetActive(false);

@@ -13,7 +13,7 @@ using UnityEngine.UI;
 /// It replaces the legacy prototype panels while continuing to use the
 /// existing gameplay, countdown, scoring and restart systems.
 /// </summary>
-public sealed class BalloonDogModernUI : MonoBehaviour
+public sealed partial class BalloonDogModernUI : MonoBehaviour
 {
     private const string RuntimeObjectName = "__BalloonDogModernUI";
     private const string SettingsLayoutMarkerName =
@@ -376,6 +376,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         }
 
         RefreshGameplayStats();
+        UpdateMissionsPopup();
         UpdateToast();
     }
 
@@ -454,6 +455,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
         safeRoot.gameObject.AddComponent<BalloonDogSafeArea>();
 
         BuildMainScreen();
+        BuildMissionsPopup();
         BuildMarketScreen();
         coinPacksScreen = BuildCurrencyPacksScreen(false);
         gemPacksScreen = BuildCurrencyPacksScreen(true);
@@ -3391,6 +3393,7 @@ public sealed class BalloonDogModernUI : MonoBehaviour
 
     private void HideAllScreens()
     {
+        CloseMissionsPopup();
         SetActive(mainScreen, false);
         SetActive(marketScreen, false);
         SetActive(coinPacksScreen, false);
