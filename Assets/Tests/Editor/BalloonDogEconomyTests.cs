@@ -751,11 +751,14 @@ public sealed class BalloonDogEconomyTests
         Assert.That(studio.GetType().GetField("target", Private).GetValue(studio), Is.Not.Null);
     }
 
-    [Test]
-    public void MissionsPopupSwitchesTabsAndBlocksTheMenuWithoutReplacingIt()
+    [TestCase(1080f,1920f)]
+    [TestCase(1080f,2348f)]
+    [TestCase(750f,1334f)]
+    [TestCase(1125f,2436f)]
+    public void MissionsPopupFitsAllDailyRowsAndSwitchesTabsWithoutGapsOrClipping(float width, float height)
     {
         wallet = new GameObject("MissionsUiTest", typeof(RectTransform));
-        wallet.GetComponent<RectTransform>().sizeDelta = new Vector2(1080f,1920f);
+        wallet.GetComponent<RectTransform>().sizeDelta = new Vector2(width,height);
         Component ui = wallet.AddComponent(Runtime("BalloonDogModernUI"));
         Set(ui,"safeRoot",wallet.GetComponent<RectTransform>());
         GameObject main = new GameObject("Main",typeof(RectTransform));
@@ -763,25 +766,66 @@ public sealed class BalloonDogEconomyTests
         Set(ui,"mainScreen",main);
         Call(ui,"BuildMissionsPopup");
         Call(ui,"ShowMissionsPopup");
+        Canvas.ForceUpdateCanvases();
         Transform popup = wallet.transform.Find("MissionsPopup");
         Assert.That(main.activeSelf,Is.True);
         Assert.That(popup.gameObject.activeSelf,Is.True);
         Assert.That(main.GetComponent<CanvasGroup>().interactable,Is.False);
         Transform window = popup.Find("MissionsWindow");
         Assert.That(window.GetComponent<Button>(),Is.Not.Null,"Empty panel taps must not bubble to outside-close.");
-        Assert.That(window.Find("MissionViewport/MissionList").childCount,Is.EqualTo(3));
+        ScrollRect scroll = window.Find("MissionViewport").GetComponent<ScrollRect>();
+        RectTransform list = (RectTransform)window.Find("MissionViewport/MissionList");
+        RectTransform viewport = (RectTransform)window.Find("MissionViewport");
+        Assert.That(list.childCount,Is.EqualTo(3));
+        Assert.That(list.anchoredPosition,Is.EqualTo(Vector2.zero));
+        Assert.That(scroll.vertical,Is.False,"The daily page must fit without scrolling.");
+        Rect timerBounds = MissionBounds(window,window.Find("ResetTimer"));
+        Rect firstTask = MissionBounds(window,list.Find("Mission_0/Task"));
+        Assert.That(timerBounds.yMin-firstTask.yMax,Is.InRange(0f,65f),"No half-row gap below the timer.");
+        Rect viewBounds = MissionBounds(window,viewport);
+        foreach (Transform row in list)
+        {
+            Rect task = MissionBounds(window,row.Find("Task"));
+            Rect bar = MissionBounds(window,row.Find("ProgressTrack"));
+            Assert.That(task.yMax,Is.LessThanOrEqualTo(viewBounds.yMax));
+            Assert.That(bar.yMin,Is.GreaterThanOrEqualTo(viewBounds.yMin));
+            Assert.That(bar.yMax,Is.LessThan(task.yMin),"Progress must not overlap a two-line title.");
+        }
+        Rect bonus = MissionBounds(window,window.Find("DailyBonus"));
+        Assert.That(bonus.yMax,Is.LessThan(viewBounds.yMin),"The bonus cannot cover the final mission.");
+        Rect panelBounds = MissionBounds(wallet.transform,window);
+        Assert.That(panelBounds.xMin,Is.GreaterThan(-width*.5f));
+        Assert.That(panelBounds.xMax,Is.LessThan(width*.5f));
+        Assert.That(panelBounds.yMin,Is.GreaterThan(-height*.5f));
+        Assert.That(panelBounds.yMax,Is.LessThan(height*.5f));
+        Image unselected = window.Find("NormalTab").GetComponent<Image>();
+        Assert.That(unselected.sprite.border.x,Is.GreaterThan(0f));
+        Assert.That(window.Find("NormalTab/IdleFace").gameObject.activeSelf,Is.True);
         window.Find("NormalTab").GetComponent<Button>().onClick.Invoke();
-        Transform list = window.Find("MissionViewport/MissionList");
-        int active = 0;
-        foreach (Transform row in list) if (row.gameObject.activeSelf) active++;
-        Assert.That(active,Is.EqualTo(12));
-        Assert.That(window.Find("MissionViewport").GetComponent<ScrollRect>().vertical,Is.True);
-        Assert.That(((RectTransform)list).rect.height,Is.GreaterThan(2000f));
+        Assert.That(list.childCount,Is.EqualTo(12));
+        Assert.That(scroll.vertical,Is.True);
+        Assert.That(list.rect.height,Is.GreaterThan(2500f));
+        Assert.That(list.anchoredPosition,Is.EqualTo(Vector2.zero));
         Assert.That(window.Find("PermanentHint").gameObject.activeSelf,Is.True);
+        list.anchoredPosition = new Vector2(0f,500f);
+        Call(ui,"RebuildMissionRows");
+        Assert.That(list.anchoredPosition.y,Is.EqualTo(500f),"Claiming rewards must not jump the permanent list.");
+        window.Find("DailyTab").GetComponent<Button>().onClick.Invoke();
+        Assert.That(list.anchoredPosition,Is.EqualTo(Vector2.zero));
+        Assert.That(scroll.vertical,Is.False);
         window.Find("MissionsClose").GetComponent<Button>().onClick.Invoke();
         Assert.That(main.activeSelf,Is.True);
         Assert.That(popup.gameObject.activeSelf,Is.False);
         Assert.That(main.GetComponent<CanvasGroup>().interactable,Is.True);
+    }
+
+    private static Rect MissionBounds(Transform root, Transform child)
+    {
+        Vector3[] corners = new Vector3[4];
+        ((RectTransform)child).GetWorldCorners(corners);
+        Vector3 first = root.InverseTransformPoint(corners[0]);
+        Vector3 last = root.InverseTransformPoint(corners[2]);
+        return Rect.MinMaxRect(first.x,first.y,last.x,last.y);
     }
 
     [Test]

@@ -23,3 +23,9 @@ State is stored in BalloonDog.Missions.v1. Saves happen at run start/end, applic
 Editor tests: BalloonDogMissionsTests and mission integration tests in BalloonDogEconomyTests. Cover reset boundaries, stable selection, unavailable tasks, backward clock movement, rollover during a run, saves, cumulative vs best progress, duplicate claims, fifth-stage gems, case accounting, wallet isolation and modal navigation/input blocking. Existing economy tests preserve and restore the mission save.
 
 Run with Unity Test Runner (EditMode), or Unity batch mode with `-runTests -testPlatform EditMode -testResults missions-tests.xml` and this project path. Unity is required for the runtime/UI tests; syntax parsing alone does not validate rendering or Unity compilation. On-device smoke check: open the popup, switch tabs and scroll, close it, play a run, verify progress, claim a reward, restart and verify it stays claimed.
+
+## Popup layout correction
+
+The list content is explicitly pinned to its viewport's top, and each row's children share its top origin. This removes the half-row gap introduced by mixing centred child anchors with top-pivot rows. The daily page has three fully visible rows without scrolling; its bonus sits outside the viewport with a separate gap. Permanent rows still scroll, retain their offset after claims, and reset to the top when switching tabs.
+
+The popup uses a small shared rounded sprite generated in code, layered cyan/white rims, the existing blue/green button artwork, matching capsule tabs, larger Titan One text and bordered progress tracks. No new imported image dependency is needed. Geometry regression cases cover four portrait sizes in Unity; offline layout calculations cover five sizes, and actual bundled-font fitting covers 168 permanent stage/title combinations. Syntax and offline checks passed here; Unity rendering and EditMode execution still require the Unity Editor.
