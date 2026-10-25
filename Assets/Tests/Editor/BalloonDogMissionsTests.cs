@@ -72,7 +72,8 @@ public sealed class BalloonDogMissionsTests
             int[] previous = (int[])Field<int[]>("DailyIds").Clone();
             Call("EnsureDay",day.AddDays(d+1),1,false,10);
             int[] ids = Field<int[]>("DailyIds");
-            Assert.That(ids,Does.Not.Contain(7)); Assert.That(ids,Does.Not.Contain(8));
+            Assert.That(Array.IndexOf(ids, 7), Is.EqualTo(-1));
+            Assert.That(Array.IndexOf(ids, 8), Is.EqualTo(-1));
             for(int i=0;i<3;i++) Assert.That(ids[i],Is.Not.EqualTo(previous[i]));
         }
     }
