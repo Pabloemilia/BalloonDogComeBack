@@ -14,7 +14,7 @@ Rewards in base coin units: easy 30, medium 60, hard 100, all-three bonus 60. Th
 
 Twelve approved series track total/best-run coins, runs, total/best-run survival, total/best-run air balloons, skins owned, cases opened, daily tasks completed, all-three daily sets, and runs lasting at least 120 seconds. Progress persists across sessions and reward claims. Only real run earnings advance coin tasks; shop, mission and double-reward payouts do not.
 
-Stages 1–4 reward 50/100/150/200 base coins. Stage 5 gives **5 gems and no coins**. Later stages use growing targets and coin rewards capped at 300 base coins. Skin and case series finish after five stages at 16 owned skins and 15 cases, matching the finite catalog. Existing ownership and case openings count; run statistics begin tracking when this update is first used.
+Stages 1–4 reward 50/100/150/200 base coins. Stage 5 gives **50 gems and no coins**. Later stages use growing targets and coin rewards capped at 300 base coins. Skin and case series finish after five stages at 16 owned skins and 15 cases, matching the finite catalog. Existing ownership and case openings count; run statistics begin tracking when this update is first used.
 
 State is stored in BalloonDog.Missions.v1. Saves happen at run start/end, application suspension/quit, claims, case openings and every five seconds during gameplay. Revives continue the same run. Claim state and wallet reward are written before the same PlayerPrefs save, preventing repeated claims across reloads.
 

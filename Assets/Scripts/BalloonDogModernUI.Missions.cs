@@ -102,7 +102,7 @@ public sealed partial class BalloonDogModernUI
         missionsScroll.vertical = false;
         missionsScroll.movementType = ScrollRect.MovementType.Clamped;
         missionsScroll.scrollSensitivity = 45f;
-        missionsFooter = CreateText(missionsWindow,"PermanentHint","Stage 5 reward: 5 gems\nSwipe up for more missions",
+        missionsFooter = CreateText(missionsWindow,"PermanentHint","Stage 5 reward: "+BalloonDogMissionProgress.MilestoneGemReward+" gems\nSwipe up for more missions",
             new Vector2(0f,-550f),new Vector2(840f,100f),32f,MissionInk,FontStyles.Normal,TextAlignmentOptions.Center);
         missionsPopup.SetActive(false);
     }

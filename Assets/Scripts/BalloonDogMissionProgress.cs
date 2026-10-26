@@ -6,6 +6,7 @@ using System.Globalization;
 [Serializable]
 public sealed class BalloonDogMissionProgress
 {
+    public const int MilestoneGemReward = 50;
     [Serializable]
     public sealed class Stats
     {
@@ -206,7 +207,7 @@ public sealed class BalloonDogMissionProgress
     }
     public bool CanClaimNormal(int id, int ownedSkins, int scale) => id >= 0 && id < 12 && !Finished(id) && NormalValue(id,ownedSkins) >= NormalTarget(id,scale);
     public int NormalCoinReward(int id, int scale) => Stages[id] == 4 || Finished(id) ? 0 : Math.Min(300, (Stages[id]+1)*50)*scale;
-    public int NormalGemReward(int id) => Stages[id] == 4 ? 5 : 0;
+    public int NormalGemReward(int id) => Stages[id] == 4 ? MilestoneGemReward : 0;
     public bool ClaimNormal(int id, int ownedSkins, int scale, out int coins, out int gems)
     {
         coins = gems = 0;

@@ -124,7 +124,7 @@ public sealed class BalloonDogMissionsTests
             object[] args = {0,1,10,0,0};
             Assert.That((bool)type.GetMethod("ClaimNormal").Invoke(state,args),Is.True);
             Assert.That((int)args[3],Is.EqualTo(stage==4 ? 0 : (stage+1)*500));
-            Assert.That((int)args[4],Is.EqualTo(stage==4 ? 5 : 0));
+            Assert.That((int)args[4],Is.EqualTo(stage==4 ? 50 : 0));
         }
     }
     [Test]
